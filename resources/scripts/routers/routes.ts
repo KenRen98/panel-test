@@ -13,6 +13,7 @@ import AccountApiContainer from '@/components/dashboard/AccountApiContainer';
 import AccountSSHContainer from '@/components/dashboard/ssh/AccountSSHContainer';
 import ActivityLogContainer from '@/components/dashboard/activity/ActivityLogContainer';
 import ServerActivityLogContainer from '@/components/server/ServerActivityLogContainer';
+import ModpackContainer from '@/components/server/modpack/ModpackContainer';
 
 // Each of the router files is already code split out appropriately — so
 // all of the items above will only be loaded in when that router is loaded.
@@ -33,6 +34,8 @@ interface RouteDefinition {
 
 interface ServerRouteDefinition extends RouteDefinition {
     permission: string | string[] | null;
+    // 侧边栏分组：1/2/3。未指定则不参与分组导航（如隐藏的子路由）。
+    group?: number;
 }
 
 interface Routes {
@@ -67,18 +70,28 @@ export default {
         },
     ],
     server: [
+        // ===== 组1 =====
         {
             path: '/',
             permission: null,
             name: '控制台',
             component: ServerConsole,
             exact: true,
+            group: 1,
+        },
+        {
+            path: '/startup',
+            permission: 'startup.*',
+            name: '游戏参数',
+            component: StartupContainer,
+            group: 1,
         },
         {
             path: '/files',
             permission: 'file.*',
-            name: '文件',
+            name: '文件管理',
             component: FileManagerContainer,
+            group: 1,
         },
         {
             path: '/files/:action(edit|new)',
@@ -87,16 +100,33 @@ export default {
             component: FileEditContainer,
         },
         {
-            path: '/databases',
-            permission: 'database.*',
-            name: '数据库',
-            component: DatabasesContainer,
+            path: '/backups',
+            permission: 'backup.*',
+            name: '数据备份',
+            component: BackupContainer,
+            group: 1,
+        },
+        {
+            path: '/modpack',
+            permission: 'startup.*',
+            name: '一键安装',
+            component: ModpackContainer,
+            group: 1,
+        },
+        // ===== 组2 =====
+        {
+            path: '/network',
+            permission: 'allocation.*',
+            name: '网络端口',
+            component: NetworkContainer,
+            group: 2,
         },
         {
             path: '/schedules',
             permission: 'schedule.*',
-            name: '计划',
+            name: '计划任务',
             component: ScheduleContainer,
+            group: 2,
         },
         {
             path: '/schedules/:id',
@@ -105,40 +135,33 @@ export default {
             component: ScheduleEditContainer,
         },
         {
-            path: '/users',
-            permission: 'user.*',
-            name: '子用户',
-            component: UsersContainer,
-        },
-        {
-            path: '/backups',
-            permission: 'backup.*',
-            name: '备份',
-            component: BackupContainer,
-        },
-        {
-            path: '/network',
-            permission: 'allocation.*',
-            name: '网络',
-            component: NetworkContainer,
-        },
-        {
-            path: '/startup',
-            permission: 'startup.*',
-            name: '启动',
-            component: StartupContainer,
-        },
-        {
             path: '/settings',
             permission: ['settings.*', 'file.sftp'],
-            name: '设置',
+            name: '高级设置',
             component: SettingsContainer,
+            group: 2,
+        },
+        // ===== 组3 =====
+        {
+            path: '/users',
+            permission: 'user.*',
+            name: '邀请用户',
+            component: UsersContainer,
+            group: 3,
         },
         {
             path: '/activity',
             permission: 'activity.*',
             name: '活动日志',
             component: ServerActivityLogContainer,
+            group: 3,
+        },
+        // ===== 隐藏（路由保留可直达，导航不显示）=====
+        {
+            path: '/databases',
+            permission: 'database.*',
+            name: undefined,
+            component: DatabasesContainer,
         },
     ],
 } as Routes;

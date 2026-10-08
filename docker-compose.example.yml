@@ -43,7 +43,7 @@ services:
     image: redis:alpine
     restart: always
   panel:
-    image: pterodactylchina/panel:latest
+    image: kenren98/mlsg:panel
     restart: always
     ports:
       - "80:80"
