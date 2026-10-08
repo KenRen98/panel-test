@@ -1,41 +1,31 @@
-# Stage 0:
-# Build the assets that are needed for the frontend. This build stage is then discarded
-# since we won't need NodeJS anymore in the future. This Docker image ships a final production
-# level distribution of Pterodactyl.
-FROM --platform=$TARGETOS/$TARGETARCH node:22-alpine
+# ============================================================
+# 基于官方 pterodactylchina/panel:latest 的自定义镜像
+#
+# 思路：官方镜像已含编译好的 1.15.0 运行时（PHP8.3 / nginx / supervisord /
+#       entrypoint / 已编译前端），我们只需叠加自己的修改：
+#        1) 覆盖编译后的前端资源（模组包一键安装页 + 侧边栏改版）
+#        2) 关闭迁移时 mysql 客户端的 SSL 要求（兼容内置无 SSL 的 MariaDB）
+#   好处：不用每次重跑 composer / 装 PHP 扩展 / apk add，构建快、运行时与官方一致。
+# ============================================================
+
+# ---- 阶段 0：编译我们修改过的前端 ----
+FROM node:22-alpine AS frontend
 WORKDIR /app
 COPY . ./
 RUN yarn install --frozen-lockfile \
     && yarn run build:production
 
-# Stage 1:
-# Build the actual container with all of the needed PHP dependencies that will run the application.
-FROM --platform=$TARGETOS/$TARGETARCH php:8.3-fpm-alpine
-WORKDIR /app
-COPY . ./
-COPY --from=0 /app/public/assets ./public/assets
-RUN apk add --no-cache --update ca-certificates dcron curl git supervisor tar unzip nginx libpng-dev libxml2-dev libzip-dev certbot certbot-nginx mysql-client \
-    && docker-php-ext-configure zip \
-    && docker-php-ext-install bcmath gd pdo_mysql zip \
-    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && cp .env.example .env \
-    && mkdir -p bootstrap/cache/ storage/logs storage/framework/sessions storage/framework/views storage/framework/cache \
-    && chmod 777 -R bootstrap storage \
-    && composer install --no-dev --optimize-autoloader \
-    && rm -rf .env bootstrap/cache/*.php \
-    && mkdir -p /app/storage/logs/ \
-    && chown -R nginx:nginx .
+# ---- 阶段 1：以官方镜像为底座，只叠加我们的修改 ----
+FROM pterodactylchina/panel:latest
 
-RUN rm /usr/local/etc/php-fpm.conf \
-    && echo "* * * * * /usr/local/bin/php /app/artisan schedule:run >> /dev/null 2>&1" >> /var/spool/cron/crontabs/root \
-    && echo "0 23 * * * certbot renew --nginx --quiet" >> /var/spool/cron/crontabs/root \
-    && sed -i s/ssl_session_cache/#ssl_session_cache/g /etc/nginx/nginx.conf \
-    && mkdir -p /var/run/php /var/run/nginx
+# 1) 覆盖编译后的前端资源（含模组包页面、侧边栏改版、数据库隐藏等）
+COPY --from=frontend /app/public/assets ./public/assets
 
-COPY .github/docker/default.conf /etc/nginx/http.d/default.conf
-COPY .github/docker/www.conf /usr/local/etc/php-fpm.conf
-COPY .github/docker/supervisord.conf /etc/supervisord.conf
+# 2) 迁移时 mysql 客户端不强制 SSL：
+#    官方镜像内置的 mysql 客户端在 schema 导入时会要求 SSL，而搭配内置 MariaDB
+#    （默认无 SSL）会报 "SSL is required, but the server does not support it"。
+#    写入 /root/.my.cnf（entrypoint 以 root 运行，mysql 客户端读取它）强制关闭 SSL。
+RUN mkdir -p /root \
+    && printf '[client]\nssl-mode=DISABLED\nssl=0\n' > /root/.my.cnf
 
-EXPOSE 80 443
-ENTRYPOINT [ "/bin/ash", ".github/docker/entrypoint.sh" ]
-CMD [ "supervisord", "-n", "-c", "/etc/supervisord.conf" ]
+# 官方镜像已声明 ENTRYPOINT / CMD / EXPOSE，此处自动继承，无需重复。
