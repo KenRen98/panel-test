@@ -55,10 +55,14 @@ export const buildGuochanIdMap = (variables: ServerEggVariable[]): Map<number, s
     }
 
     for (const raw of packVar.rules) {
-        const rule = stripInPrefix(raw);
-        const match = rule.match(/^\((\d+)\)/);
-        if (match) {
-            map.set(parseInt(match[1], 10), rule);
+        // in: 规则是一整串逗号分隔的允许值（如 "(1000) 未启用,(1001) 愚者The Fool-0.3.0,..."），
+        // 必须先按逗号拆成单个选项，再为每个 (N) 前缀建立映射（robust 匹配，忽略前缀后的文字）。
+        for (const option of stripInPrefix(raw).split(',')) {
+            const trimmed = option.trim();
+            const match = trimmed.match(/^\((\d+)\)/);
+            if (match) {
+                map.set(parseInt(match[1], 10), trimmed);
+            }
         }
     }
 
@@ -76,9 +80,12 @@ export const matchGuoChanServerType = (variables: ServerEggVariable[]): string |
     }
 
     for (const raw of typeVar.rules) {
-        const rule = stripInPrefix(raw);
-        if (rule.startsWith('GuoChan')) {
-            return rule;
+        // SERVER_TYPE 的 in: 规则同样是一整串逗号分隔的选项，需拆分后再匹配 GuoChan 开头。
+        for (const option of stripInPrefix(raw).split(',')) {
+            const trimmed = option.trim();
+            if (trimmed.startsWith('GuoChan')) {
+                return trimmed;
+            }
         }
     }
 
