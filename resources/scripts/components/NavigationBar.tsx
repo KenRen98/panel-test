@@ -48,7 +48,7 @@ export default () => {
     return (
         <div className={'w-full bg-neutral-900 shadow-md overflow-x-auto'}>
             <SpinnerOverlay visible={isLoggingOut} />
-            <div className={'mx-auto w-full flex items-center h-[3.5rem] max-w-[1200px]'}>
+            <div className={'w-full flex items-center h-[3.5rem]'}>
                 <div id={'logo'} className={'flex flex-1'}>
                     <Link
                         to={'/'}
