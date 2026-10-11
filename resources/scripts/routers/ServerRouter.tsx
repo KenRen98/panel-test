@@ -11,6 +11,7 @@ import { httpErrorToHuman } from '@/api/http';
 import { useStoreState } from 'easy-peasy';
 import tw from 'twin.macro';
 import ServerSidebar from '@/components/server/ServerSidebar';
+import ServerSubNavigation from '@/components/elements/ServerSubNavigation';
 import InstallListener from '@/components/server/InstallListener';
 import ErrorBoundary from '@/components/elements/ErrorBoundary';
 import { useLocation } from 'react-router';
@@ -60,10 +61,18 @@ export default () => {
 
     return (
         <React.Fragment key={'server-router'}>
-            <div css={tw`flex flex-col min-h-screen`}>
-                <NavigationBar />
-                <div css={tw`flex flex-1 flex-col lg:flex-row`}>
+            <div css={tw`flex flex-col lg:flex-row min-h-screen`}>
+                {/* 桌面端：全高侧边栏贯穿视口，覆盖原本顶部栏左侧区域 */}
+                <div css={tw`hidden lg:flex lg:flex-shrink-0`}>
                     <ServerSidebar />
+                </div>
+                {/* 桌面端右侧：顶部栏（不再横向贯穿）+ 内容 */}
+                <div css={tw`flex flex-1 flex-col min-w-0`}>
+                    <NavigationBar />
+                    {/* 手机端：原始顶部栏样式，横向导航条 */}
+                    <div css={tw`lg:hidden`}>
+                        <ServerSubNavigation />
+                    </div>
                     <div css={tw`flex-1 min-w-0`}>
                     {!uuid || !id ? (
                         error ? (

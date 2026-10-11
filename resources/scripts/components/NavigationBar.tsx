@@ -1,6 +1,6 @@
 ﻿import * as React from 'react';
 import { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useRouteMatch } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCogs, faLayerGroup, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState } from 'easy-peasy';
@@ -36,6 +36,8 @@ export default () => {
     const name = useStoreState((state: ApplicationStore) => state.settings.data!.name);
     const rootAdmin = useStoreState((state: ApplicationStore) => state.user.data!.rootAdmin);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    // 服务器内页：logo 移到侧边栏顶上，桌面端这里不显示 logo，顶部栏不再横向贯穿。
+    const isServerPage = !!useRouteMatch('/server/:id');
 
     const onTriggerLogout = () => {
         setIsLoggingOut(true);
@@ -46,21 +48,23 @@ export default () => {
     };
 
     return (
-        <div className={'w-full bg-neutral-900 shadow-md overflow-x-auto sticky top-0 z-40'}>
+        <div className={'w-full bg-neutral-900 shadow-md overflow-x-auto'}>
             <SpinnerOverlay visible={isLoggingOut} />
             <div className={'w-full flex items-center h-[3.5rem]'}>
                 <div id={'logo'} className={'flex flex-1'}>
-                    <Link
-                        to={'/'}
-                        className={
-                            'text-2xl font-header font-medium px-4 no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150'
-                        }
-                    >
-                        {useStoreState((state) => {
-                            const logoTitle = state.settings.data?.logo.title;
-                            return logoTitle ? <img src={logoTitle} /> : name;
-                        })}
-                    </Link>
+                    <div className={isServerPage ? 'lg:hidden' : ''}>
+                        <Link
+                            to={'/'}
+                            className={
+                                'text-2xl font-header font-medium px-4 no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150'
+                            }
+                        >
+                            {useStoreState((state) => {
+                                const logoTitle = state.settings.data?.logo.title;
+                                return logoTitle ? <img src={logoTitle} /> : name;
+                            })}
+                        </Link>
+                    </div>
                 </div>
                 <RightNavigation className={'flex h-full items-center justify-center'}>
                     <SearchContainer />
