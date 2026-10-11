@@ -42,13 +42,13 @@ const Item = styled(NavLink)`
     ${tw`flex items-center px-3 py-2 rounded text-sm text-neutral-300 no-underline whitespace-nowrap transition-all duration-150`};
 
     &:hover {
-        ${tw`text-neutral-100 bg-neutral-800`};
+        ${tw`text-neutral-100 bg-neutral-700`};
     }
 
     &.active {
         ${tw`text-neutral-100`};
-        background: rgba(0, 0, 0, 0.35);
-        box-shadow: inset 0 0 0 1px ${theme`colors.neutral.700`.toString()};
+        background: rgba(7, 116, 255, 0.10);
+        box-shadow: inset 0 0 0 1px ${theme`colors.blue.500`.toString()};
     }
 
     @media (max-width: 1023px) {

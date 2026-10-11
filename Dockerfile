@@ -21,4 +21,7 @@ FROM pterodactylchina/panel:latest
 # 覆盖编译后的前端资源（含模组包页面、侧边栏改版、数据库隐藏等）
 COPY --from=frontend /app/public/assets ./public/assets
 
-# 官方镜像已声明 ENTRYPOINT / CMD / EXPOSE，此处自动继承，无需重复。
+# 连接带自签/不受信证书的 MySQL 时跳过服务器证书校验
+# （否则 schema 导入会报 "certificate is NOT trusted"）。
+# 用 MariaDB 客户端认的 ssl-verify-server-cert=0；不能用 ssl-mode（MariaDB 不认，会报 unknown variable 中止）。
+RUN mkdir -p /root && printf '[client]\nssl-verify-server-cert=0\n' > /root/.my.cnf

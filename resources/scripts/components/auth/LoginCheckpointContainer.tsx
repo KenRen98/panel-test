@@ -55,7 +55,7 @@ const LoginCheckpointContainer = () => {
                         setFieldValue('recoveryCode', '');
                         setIsMissingDevice((s) => !s);
                     }}
-                    css={tw`cursor-pointer text-xs text-neutral-500 tracking-wide uppercase no-underline hover:text-neutral-700`}
+                    css={tw`cursor-pointer text-xs text-neutral-400 tracking-wide uppercase no-underline hover:text-neutral-100`}
                 >
                     {!isMissingDevice ? '我的设备丢失了' : '我的设备还在'}
                 </span>
@@ -63,7 +63,7 @@ const LoginCheckpointContainer = () => {
             <div css={tw`mt-6 text-center`}>
                 <Link
                     to={'/auth/login'}
-                    css={tw`text-xs text-neutral-500 tracking-wide uppercase no-underline hover:text-neutral-700`}
+                    css={tw`text-xs text-neutral-400 tracking-wide uppercase no-underline hover:text-neutral-100`}
                 >
                     返回登录
                 </Link>

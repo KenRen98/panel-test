@@ -7,13 +7,13 @@ export interface Props {
 }
 
 const light = css<Props>`
-    ${tw`bg-white border-neutral-200 text-neutral-800`};
+    ${tw`bg-white border-neutral-700 text-neutral-100`};
     &:focus {
         ${tw`border-primary-400`}
     }
 
     &:disabled {
-        ${tw`bg-neutral-100 border-neutral-200`};
+        ${tw`bg-neutral-700 border-neutral-600`};
     }
 `;
 
