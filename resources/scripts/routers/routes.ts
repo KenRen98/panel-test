@@ -1,4 +1,17 @@
 import React, { lazy } from 'react';
+import {
+    faArchive,
+    faClock,
+    faCogs,
+    faDownload,
+    faFolderOpen,
+    faHistory,
+    faNetworkWired,
+    faSlidersH,
+    faTerminal,
+    faUserPlus,
+} from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-common-types';
 import ServerConsole from '@/components/server/console/ServerConsoleContainer';
 import DatabasesContainer from '@/components/server/databases/DatabasesContainer';
 import ScheduleContainer from '@/components/server/schedules/ScheduleContainer';
@@ -36,6 +49,8 @@ interface ServerRouteDefinition extends RouteDefinition {
     permission: string | string[] | null;
     // 侧边栏分组：1/2/3。未指定则不参与分组导航（如隐藏的子路由）。
     group?: number;
+    // 侧边栏导航项图标
+    icon?: IconDefinition;
 }
 
 interface Routes {
@@ -78,6 +93,7 @@ export default {
             component: ServerConsole,
             exact: true,
             group: 1,
+            icon: faTerminal,
         },
         {
             path: '/startup',
@@ -85,6 +101,7 @@ export default {
             name: '游戏参数',
             component: StartupContainer,
             group: 1,
+            icon: faSlidersH,
         },
         {
             path: '/files',
@@ -92,6 +109,7 @@ export default {
             name: '文件管理',
             component: FileManagerContainer,
             group: 1,
+            icon: faFolderOpen,
         },
         {
             path: '/files/:action(edit|new)',
@@ -105,6 +123,7 @@ export default {
             name: '数据备份',
             component: BackupContainer,
             group: 1,
+            icon: faArchive,
         },
         {
             path: '/modpack',
@@ -112,6 +131,7 @@ export default {
             name: '一键安装',
             component: ModpackContainer,
             group: 1,
+            icon: faDownload,
         },
         // ===== 组2 =====
         {
@@ -120,6 +140,7 @@ export default {
             name: '网络端口',
             component: NetworkContainer,
             group: 2,
+            icon: faNetworkWired,
         },
         {
             path: '/schedules',
@@ -127,6 +148,7 @@ export default {
             name: '计划任务',
             component: ScheduleContainer,
             group: 2,
+            icon: faClock,
         },
         {
             path: '/schedules/:id',
@@ -140,6 +162,7 @@ export default {
             name: '高级设置',
             component: SettingsContainer,
             group: 2,
+            icon: faCogs,
         },
         // ===== 组3 =====
         {
@@ -148,6 +171,7 @@ export default {
             name: '邀请用户',
             component: UsersContainer,
             group: 3,
+            icon: faUserPlus,
         },
         {
             path: '/activity',
@@ -155,6 +179,7 @@ export default {
             name: '活动日志',
             component: ServerActivityLogContainer,
             group: 3,
+            icon: faHistory,
         },
         // ===== 隐藏（路由保留可直达，导航不显示）=====
         {

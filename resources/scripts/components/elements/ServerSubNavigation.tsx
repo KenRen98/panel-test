@@ -2,9 +2,11 @@ import React from 'react';
 import { NavLink, useRouteMatch } from 'react-router-dom';
 import styled from 'styled-components/macro';
 import tw, { theme } from 'twin.macro';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 import { ServerContext } from '@/state/server';
+import Tooltip from '@/components/elements/tooltip/Tooltip';
 
 const Nav = styled.nav`
     ${tw`flex flex-col px-2 py-3 gap-0.5`};
@@ -31,14 +33,14 @@ const Group = styled.div`
 const Separator = styled.div`
     height: 1px;
     margin: 8px 6px;
-    background: ${theme`colors.neutral.700`.toString()};
+    background: ${theme`colors.neutral.600`.toString()};
 
     @media (max-width: 1023px) {
         display: none;
     }
 `;
 
-const Item = styled(NavLink)`
+const Item = styled(NavLink)<{ collapsed?: boolean }>`
     ${tw`flex items-center px-3 py-2 rounded text-sm text-neutral-300 no-underline whitespace-nowrap transition-all duration-150`};
 
     &:hover {
@@ -48,15 +50,17 @@ const Item = styled(NavLink)`
     &.active {
         ${tw`text-neutral-100`};
         background: rgba(0, 0, 0, 0.35);
-        box-shadow: inset 0 0 0 1px ${theme`colors.neutral.700`.toString()};
+        box-shadow: inset 0 0 0 1px ${theme`colors.neutral.600`.toString()};
     }
+
+    ${(props) => props.collapsed && tw`lg:justify-center lg:px-0`};
 
     @media (max-width: 1023px) {
         ${tw`px-3 py-2`};
     }
 `;
 
-export default () => {
+export default ({ collapsed = false }: { collapsed?: boolean }) => {
     const match = useRouteMatch<{ id: string }>();
     const variables = ServerContext.useStoreState((state) => state.server.data?.variables);
     const hasModpack = !!variables?.some((v) => v.envVariable === 'GUOCHAN_PACK_ID');
@@ -79,7 +83,7 @@ export default () => {
             return;
         }
 
-        if (rendered.length > 0) {
+        if (rendered.length > 0 && !collapsed) {
             rendered.push(<Separator key={`sep-${group}`} />);
         }
 
@@ -87,17 +91,26 @@ export default () => {
             <Group key={`group-${group}`}>
                 {items.map((route) => {
                     const link = (
-                        <Item key={route.path} to={to(route.path)} exact={route.exact}>
-                            {route.name}
+                        <Item key={route.path} to={to(route.path)} exact={route.exact} collapsed={collapsed}>
+                            {route.icon && <FontAwesomeIcon icon={route.icon} fixedWidth />}
+                            <span css={[tw`ml-3`, collapsed && tw`lg:hidden`]}>{route.name}</span>
                         </Item>
+                    );
+
+                    const wrapped = collapsed ? (
+                        <Tooltip key={route.path} placement={'right'} content={route.name!}>
+                            {link}
+                        </Tooltip>
+                    ) : (
+                        link
                     );
 
                     return route.permission ? (
                         <Can key={route.path} action={route.permission} matchAny>
-                            {link}
+                            {wrapped}
                         </Can>
                     ) : (
-                        link
+                        wrapped
                     );
                 })}
             </Group>
