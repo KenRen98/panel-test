@@ -41,29 +41,46 @@ else
 fi
 
 echo "正在检查是否需要 https."
+DOMAIN=$(echo $APP_URL | sed 's~http[s]*://~~g')
 if [ -f /etc/nginx/http.d/panel.conf ]; then
   echo "nginx 配置已经就位."
-  if [ $LE_EMAIL ]; then
-    echo "正在检查证书更新"
-    certbot certonly -d $(echo $APP_URL | sed 's~http[s]*://~~g')  --standalone -m $LE_EMAIL --agree-tos -n
-  else
-    echo "未设置 Letsencrypt 电子邮箱"
-  fi
 else
   echo "正在检查是否设置了 letsencrypt 电子邮箱."
   if [ -z $LE_EMAIL ]; then
-    echo "http 配置文件中没有设置 letencrypt 电子邮箱."
+    echo "http 配置文件中没有设置 letsencrypt 电子邮箱."
     cp .github/docker/default.conf /etc/nginx/http.d/panel.conf
   else
     echo "编写 ssl 配置"
     cp .github/docker/default_ssl.conf /etc/nginx/http.d/panel.conf
     echo "正在更新域名的 ssl 配置"
-    sed -i "s|<domain>|$(echo $APP_URL | sed 's~http[s]*://~~g')|g" /etc/nginx/http.d/panel.conf
-    echo "生成证书"
-    certbot certonly -d $(echo $APP_URL | sed 's~http[s]*://~~g')  --standalone -m $LE_EMAIL --agree-tos -n
+    sed -i "s|<domain>|$DOMAIN|g" /etc/nginx/http.d/panel.conf
   fi
   echo "删除默认的 nginx 配置"
   rm -rf /etc/nginx/http.d/default.conf
+fi
+
+## 证书检查（certbot 已移除；证书由宿主机签发并映射进容器）
+if [ -n "$LE_EMAIL" ]; then
+  echo "正在检查 SSL 证书."
+  CERT_FILE="/etc/letsencrypt/live/$DOMAIN/fullchain.pem"
+  KEY_FILE="/etc/letsencrypt/live/$DOMAIN/privkey.pem"
+  if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
+    echo "[证书检查] 警告：未找到证书或私钥！"
+    echo "[证书检查]   证书路径：$CERT_FILE"
+    echo "[证书检查]   私钥路径：$KEY_FILE"
+    echo "[证书检查]   请将宿主机签发的证书映射到 /etc/letsencrypt/live/$DOMAIN/ 目录下（fullchain.pem + privkey.pem）。"
+  else
+    echo "[证书检查] 证书已找到：$CERT_FILE"
+    if command -v openssl >/dev/null 2>&1; then
+      if openssl x509 -checkend 604800 -noout -in "$CERT_FILE" >/dev/null 2>&1; then
+        echo "[证书检查] 证书有效（剩余有效期超过 7 天）。"
+      else
+        EXPIRES=$(openssl x509 -enddate -noout -in "$CERT_FILE" 2>/dev/null | cut -d= -f2-)
+        echo "[证书检查] 警告：证书将在 7 天内过期或已经过期！"
+        [ -n "$EXPIRES" ] && echo "[证书检查]   过期时间：$EXPIRES"
+      fi
+    fi
+  fi
 fi
 
 if [[ -z $DB_PORT ]]; then

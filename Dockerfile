@@ -21,7 +21,11 @@ FROM pterodactylchina/panel:latest
 # 覆盖编译后的前端资源（含模组包页面、侧边栏改版、数据库隐藏等）
 COPY --from=frontend /app/public/assets ./public/assets
 
+# 移除容器内 certbot（证书由宿主机宝塔签发并自动续期、映射进容器，容器内不再需要申请/续期）
+# 同时清掉官方镜像内置的每天 23:00 certbot renew 定时任务
 # 连接带自签/不受信证书的 MySQL 时跳过服务器证书校验
 # （否则 schema 导入会报 "certificate is NOT trusted"）。
 # 用 MariaDB 客户端认的 ssl-verify-server-cert=0；不能用 ssl-mode（MariaDB 不认，会报 unknown variable 中止）。
-RUN mkdir -p /root && printf '[client]\nssl-verify-server-cert=0\n' > /root/.my.cnf
+RUN apk del certbot certbot-nginx \
+    && sed -i '/certbot/d' /var/spool/cron/crontabs/root \
+    && mkdir -p /root && printf '[client]\nssl-verify-server-cert=0\n' > /root/.my.cnf
