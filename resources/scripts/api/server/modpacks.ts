@@ -1,4 +1,3 @@
-import http from '@/api/http';
 import { ServerEggVariable } from '@/api/server/types';
 import updateStartupVariable from '@/api/server/updateStartupVariable';
 import reinstallServer from '@/api/server/reinstallServer';
@@ -27,10 +26,17 @@ export interface ModpacksResponse {
 
 const MODPACKS_URL = 'https://raw.githubusercontent.com/Mr-Leaves-Server-Group/ModPacks/main/modpacks.json';
 
-export const getModpacks = (): Promise<Modpack[]> =>
-    http
-        .get<ModpacksResponse>(MODPACKS_URL)
-        .then(({ data }) => (data && Array.isArray(data.modpacks) ? data.modpacks : []));
+export const getModpacks = async (): Promise<Modpack[]> => {
+    // 使用原生 fetch 而非全局 axios：面板全局 axios 会带 withCredentials，
+    // 而 raw.githubusercontent.com 只返回 Access-Control-Allow-Origin: *，
+    // 凭证模式为 include 时会被 CORS 拦截。fetch 默认 same-origin，跨域不带凭证，即可放行。
+    const res = await fetch(MODPACKS_URL);
+    if (!res.ok) {
+        throw new Error(`模组包列表拉取失败 (${res.status})`);
+    }
+    const data = await res.json();
+    return data && Array.isArray(data.modpacks) ? data.modpacks : [];
+};
 
 const stripInPrefix = (rule: string): string => (rule.startsWith('in:') ? rule.slice(3) : rule);
 

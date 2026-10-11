@@ -1,7 +1,7 @@
 import TransferListener from '@/components/server/TransferListener';
 import React, { useEffect, useState } from 'react';
 import { Route, Switch, useRouteMatch } from 'react-router-dom';
-import ServerNavigationBar from '@/components/server/ServerNavigationBar';
+import NavigationBar from '@/components/NavigationBar';
 import TransitionRouter from '@/TransitionRouter';
 import WebsocketHandler from '@/components/server/WebsocketHandler';
 import { ServerContext } from '@/state/server';
@@ -61,9 +61,9 @@ export default () => {
     return (
         <React.Fragment key={'server-router'}>
             <div css={tw`flex flex-col min-h-screen lg:flex-row`}>
-                <ServerNavigationBar>
+                <NavigationBar>
                     <ServerSubNavigation />
-                </ServerNavigationBar>
+                </NavigationBar>
                 <div css={tw`flex-1 min-w-0`}>
                     {!uuid || !id ? (
                         error ? (
