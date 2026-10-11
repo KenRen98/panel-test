@@ -10,7 +10,7 @@ import { NotFound, ServerError } from '@/components/elements/ScreenBlock';
 import { httpErrorToHuman } from '@/api/http';
 import { useStoreState } from 'easy-peasy';
 import tw from 'twin.macro';
-import ServerSubNavigation from '@/components/elements/ServerSubNavigation';
+import ServerSidebar from '@/components/server/ServerSidebar';
 import InstallListener from '@/components/server/InstallListener';
 import ErrorBoundary from '@/components/elements/ErrorBoundary';
 import { useLocation } from 'react-router';
@@ -60,11 +60,11 @@ export default () => {
 
     return (
         <React.Fragment key={'server-router'}>
-            <div css={tw`flex flex-col min-h-screen lg:flex-row`}>
-                <NavigationBar>
-                    <ServerSubNavigation />
-                </NavigationBar>
-                <div css={tw`flex-1 min-w-0`}>
+            <div css={tw`flex flex-col min-h-screen`}>
+                <NavigationBar />
+                <div css={tw`flex flex-1 flex-col lg:flex-row`}>
+                    <ServerSidebar />
+                    <div css={tw`flex-1 min-w-0`}>
                     {!uuid || !id ? (
                         error ? (
                             <ServerError message={error} />
@@ -96,6 +96,7 @@ export default () => {
                             )}
                         </>
                     )}
+                </div>
                 </div>
             </div>
         </React.Fragment>

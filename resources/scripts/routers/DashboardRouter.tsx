@@ -14,7 +14,7 @@ export default () => {
     const location = useLocation();
 
     return (
-        <div css={tw`flex flex-col min-h-screen lg:flex-row`}>
+        <div css={tw`flex flex-col min-h-screen`}>
             <NavigationBar />
             <div css={tw`flex-1 min-w-0`}>
                 {location.pathname.startsWith('/account') && (
