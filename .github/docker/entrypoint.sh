@@ -115,8 +115,11 @@ do
 done
 
 ## 确保数据库已设置
+## 注意：不传 --seed，避免每次重建容器时官方 NestSeeder/EggSeeder
+## 把预置的 nests/eggs 重新打入数据库。官方 seeder 仅含这两者，
+## 权限表/变量等基础结构由 migration 建立，去掉 seed 不影响面板功能。
 echo -e "迁移或生成数据库"
-php artisan migrate --seed --force
+php artisan migrate --force
 
 ## 启动队列的 cronjobs
 echo -e "正在启动 cron 作业."
