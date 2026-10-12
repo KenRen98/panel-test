@@ -1,5 +1,6 @@
 import { ServerEggVariable } from '@/api/server/types';
 import updateStartupVariable from '@/api/server/updateStartupVariable';
+import setDockerImage from '@/api/server/setSelectedDockerImage';
 import reinstallServer from '@/api/server/reinstallServer';
 import http from '@/api/http';
 
@@ -97,27 +98,57 @@ export const matchGuoChanPackId = (variables: ServerEggVariable[], packId: numbe
 };
 
 /**
+ * Java 版本 -> yolks 镜像路径映射。
+ * 对应全能 MC egg 的 docker_images（array_values 为镜像路径本身，
+ * 后端 SetDockerImageRequest 用 Rule::in 校验该值，因此必须是 egg 内已配置的路径）。
+ * 写全套（8/11/16/17/18/21/25），未来 metadata 新增版本时无需再改代码。
+ */
+export const JAVA_IMAGE_MAP: Record<string, string> = {
+    '8': 'ghcr.io/pterodactyl/yolks:java_8',
+    '11': 'ghcr.io/pterodactyl/yolks:java_11',
+    '16': 'ghcr.io/pterodactyl/yolks:java_16',
+    '17': 'ghcr.io/pterodactyl/yolks:java_17',
+    '18': 'ghcr.io/pterodactyl/yolks:java_18',
+    '21': 'ghcr.io/pterodactyl/yolks:java_21',
+    '25': 'ghcr.io/pterodactyl/yolks:java_25',
+};
+
+/**
+ * 根据模组包的 java_version 返回对应 yolks 镜像路径；无映射返回 null。
+ */
+export const matchJavaImage = (pack: Modpack): string | null =>
+    JAVA_IMAGE_MAP[pack.java_version] ?? null;
+
+/**
  * 一键安装完整流程：
  * 1. 切换服务器类型为 GuoChan 模式
  * 2. 设置模组包 ID
- * 3. 触发服务器重装
+ * 3. 按模组包的 java_version 切换对应的 Java 镜像（无映射则跳过，不阻断）
+ * 4. 触发服务器重装
  */
 export const installModpack = async (
     uuid: string,
     variables: ServerEggVariable[],
-    packId: number
+    pack: Modpack
 ): Promise<void> => {
     const serverType = matchGuoChanServerType(variables);
     if (!serverType) {
         throw new Error('当前 egg 未提供 GuoChan 服务器类型，无法切换。');
     }
 
-    const packValue = matchGuoChanPackId(variables, packId);
+    const packValue = matchGuoChanPackId(variables, pack.id);
     if (!packValue) {
-        throw new Error(`模组包 ID (${packId}) 尚未在当前 egg 的允许列表中登记，无法安装。请先更新 egg。`);
+        throw new Error(`模组包 ID (${pack.id}) 尚未在当前 egg 的允许列表中登记，无法安装。请先更新 egg。`);
     }
 
     await updateStartupVariable(uuid, 'SERVER_TYPE', serverType);
     await updateStartupVariable(uuid, 'GUOCHAN_PACK_ID', packValue);
+
+    const javaImage = matchJavaImage(pack);
+    if (javaImage) {
+        // 切换 Java 镜像到模组包要求的版本。
+        await setDockerImage(uuid, javaImage);
+    }
+
     await reinstallServer(uuid);
 };

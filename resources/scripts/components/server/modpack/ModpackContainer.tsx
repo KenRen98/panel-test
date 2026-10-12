@@ -51,6 +51,11 @@ export default () => {
     const hasGuoChanEgg = variables.some((v) => v.envVariable === 'GUOCHAN_PACK_ID');
 
     useEffect(() => {
+        // 非全能 MC egg 不请求模组包列表，避免无效 API 调用。
+        if (!hasGuoChanEgg) {
+            return;
+        }
+
         clearFlashes();
 
         getModpacks()
@@ -59,7 +64,7 @@ export default () => {
                 console.error(e);
                 setError(httpErrorToHuman(e));
             });
-    }, []);
+    }, [hasGuoChanEgg]);
 
     const handleInstall = async () => {
         if (!selected) {
@@ -70,7 +75,7 @@ export default () => {
         clearFlashes();
 
         try {
-            await installModpack(uuid, variables, selected.id);
+            await installModpack(uuid, variables, selected);
             // 安装成功后直接跳转到控制台页面。
             window.location.href = `/server/${match.params.id}`;
         } catch (e) {
