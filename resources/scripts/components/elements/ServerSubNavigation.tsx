@@ -53,7 +53,7 @@ const Item = styled(NavLink)<{ collapsed?: boolean }>`
         box-shadow: inset 0 0 0 1px ${theme`colors.neutral.600`.toString()};
     }
 
-    ${(props) => props.collapsed && tw`lg:justify-center lg:px-0`};
+    ${(props) => props.collapsed && tw`lg:justify-center lg:px-0 lg:h-9`};
 
     @media (max-width: 1023px) {
         ${tw`px-3 py-2`};

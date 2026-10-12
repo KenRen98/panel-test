@@ -7,6 +7,7 @@ import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons
 import ServerSubNavigation from '@/components/elements/ServerSubNavigation';
 import { useStoreState } from 'easy-peasy';
 import { ApplicationStore } from '@/state';
+import logo from '@/assets/images/logo.png';
 
 // 服务器内页全高侧边栏：贯穿整个视口高度，顶部放站点名称（logo），
 // 与下方分组导航用分隔线区隔。桌面端左侧全高 sticky，覆盖原本顶部栏左侧区域。
@@ -41,6 +42,10 @@ const BrandLink = styled(Link)`
     ${tw`text-2xl font-header font-medium no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150 whitespace-nowrap`};
 `;
 
+const BrandLogo = styled.img`
+    ${tw`h-8 w-8 object-contain`};
+`;
+
 const NavScroll = styled.div`
     ${tw`flex-1 min-h-0`};
 
@@ -66,7 +71,9 @@ export default () => {
     return (
         <Aside collapsed={collapsed}>
             <Brand collapsed={collapsed}>
-                <BrandLink to={'/'}>{logoTitle ? <img src={logoTitle} /> : name}</BrandLink>
+                <BrandLink to={'/'}>
+                    {collapsed ? <BrandLogo src={logo} alt={'logo'} /> : logoTitle ? <img src={logoTitle} /> : name}
+                </BrandLink>
             </Brand>
             <NavScroll>
                 <ServerSubNavigation collapsed={collapsed} />
