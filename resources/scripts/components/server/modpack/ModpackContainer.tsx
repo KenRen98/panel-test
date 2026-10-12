@@ -75,6 +75,13 @@ const Actions = styled.div`
     ${tw`flex gap-2.5`};
 `;
 
+const ActionBtnWrap = styled.div`
+    ${tw`flex-1`};
+    & > button {
+        ${tw`w-full`};
+    }
+`;
+
 const ClientBtn = styled.a`
     ${tw`flex-1 inline-flex items-center justify-center py-2 rounded-lg text-sm font-medium text-neutral-100 bg-neutral-600 border border-neutral-500 transition-colors duration-150 hover:bg-neutral-500 cursor-pointer no-underline`};
 `;
@@ -191,7 +198,13 @@ export default () => {
                 {filtered && (
                     <div css={tw`ml-auto flex flex-col items-start gap-1`}>
                         <div css={tw`relative`}>
-                            <span css={tw`absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 text-xs pointer-events-none`}>⌕</span>
+                            <svg
+                                css={tw`absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400 pointer-events-none`}
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                            >
+                                <circle cx="11" cy="11" r="8"/>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
                             <input
                                 type="text"
                                 value={query}
@@ -248,14 +261,16 @@ export default () => {
                                             客户端包
                                         </ClientBtn>
                                     )}
-                                    <Button
-                                        size={'small'}
-                                        color={installable ? 'primary' : 'grey'}
-                                        disabled={!installable}
-                                        onClick={() => installable && setSelected(pack)}
-                                    >
-                                        {installable ? '一键安装' : '未登记'}
-                                    </Button>
+                                    <ActionBtnWrap>
+                                        <Button
+                                            size={'small'}
+                                            color={installable ? 'primary' : 'grey'}
+                                            disabled={!installable}
+                                            onClick={() => installable && setSelected(pack)}
+                                        >
+                                            {installable ? '一键安装' : '未登记'}
+                                        </Button>
+                                    </ActionBtnWrap>
                                 </Actions>
                                 <Foot>
                                     <span>☕ Java {pack.java_version}</span>
