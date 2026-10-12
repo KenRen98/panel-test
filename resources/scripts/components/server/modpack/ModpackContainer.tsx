@@ -8,6 +8,7 @@ import Button from '@/components/elements/Button';
 import Modal from '@/components/elements/Modal';
 import { ServerContext } from '@/state/server';
 import { getModpacks, installModpack, matchGuoChanPackId, Modpack } from '@/api/server/modpacks';
+import { hasCapability } from '@/api/server/eggCapabilities';
 import { useFlashKey } from '@/plugins/useFlash';
 import { httpErrorToHuman } from '@/api/http';
 
@@ -48,11 +49,11 @@ export default () => {
     const [selected, setSelected] = useState<Modpack | null>(null);
     const [installing, setInstalling] = useState(false);
 
-    const hasGuoChanEgg = variables.some((v) => v.envVariable === 'GUOCHAN_PACK_ID');
+    const hasModpack = hasCapability(variables, 'modpack');
 
     useEffect(() => {
         // 非全能 MC egg 不请求模组包列表，避免无效 API 调用。
-        if (!hasGuoChanEgg) {
+        if (!hasModpack) {
             return;
         }
 
@@ -64,7 +65,7 @@ export default () => {
                 console.error(e);
                 setError(httpErrorToHuman(e));
             });
-    }, [hasGuoChanEgg]);
+    }, [hasModpack]);
 
     const handleInstall = async () => {
         if (!selected) {
@@ -85,7 +86,7 @@ export default () => {
         }
     };
 
-    if (!hasGuoChanEgg) {
+    if (!hasModpack) {
         return (
             <ServerContentBlock title={'国产模组包'}>
                 <div css={tw`text-sm text-neutral-300`}>

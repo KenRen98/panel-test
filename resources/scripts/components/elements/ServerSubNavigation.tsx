@@ -7,6 +7,7 @@ import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 import { ServerContext } from '@/state/server';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
+import { hasCapability } from '@/api/server/eggCapabilities';
 
 const Nav = styled.nav`
     ${tw`flex flex-col px-2 py-3 gap-0.5`};
@@ -65,7 +66,7 @@ const Item = styled(NavLink)<{ collapsed?: boolean }>`
 export default ({ collapsed = false }: { collapsed?: boolean }) => {
     const match = useRouteMatch<{ id: string }>();
     const variables = ServerContext.useStoreState((state) => state.server.data?.variables);
-    const hasModpack = !!variables?.some((v) => v.envVariable === 'GUOCHAN_PACK_ID');
+    const hasModpack = hasCapability(variables, 'modpack');
 
     const to = (path: string) => {
         if (path === '/') {
