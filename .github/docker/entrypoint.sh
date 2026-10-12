@@ -64,13 +64,21 @@ if [ -n "$LE_EMAIL" ]; then
   echo "正在检查 SSL 证书."
   CERT_FILE="/etc/letsencrypt/live/$DOMAIN/fullchain.pem"
   KEY_FILE="/etc/letsencrypt/live/$DOMAIN/privkey.pem"
-  if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
-    echo "[证书检查] 警告：未找到证书或私钥！"
-    echo "[证书检查]   证书路径：$CERT_FILE"
-    echo "[证书检查]   私钥路径：$KEY_FILE"
-    echo "[证书检查]   请将宿主机签发的证书映射到 /etc/letsencrypt/live/$DOMAIN/ 目录下（fullchain.pem + privkey.pem）。"
+  CERT_OK="no"
+  KEY_OK="no"
+  if [ -f "$CERT_FILE" ]; then
+    echo "[证书检查] 证书文件已找到：$CERT_FILE"
+    CERT_OK="yes"
   else
-    echo "[证书检查] 证书已找到：$CERT_FILE"
+    echo "[证书检查] 警告：未找到证书文件：$CERT_FILE"
+  fi
+  if [ -f "$KEY_FILE" ]; then
+    echo "[证书检查] 私钥文件已找到：$KEY_FILE"
+    KEY_OK="yes"
+  else
+    echo "[证书检查] 警告：未找到私钥文件：$KEY_FILE"
+  fi
+  if [ "$CERT_OK" = "yes" ] && [ "$KEY_OK" = "yes" ]; then
     if command -v openssl >/dev/null 2>&1; then
       if openssl x509 -checkend 604800 -noout -in "$CERT_FILE" >/dev/null 2>&1; then
         echo "[证书检查] 证书有效（剩余有效期超过 7 天）。"
@@ -80,6 +88,8 @@ if [ -n "$LE_EMAIL" ]; then
         [ -n "$EXPIRES" ] && echo "[证书检查]   过期时间：$EXPIRES"
       fi
     fi
+  else
+    echo "[证书检查] 警告：证书或私钥缺失，请将宿主机签发的证书映射到 /etc/letsencrypt/live/$DOMAIN/ 目录下（fullchain.pem + privkey.pem）。"
   fi
 fi
 

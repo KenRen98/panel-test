@@ -21,6 +21,13 @@ FROM pterodactylchina/panel:latest
 # 覆盖编译后的前端资源（含模组包页面、侧边栏改版、数据库隐藏等）
 COPY --from=frontend /app/public/assets ./public/assets
 
+# 覆盖容器启动脚本与 nginx 模板：
+# 官方镜像内置的是官方旧版 entrypoint（含 certbot 调用），必须用我们修改后的版本替换，
+# 否则启动时仍会调用已被卸载的 certbot 并报 "certbot: not found"，证书检查也不会执行。
+COPY .github/docker/entrypoint.sh .github/docker/entrypoint.sh
+COPY .github/docker/default.conf .github/docker/default.conf
+COPY .github/docker/default_ssl.conf .github/docker/default_ssl.conf
+
 # 移除容器内 certbot（证书由宿主机宝塔签发并自动续期、映射进容器，容器内不再需要申请/续期）
 # 同时清掉官方镜像内置的每天 23:00 certbot renew 定时任务
 # 连接带自签/不受信证书的 MySQL 时跳过服务器证书校验
