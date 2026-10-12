@@ -100,7 +100,7 @@ export default () => {
 
     return (
         <ServerContentBlock title={'国产模组包'} showFlashKey={'modpack'}>
-            <div css={tw`flex items-center mb-6`}>
+            <div css={tw`flex items-center mb-6 -mt-6`}>
                 <div css={tw`flex items-center gap-3`}>
                     <div
                         css={tw`w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center text-primary-50 flex-shrink-0`}
