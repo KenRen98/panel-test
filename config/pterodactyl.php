@@ -201,4 +201,16 @@ return [
     'features' => [
         'new_server_identifiers' => (bool) env('PTERODACTYL_USE_SERVER_IDENTIFIERS', false),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Modpack Metadata
+    |--------------------------------------------------------------------------
+    |
+    | 模组包元数据与图标的本地挂载目录。该目录由宿主机 cron 从 GitHub 同步
+    | 更新（modpacks.json + logos/ 图标），面板后端读取后返回给前端，
+    | 浏览器不再直连 GitHub raw。
+    */
+
+    'modpacks_path' => env('MODPACKS_PATH', '/app/storage/modpacks'),
 ];

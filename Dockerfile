@@ -35,4 +35,5 @@ COPY .github/docker/default_ssl.conf .github/docker/default_ssl.conf
 # 用 MariaDB 客户端认的 ssl-verify-server-cert=0；不能用 ssl-mode（MariaDB 不认，会报 unknown variable 中止）。
 RUN apk del certbot certbot-nginx \
     && sed -i '/certbot/d' /var/spool/cron/crontabs/root \
-    && mkdir -p /root && printf '[client]\nssl-verify-server-cert=0\n' > /root/.my.cnf
+    && mkdir -p /root && printf '[client]\nssl-verify-server-cert=0\n' > /root/.my.cnf \
+    && mkdir -p /app/storage/modpacks/logos

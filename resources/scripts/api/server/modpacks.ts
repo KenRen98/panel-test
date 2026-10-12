@@ -1,6 +1,7 @@
 import { ServerEggVariable } from '@/api/server/types';
 import updateStartupVariable from '@/api/server/updateStartupVariable';
 import reinstallServer from '@/api/server/reinstallServer';
+import http from '@/api/http';
 
 export interface Modpack {
     id: number;
@@ -24,17 +25,12 @@ export interface ModpacksResponse {
     modpacks: Modpack[];
 }
 
-const MODPACKS_URL = 'https://raw.githubusercontent.com/Mr-Leaves-Server-Group/ModPacks/main/modpacks.json';
+const MODPACKS_URL = '/api/client/modpacks';
 
 export const getModpacks = async (): Promise<Modpack[]> => {
-    // 使用原生 fetch 而非全局 axios：面板全局 axios 会带 withCredentials，
-    // 而 raw.githubusercontent.com 只返回 Access-Control-Allow-Origin: *，
-    // 凭证模式为 include 时会被 CORS 拦截。fetch 默认 same-origin，跨域不带凭证，即可放行。
-    const res = await fetch(MODPACKS_URL);
-    if (!res.ok) {
-        throw new Error(`模组包列表拉取失败 (${res.status})`);
-    }
-    const data = await res.json();
+    // 通过面板后端读取本地挂载的 modpacks.json，浏览器不再直连 GitHub raw。
+    // 后端会把 logo_url 改写为面板本地相对路径，避免外网依赖与 CORS 问题。
+    const { data } = await http.get<ModpacksResponse>(MODPACKS_URL);
     return data && Array.isArray(data.modpacks) ? data.modpacks : [];
 };
 

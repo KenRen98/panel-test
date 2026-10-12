@@ -20,6 +20,9 @@ use Pterodactyl\Http\Middleware\Api\Client\Server\AuthenticateServerAccess;
 Route::get('/', [Client\ClientController::class, 'index'])->name('api:client.index');
 Route::get('/permissions', [Client\ClientController::class, 'permissions']);
 
+// 模组包元数据（本地挂载，浏览器不直连 GitHub raw）
+Route::get('/modpacks', [Client\ModpackController::class, 'index'])->name('api:client.modpacks');
+
 Route::prefix('/account')->middleware(AccountSubject::class)->group(function () {
     Route::prefix('/')->withoutMiddleware(RequireTwoFactorAuthentication::class)->group(function () {
         Route::get('/', [Client\AccountController::class, 'index'])->name('api:client.account');
