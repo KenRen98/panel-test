@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouteMatch } from 'react-router-dom';
 import styled from 'styled-components/macro';
 import tw from 'twin.macro';
@@ -14,20 +14,73 @@ import { httpErrorToHuman } from '@/api/http';
 
 const Grid = styled.div`
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
 `;
 
 const Card = styled.div`
-    ${tw`flex flex-col bg-neutral-800 border border-neutral-700 rounded-lg overflow-hidden transition-colors duration-150 hover:border-neutral-600`};
+    ${tw`flex flex-col bg-neutral-800 border border-neutral-700 rounded-xl p-[18px] pb-2 transition-colors duration-150 hover:border-primary-500`};
+`;
+
+const CardHead = styled.div`
+    ${tw`flex items-center gap-3`};
 `;
 
 const Logo = styled.img`
-    ${tw`w-16 h-16 rounded-md object-cover bg-neutral-700 flex-shrink-0`};
+    ${tw`w-14 h-14 rounded-lg object-cover bg-neutral-700 flex-shrink-0`};
 `;
 
-const Chip = styled.span`
-    ${tw`inline-flex items-center text-[11px] px-2 py-0.5 rounded border border-neutral-600 bg-neutral-700 text-neutral-300`};
+const HeadMain = styled.div`
+    ${tw`min-w-0 flex-1 flex flex-col`};
+`;
+
+const HeadLeft = styled.div`
+    ${tw`flex justify-between items-start gap-2`};
+`;
+
+const Name = styled.div`
+    ${tw`font-semibold text-neutral-100 truncate`};
+`;
+
+const Core = styled.div`
+    ${tw`flex flex-col items-end gap-0.5 text-[11px] text-neutral-400 leading-tight flex-shrink-0 pt-0.5`};
+    & > span {
+        ${tw`whitespace-nowrap`};
+    }
+`;
+
+const Meta = styled.div`
+    ${tw`flex justify-between items-center mt-2 text-xs w-full`};
+`;
+
+const Badge = styled.span`
+    ${tw`bg-neutral-700 rounded-md px-2 py-0.5 text-neutral-400`};
+`;
+
+const Desc = styled.div`
+    ${tw`mt-3 text-[13px] leading-relaxed text-neutral-400 line-clamp-3`};
+`;
+
+const Spec = styled.div`
+    ${tw`mt-auto mb-3.5 flex items-center gap-2 text-[13px]`};
+    & > .label {
+        ${tw`w-[42px] flex-shrink-0 text-neutral-400 font-medium`};
+    }
+    & > .val {
+        ${tw`font-medium text-neutral-100`};
+    }
+`;
+
+const Actions = styled.div`
+    ${tw`flex gap-2.5`};
+`;
+
+const ClientBtn = styled.a`
+    ${tw`flex-1 inline-flex items-center justify-center py-2 rounded-lg text-sm font-medium text-neutral-100 bg-neutral-600 border border-neutral-500 transition-colors duration-150 hover:bg-neutral-500 cursor-pointer no-underline`};
+`;
+
+const Foot = styled.div`
+    ${tw`mt-2 pt-1.5 border-t border-neutral-700 flex justify-between text-xs text-neutral-400`};
 `;
 
 const StepRow = styled.div`
@@ -36,6 +89,11 @@ const StepRow = styled.div`
         ${tw`w-5 h-5 rounded-full flex items-center justify-center text-xs bg-neutral-700 border border-neutral-600 flex-shrink-0`};
     }
 `;
+
+const coreLabel = (pack: Modpack): string => {
+    if (!pack.core_type) return '';
+    return pack.core_type.charAt(0).toUpperCase() + pack.core_type.slice(1);
+};
 
 export default () => {
     const match = useRouteMatch<{ id: string }>();
@@ -48,6 +106,7 @@ export default () => {
     const [error, setError] = useState<string | null>(null);
     const [selected, setSelected] = useState<Modpack | null>(null);
     const [installing, setInstalling] = useState(false);
+    const [query, setQuery] = useState('');
 
     const hasModpack = hasCapability(variables, 'modpack');
 
@@ -66,6 +125,17 @@ export default () => {
                 setError(httpErrorToHuman(e));
             });
     }, [hasModpack]);
+
+    // 按名称 + 描述实时筛选。
+    const filtered = useMemo(() => {
+        if (!packs) return null;
+        const q = query.trim().toLowerCase();
+        if (!q) return packs;
+        return packs.filter((p) => {
+            const text = `${p.name} ${p.description}`.toLowerCase();
+            return text.includes(q);
+        });
+    }, [packs, query]);
 
     const handleInstall = async () => {
         if (!selected) {
@@ -106,7 +176,7 @@ export default () => {
 
     return (
         <ServerContentBlock title={'国产模组包'} showFlashKey={'modpack'}>
-            <div css={tw`flex items-center mb-6 -mt-6`}>
+            <div css={tw`flex items-start mb-7 -mt-6`}>
                 <div css={tw`flex items-center gap-3`}>
                     <div
                         css={tw`w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center text-primary-50 flex-shrink-0`}
@@ -116,46 +186,68 @@ export default () => {
                             <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
                         </svg>
                     </div>
-                    <div>
-                        <h1 css={tw`text-xl font-bold`}>国产模组包</h1>
-                        <p css={tw`text-sm text-neutral-400 mt-0.5`}>选择一个整合包，一键切换服务器模式并自动安装。</p>
-                    </div>
+                    <h1 css={tw`text-[30px] font-bold leading-tight`}>国产模组包</h1>
                 </div>
-                {packs && (
-                    <span
-                        css={tw`ml-auto inline-flex items-center h-9 px-3 rounded-lg border border-neutral-600 bg-neutral-800 text-xs text-neutral-400 whitespace-nowrap`}
-                    >
-                        总计：{packs.length}个
-                    </span>
+                {filtered && (
+                    <div css={tw`ml-auto flex flex-col items-start gap-1`}>
+                        <div css={tw`relative`}>
+                            <span css={tw`absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 text-xs pointer-events-none`}>⌕</span>
+                            <input
+                                type="text"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder="搜索"
+                                css={tw`w-[132px] py-[3px] pl-6 pr-2 rounded-md border border-neutral-600 bg-neutral-700 text-sm text-neutral-100 placeholder-neutral-400 outline-none focus:border-primary-500 transition-colors duration-150`}
+                            />
+                        </div>
+                        <span css={tw`text-xs text-neutral-400 self-end`}>总数：{filtered.length}</span>
+                    </div>
                 )}
             </div>
 
-            {!packs ? (
+            {!filtered ? (
                 <Spinner centered size={Spinner.Size.LARGE} />
             ) : (
                 <Grid>
-                    {packs.map((pack) => {
+                    {filtered.map((pack) => {
                         const installable = matchGuoChanPackId(variables, pack.id) !== null;
                         return (
                             <Card key={pack.id}>
-                                <div css={tw`p-4 flex gap-3 items-start`}>
+                                <CardHead>
                                     <Logo src={pack.logo_url} alt={pack.name} />
-                                    <div css={tw`min-w-0`}>
-                                        <div css={tw`font-semibold text-neutral-100 truncate`}>{pack.name}</div>
-                                        <div css={tw`text-xs text-neutral-400 mt-0.5`}>v{pack.version}</div>
-                                    </div>
-                                </div>
-                                <div
-                                    css={tw`px-4 text-xs text-neutral-400 line-clamp-3 flex-1 leading-relaxed`}
-                                >
-                                    {pack.description}
-                                </div>
-                                <div css={tw`px-4 mt-3 flex flex-wrap gap-1.5`}>
-                                    {pack.mc_version && <Chip>MC {pack.mc_version}</Chip>}
-                                    {pack.java_version && <Chip>Java {pack.java_version}</Chip>}
-                                    <Chip>{pack.total_mods} 模组</Chip>
-                                </div>
-                                <div css={tw`p-4`}>
+                                    <HeadMain>
+                                        <HeadLeft>
+                                            <Name>{pack.name}</Name>
+                                            {pack.core_type && (
+                                                <Core>
+                                                    <span>{coreLabel(pack)}</span>
+                                                    {pack.mc_version && <span>{pack.mc_version}</span>}
+                                                </Core>
+                                            )}
+                                        </HeadLeft>
+                                        <Meta>
+                                            <Badge>v{pack.version}</Badge>
+                                            <Badge>{pack.total_mods} Mods</Badge>
+                                        </Meta>
+                                    </HeadMain>
+                                </CardHead>
+                                <Desc>{pack.description}</Desc>
+                                {pack.recommend_spec && (
+                                    <Spec>
+                                        <span className={'label'}>推荐:</span>
+                                        <span className={'val'}>{pack.recommend_spec}</span>
+                                    </Spec>
+                                )}
+                                <Actions>
+                                    {pack.client_download_url ? (
+                                        <ClientBtn href={pack.client_download_url} target="_blank" rel="noopener">
+                                            客户端包
+                                        </ClientBtn>
+                                    ) : (
+                                        <ClientBtn as="div" css={tw`cursor-not-allowed opacity-50`}>
+                                            客户端包
+                                        </ClientBtn>
+                                    )}
                                     <Button
                                         size={'small'}
                                         color={installable ? 'primary' : 'grey'}
@@ -164,7 +256,11 @@ export default () => {
                                     >
                                         {installable ? '一键安装' : '未登记'}
                                     </Button>
-                                </div>
+                                </Actions>
+                                <Foot>
+                                    <span>☕ Java {pack.java_version}</span>
+                                    <span>{pack.release_date}</span>
+                                </Foot>
                             </Card>
                         );
                     })}
