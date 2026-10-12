@@ -7,7 +7,11 @@ import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons
 import ServerSubNavigation from '@/components/elements/ServerSubNavigation';
 import { useStoreState } from 'easy-peasy';
 import { ApplicationStore } from '@/state';
-import logo from '@/assets/images/logo.png';
+
+// 折叠时顶部展示的品牌 logo：放在 public/favicons 下（该目录被 git 跟踪、不经 webpack
+// 打包），用静态 URL 引用。不能放 public/assets 里用 import，否则 png 走 file-loader
+// 会在 Node22 下触发 MD4 哈希报错。
+const LOGO_URL = '/assets/svgs/logo.png';
 
 // 服务器内页全高侧边栏：贯穿整个视口高度，顶部放站点名称（logo），
 // 与下方分组导航用分隔线区隔。桌面端左侧全高 sticky，覆盖原本顶部栏左侧区域。
@@ -72,7 +76,7 @@ export default () => {
         <Aside collapsed={collapsed}>
             <Brand collapsed={collapsed}>
                 <BrandLink to={'/'}>
-                    {collapsed ? <BrandLogo src={logo} alt={'logo'} /> : logoTitle ? <img src={logoTitle} /> : name}
+                    {collapsed ? <BrandLogo src={LOGO_URL} alt={'logo'} /> : logoTitle ? <img src={logoTitle} /> : name}
                 </BrandLink>
             </Brand>
             <NavScroll>
