@@ -30,10 +30,12 @@ const Group = styled.div`
     }
 `;
 
-const Separator = styled.div`
+const Separator = styled.div<{ collapsed?: boolean }>`
     height: 1px;
     margin: 8px 6px;
     background: ${theme`colors.neutral.600`.toString()};
+
+    ${(props) => props.collapsed && tw`lg:mx-3 lg:w-auto`};
 
     @media (max-width: 1023px) {
         display: none;
@@ -83,8 +85,8 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
             return;
         }
 
-        if (rendered.length > 0 && !collapsed) {
-            rendered.push(<Separator key={`sep-${group}`} />);
+        if (rendered.length > 0) {
+            rendered.push(<Separator key={`sep-${group}`} collapsed={collapsed} />);
         }
 
         rendered.push(
