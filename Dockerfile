@@ -21,6 +21,13 @@ FROM pterodactylchina/panel:latest
 # 覆盖编译后的前端资源（含模组包页面、侧边栏改版、数据库隐藏等）
 COPY --from=frontend /app/public/assets ./public/assets
 
+# 覆盖后端 PHP 改动（模组包本地化接口）：
+# 官方镜像内置的是未含这些改动的旧代码，必须把改动的控制器/路由/config 覆盖进去，
+# 否则运行时路由 /api/client/modpacks 会报 "route could not be found"。
+COPY app/Http/Controllers/Api/Client/ModpackController.php app/Http/Controllers/Api/Client/ModpackController.php
+COPY routes/api-client.php routes/api-client.php
+COPY config/pterodactyl.php config/pterodactyl.php
+
 # 覆盖容器启动脚本与 nginx 模板：
 # 官方镜像内置的是官方旧版 entrypoint（含 certbot 调用），必须用我们修改后的版本替换，
 # 否则启动时仍会调用已被卸载的 certbot 并报 "certbot: not found"，证书检查也不会执行。
@@ -36,4 +43,6 @@ COPY .github/docker/default_ssl.conf .github/docker/default_ssl.conf
 RUN apk del certbot certbot-nginx \
     && sed -i '/certbot/d' /var/spool/cron/crontabs/root \
     && mkdir -p /root && printf '[client]\nssl-verify-server-cert=0\n' > /root/.my.cnf \
-    && mkdir -p /app/storage/modpacks/logos
+    && mkdir -p /app/storage/modpacks/logos \
+    # 清掉可能存在的路由/配置缓存，确保新路由与 config 改动生效
+    && (php artisan optimize:clear 2>/dev/null || true)

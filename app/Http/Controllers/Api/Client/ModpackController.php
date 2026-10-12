@@ -9,21 +9,20 @@ use Illuminate\Support\Facades\File;
  * 模组包元数据接口。
  *
  * 数据源：宿主机挂载进容器的 modpacks.json（目录 /app/storage/modpacks/）。
- * 该 JSON 由宿主机 cron 从 GitHub 拉取更新（见 README / 部署说明），面板不再
- * 让浏览器直连 GitHub raw，避免外网依赖与 CORS 问题。
+ * 该 JSON 由宿主机 cron 从 GitHub 拉取更新（见部署说明），面板不再让浏览器
+ * 直连 GitHub raw，避免外网依赖与 CORS 问题。
  *
- * 返回时把每个包的 logo_url 改写为面板本地相对路径（/modpacks/logos/<id>.png），
+ * 返回时把每个包的 logo_url 改写为面板本地相对路径（/modpacks/logos/<id>.*），
  * 图标同样由宿主机同步到挂载目录，走面板域名加载。
  */
 class ModpackController extends ClientApiController
 {
     /**
-     * 挂载的元数据文件路径。
+     * 挂载的根目录。
      */
-    private function metadataPath(): string
+    private function basePath(): string
     {
-        return rtrim((string) config('pterodactyl.modpacks_path', '/app/storage/modpacks'), '/')
-            . '/modpacks.json';
+        return rtrim((string) config('pterodactyl.modpacks_path', '/app/storage/modpacks'), '/');
     }
 
     /**
@@ -31,7 +30,8 @@ class ModpackController extends ClientApiController
      */
     public function index(): JsonResponse
     {
-        $path = $this->metadataPath();
+        $base = $this->basePath();
+        $path = $base . '/modpacks.json';
 
         if (!File::exists($path)) {
             return new JsonResponse(['modpacks' => [], 'error' => 'modpacks metadata not found'], 200);
@@ -47,10 +47,19 @@ class ModpackController extends ClientApiController
             ? $data['modpacks']
             : [];
 
+        $logosDir = $base . '/logos';
         foreach ($packs as &$pack) {
-            // 把外链 logo 改写为面板本地相对路径（图标由宿主机同步到挂载目录）。
-            if (isset($pack['id']) && (isset($pack['logo_url']) || isset($pack['logo']))) {
-                $pack['logo_url'] = '/modpacks/logos/' . (string) $pack['id'] . '.png';
+            // 把外链 logo 改写为面板本地相对路径。图标由宿主机按原格式保存为 <id>.<ext>，
+            // 这里用 glob 动态匹配实际存在的文件（webp/png 均可）。
+            if (!isset($pack['id'])) {
+                continue;
+            }
+
+            $matched = File::glob($logosDir . '/' . (int) $pack['id'] . '.*');
+            if (!empty($matched)) {
+                $pack['logo_url'] = '/modpacks/logos/' . basename($matched[0]);
+            } else {
+                $pack['logo_url'] = null;
             }
         }
         unset($pack);
