@@ -21,11 +21,15 @@ FROM pterodactylchina/panel:latest
 # 覆盖编译后的前端资源（含模组包页面、侧边栏改版、数据库隐藏等）
 COPY --from=frontend /app/public/assets ./public/assets
 
-# 覆盖后端 PHP 改动（模组包本地化接口）：
+# 覆盖后端 PHP 改动（模组包本地化接口 + egg 变量自动同步）：
 # 官方镜像内置的是未含这些改动的旧代码，必须把改动的控制器/路由/config 覆盖进去，
 # 否则运行时路由 /api/client/modpacks 会报 "route could not be found"。
 COPY app/Http/Controllers/Api/Client/ModpackController.php app/Http/Controllers/Api/Client/ModpackController.php
+COPY app/Http/Controllers/Base/ModpackSyncController.php app/Http/Controllers/Base/ModpackSyncController.php
+COPY app/Services/Modpacks/ModpackEggSyncService.php app/Services/Modpacks/ModpackEggSyncService.php
+COPY app/Console/Commands/Overrides/ModpackSyncEggCommand.php app/Console/Commands/Overrides/ModpackSyncEggCommand.php
 COPY routes/api-client.php routes/api-client.php
+COPY routes/base.php routes/base.php
 COPY config/pterodactyl.php config/pterodactyl.php
 
 # 覆盖容器启动脚本与 nginx 模板：

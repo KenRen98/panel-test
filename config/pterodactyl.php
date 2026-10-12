@@ -213,4 +213,15 @@ return [
     */
 
     'modpacks_path' => env('MODPACKS_PATH', '/app/storage/modpacks'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Modpack Sync Token
+    |--------------------------------------------------------------------------
+    |
+    | 内部触发端点 /internal/modpacks/sync-egg 的访问令牌。宿主机 update.sh
+    | 拉取 metadata 后携带该 token 触发 egg 变量同步。未配置时端点默认关闭。
+    */
+
+    'modpacks_sync_token' => env('MODPACKS_SYNC_TOKEN', ''),
 ];
