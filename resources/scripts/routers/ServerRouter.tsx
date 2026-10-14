@@ -70,7 +70,7 @@ export default () => {
                 <div css={tw`flex flex-1 flex-col min-w-0`}>
                     <NavigationBar />
                     {/* 手机端：原始顶部栏样式，横向导航条 */}
-                    <div css={tw`lg:hidden`}>
+                    <div css={tw`lg:hidden bg-neutral-700 border-b border-neutral-600`}>
                         <ServerSubNavigation />
                     </div>
                     <div css={tw`flex-1 min-w-0`}>

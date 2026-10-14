@@ -183,7 +183,7 @@ export default () => {
 
     return (
         <ServerContentBlock title={'国产模组包'} showFlashKey={'modpack'}>
-            <div css={tw`flex items-start mb-7 -mt-6`}>
+            <div css={tw`flex items-start mb-7`}>
                 <div css={tw`flex items-center gap-3`}>
                     <div
                         css={tw`w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center text-primary-50 flex-shrink-0`}
@@ -199,7 +199,7 @@ export default () => {
                     <div css={tw`ml-auto flex flex-col items-start gap-1`}>
                         <div css={tw`relative`}>
                             <svg
-                                css={tw`absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400 pointer-events-none`}
+                                css={tw`absolute left-2 top-0 bottom-0 my-auto w-3.5 h-3.5 text-neutral-400 pointer-events-none`}
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                             >
                                 <circle cx="11" cy="11" r="8"/>
