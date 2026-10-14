@@ -61,8 +61,8 @@ export const getCoreVersions = async (core: string): Promise<string[]> => {
             if (res.ok) {
                 const data = (await res.json()) as string[];
                 if (Array.isArray(data) && data.length > 0) {
-                    // 过滤带 '-' 的（分支 dev 版本，如 Paper 1.21.4-rc1；MC 正式版号不带 '-'）
-                    const clean = data.filter((v) => !v.includes('-'));
+                    // 过滤带 '-' / '+' 的（分支 dev 版本如 Paper 1.21.4-rc1、Fabric loader +build；正式版号不带）
+                    const clean = data.filter((v) => !v.includes('-') && !v.includes('+'));
                     if (clean.length > 0) {
                         return clean;
                     }
@@ -80,14 +80,14 @@ export const getCoreVersions = async (core: string): Promise<string[]> => {
                 const res = await apiFetch('https://fill.papermc.io/v3/projects/paper');
                 const data = await res.json();
                 // fill API versions 为 {分组: [具体版本...]}，展平得到全部 MC 版本（含 26.x）
-                // 过滤带 '-' 的（分支 dev 版本如 1.21.4-rc1，MC 正式版号不带 '-'）
+                // 过滤带 '-' / '+' 的（分支 dev 版本如 1.21.4-rc1，MC 正式版号不带）
                 const seen = new Set<string>();
                 for (const group of Object.keys(data.versions ?? {})) {
                     for (const v of data.versions[group] ?? []) {
                         seen.add(v as string);
                     }
                 }
-                return Array.from(seen).filter((v) => !v.includes('-'));
+                return Array.from(seen).filter((v) => !v.includes('-') && !v.includes('+'));
             });
         }
         case 'forge': {
@@ -110,7 +110,7 @@ export const getCoreVersions = async (core: string): Promise<string[]> => {
                 // 无二级版本：全部完整版本号（含 26.x，过滤 beta/alpha/rc/snapshot 及带 '-' 的 dev 分支），倒序
                 return Array.from(xml.querySelectorAll('version'))
                     .map((v) => v.textContent ?? '')
-                    .filter((v) => !/-(beta|alpha|rc|snapshot)/i.test(v) && !v.includes('-'))
+                    .filter((v) => !/-(beta|alpha|rc|snapshot)/i.test(v) && !v.includes('-') && !v.includes('+'))
                     .reverse();
             });
         }
@@ -118,9 +118,9 @@ export const getCoreVersions = async (core: string): Promise<string[]> => {
             return withCache('versions:fabric', async () => {
                 const res = await apiFetch('https://meta.fabricmc.net/v2/versions/loader');
                 const data = await res.json();
-                // 无二级版本：全部 loader 版本（0.x.x）
+                // 无二级版本：全部 loader 版本（0.x.x，过滤带 '-' / '+build' 的）
                 return Array.isArray(data)
-                    ? data.map((i: { version?: string }) => i.version ?? '').filter((v) => v && !v.includes('-'))
+                    ? data.map((i: { version?: string }) => i.version ?? '').filter((v) => v && !v.includes('-') && !v.includes('+'))
                     : [];
             });
         }
