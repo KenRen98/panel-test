@@ -91,9 +91,24 @@ const Foot = styled.div`
 `;
 
 const StepRow = styled.div`
-    ${tw`flex items-center gap-2 text-sm text-neutral-300 py-2`};
+    ${tw`flex items-center gap-2.5 text-sm text-neutral-300 py-2`};
     & > .num {
-        ${tw`w-5 h-5 rounded-full flex items-center justify-center text-xs bg-neutral-700 border border-neutral-600 flex-shrink-0`};
+        ${tw`w-6 h-6 rounded-full flex items-center justify-center text-[13px] bg-neutral-700 border border-neutral-600 flex-shrink-0`};
+    }
+`;
+
+const Warn = styled.div`
+    ${tw`mt-5 px-3 py-2 rounded-lg border text-xs leading-relaxed`};
+    background: rgba(255, 170, 0, 0.08);
+    border-color: rgba(255, 170, 0, 0.35);
+    color: hsl(40, 90%, 72%);
+`;
+
+const WarnLink = styled.a`
+    ${tw`underline font-medium ml-1`};
+    color: hsl(217, 91%, 72%);
+    &:hover {
+        color: hsl(217, 91%, 85%);
     }
 `;
 
@@ -285,24 +300,28 @@ export default () => {
             <Modal visible={!!selected} onDismissed={() => !installing && setSelected(null)} dismissable={!installing}>
                 {selected && (
                     <>
-                        <div css={tw`text-lg font-semibold`}>确认安装《{selected.name}》</div>
-                        <div css={tw`text-sm text-neutral-400 mt-1`}>
-                            将切换服务器类型为 GuoChan 并安装该整合包，随后触发重装并跳转到控制台。
+                        <div css={tw`text-xl font-semibold leading-snug`}>
+                            安装模组包<span css={tw`text-primary-400`}>《{selected.name}》</span>版本 {selected.version}
                         </div>
-                        <div css={tw`mt-3`}>
+                        <div css={tw`mt-2`}>
                             <StepRow>
                                 <span className={'num'}>1</span>
-                                切换服务器类型为 GuoChan (整合包)
+                                切换服务器类型为国产包
                             </StepRow>
                             <StepRow>
                                 <span className={'num'}>2</span>
-                                设置模组包 ID 为 ({selected.id})
+                                设置模组包为<span css={tw`text-primary-400`}>《{selected.name}》</span>
                             </StepRow>
                             <StepRow>
                                 <span className={'num'}>3</span>
-                                触发服务器重装
+                                服务器重装并清空所有数据
                             </StepRow>
                         </div>
+                        <Warn>
+                            警告: 将清空服务器全部数据且无法找回，请先
+                            <WarnLink href={`/server/${match.params.id}/backups`}>备份</WarnLink>
+                            。
+                        </Warn>
                         <div css={tw`mt-6 flex justify-end gap-3`}>
                             <Button color={'grey'} isSecondary disabled={installing} onClick={() => setSelected(null)}>
                                 取消
