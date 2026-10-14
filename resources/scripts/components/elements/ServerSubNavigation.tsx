@@ -56,7 +56,7 @@ const Item = styled(NavLink)<{ collapsed?: boolean }>`
         box-shadow: inset 0 0 0 1px ${theme`colors.neutral.600`.toString()};
     }
 
-    ${(props) => props.collapsed && tw`lg:justify-center lg:px-0 lg:h-9`};
+    ${(props) => props.collapsed && tw`lg:pl-[15px] lg:pr-0 lg:h-9`};
 
     @media (max-width: 1023px) {
         ${tw`px-3 py-2`};
@@ -96,7 +96,7 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
                     const link = (
                         <Item key={route.path} to={to(route.path)} exact={route.exact} collapsed={collapsed}>
                             {route.icon && <FontAwesomeIcon icon={route.icon} fixedWidth />}
-                            <span css={[tw`ml-3`, collapsed && tw`lg:hidden`]}>{route.name}</span>
+                            <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms]`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>{route.name}</span>
                         </Item>
                     );
 

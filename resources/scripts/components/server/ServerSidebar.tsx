@@ -19,7 +19,8 @@ const LOGO_URL = '/assets/svgs/logo.png';
 const Aside = styled.aside<{ collapsed?: boolean }>`
     ${tw`flex flex-col bg-neutral-700 border-r border-neutral-600`};
     flex-shrink: 0;
-    transition: width 150ms ease;
+    transition: width 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: width;
 
     @media (max-width: 1023px) {
         ${tw`w-full border-r-0 border-b`};
