@@ -318,8 +318,8 @@ export default () => {
                             </StepRow>
                         </div>
                         <Warn>
-                            警告: 将清空服务器全部数据且无法找回，请先
-                            <WarnLink href={`/server/${match.params.id}/backups`}>备份</WarnLink>
+                            警告: 将清空服务器全部数据且无法找回，请前往
+                            <WarnLink href={`/server/${match.params.id}/backups`}>备份数据</WarnLink>
                             。
                         </Warn>
                         <div css={tw`mt-6 flex justify-end gap-3`}>
