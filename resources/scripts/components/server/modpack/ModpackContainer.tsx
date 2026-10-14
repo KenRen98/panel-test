@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouteMatch } from 'react-router-dom';
 import styled from 'styled-components/macro';
 import tw from 'twin.macro';
@@ -7,10 +7,80 @@ import Spinner from '@/components/elements/Spinner';
 import Button from '@/components/elements/Button';
 import Modal from '@/components/elements/Modal';
 import { ServerContext } from '@/state/server';
-import { getModpacks, installModpack, matchGuoChanPackId, Modpack } from '@/api/server/modpacks';
+import {
+    getModpacks,
+    installModpack,
+    installCoreVersion,
+    getCoreVersions,
+    getCoreBuilds,
+    matchGuoChanPackId,
+    CORE_SERVER_TYPES,
+    Modpack,
+} from '@/api/server/modpacks';
 import { hasCapability } from '@/api/server/eggCapabilities';
 import { useFlashKey } from '@/plugins/useFlash';
 import { httpErrorToHuman } from '@/api/http';
+
+const CORE_KEYS = Object.keys(CORE_SERVER_TYPES);
+
+const CorePanel = styled.div`
+    ${tw`mb-7 flex flex-col gap-3 rounded-xl border border-neutral-700 bg-neutral-800 p-4`};
+`;
+
+const CoreTitle = styled.h2`
+    ${tw`text-base font-semibold text-neutral-100`};
+`;
+
+// 与 demo 对齐：三个下拉等宽撑满（field flex:1），按钮固定宽 148px 靠右；
+// 移动端（<=640px）field 与按钮各占 100% 换行堆叠。
+const CoreRow = styled.div`
+    ${tw`flex items-end gap-3`};
+    flex-wrap: nowrap;
+    @media (max-width: 640px) {
+        flex-wrap: wrap;
+    }
+`;
+
+const CoreField = styled.div`
+    ${tw`flex flex-col gap-1.5`};
+    flex: 1 1 0;
+    min-width: 0;
+    @media (max-width: 640px) {
+        flex: 1 1 100%;
+    }
+    & > label {
+        ${tw`text-xs text-neutral-400`};
+    }
+    & > select {
+        ${tw`w-full h-[38px] rounded-lg border border-neutral-600 bg-neutral-700 px-3 text-sm text-neutral-100 outline-none focus:border-primary-500 transition-colors duration-150`};
+    }
+    & > select.rate-limited {
+        border-color: hsl(0, 75%, 60%);
+        color: hsl(0, 75%, 72%);
+    }
+`;
+
+const CoreAction = styled.div`
+    ${tw`flex items-end`};
+    flex: 0 0 148px;
+    & > button {
+        ${tw`w-full`};
+    }
+    & > button.rate-limited {
+        background: transparent;
+        border-color: hsl(0, 75%, 60%);
+        color: hsl(0, 75%, 72%);
+    }
+    @media (max-width: 640px) {
+        flex: 1 1 100%;
+    }
+`;
+
+// 核心快切模块与下方模组包卡片之间的分隔线（对齐 demo .divider）
+const CoreDivider = styled.hr`
+    ${tw`border-t border-neutral-700`};
+    margin: 0 auto 24px;
+`;
 
 const Grid = styled.div`
     display: grid;
@@ -105,7 +175,7 @@ const Warn = styled.div`
 `;
 
 const WarnLink = styled.a`
-    ${tw`underline font-medium ml-1`};
+    ${tw`underline font-medium`};
     color: hsl(217, 91%, 72%);
     &:hover {
         color: hsl(217, 91%, 85%);
@@ -178,6 +248,139 @@ export default () => {
         }
     };
 
+    // ---------- 核心快切模块 ----------
+    // 设计：核心版本列表前端直连官方 API（无缓存文件、无 MC 对应表，24h localStorage 缓存）。
+    // Paper/Forge 有一级+二级版本：核心版本=一级版本（API 列表），具体版本=builds（二级，直连拉取）
+    // NeoForge/Fabric 无二级版本：核心版本=全部版本选择，具体版本=所选核心版本本身（唯一）
+    const [core, setCore] = useState<string>('');
+    const [coreVersions, setCoreVersions] = useState<string[]>([]);
+    const [coreVersionsLoading, setCoreVersionsLoading] = useState(false);
+    const [coreError, setCoreError] = useState<string | null>(null);
+    const [coreRateLimited, setCoreRateLimited] = useState(false);
+    const [coreVersion, setCoreVersion] = useState('');
+    const [builds, setBuilds] = useState<string[]>([]);
+    const [buildsLoading, setBuildsLoading] = useState(false);
+    const [buildNumber, setBuildNumber] = useState('');
+    const [coreSelected, setCoreSelected] = useState<{ core: string; coreVersion: string; build: string } | null>(null);
+    const [coreInstalling, setCoreInstalling] = useState(false);
+
+    // 记录当前生效的 core，用于丢弃切换核心后的过期 API 响应。
+    const coreRef = useRef(core);
+    useEffect(() => {
+        coreRef.current = core;
+    }, [core]);
+
+    const showCoreError = (msg: string | null, rateLimited = false) => {
+        setCoreError(msg);
+        setCoreRateLimited(rateLimited);
+    };
+
+    // 拉取具体版本列表（Paper/Forge 有二级版本；NeoForge/Fabric 无二级版本，具体版本=所选核心版本本身）。
+    const loadCoreBuilds = async (c: string, cv: string) => {
+        if (!c || !cv) {
+            return;
+        }
+
+        setBuilds([]);
+        setBuildNumber('');
+        setBuildsLoading(true);
+        try {
+            const data = await getCoreBuilds(c, cv);
+            if (coreRef.current !== c) {
+                return; // 已切换核心，丢弃过期结果
+            }
+            setBuilds(data);
+            if (data.length > 0) {
+                setBuildNumber(data[0]);
+            }
+        } catch (e) {
+            if (coreRef.current !== c) {
+                return;
+            }
+            console.error(e);
+            const rateLimited = (e as Error & { rateLimited?: boolean }).rateLimited;
+            showCoreError(
+                rateLimited ? '官方 API 请求过于频繁，请稍后再试' : httpErrorToHuman(e),
+                !!rateLimited
+            );
+        } finally {
+            if (coreRef.current === c) {
+                setBuildsLoading(false);
+            }
+        }
+    };
+
+    // 切换核心时实时拉取一级版本列表（官方 API，24h localStorage 缓存），并重置联动选择。
+    useEffect(() => {
+        setCoreVersions([]);
+        setCoreVersion('');
+        setBuilds([]);
+        setBuildNumber('');
+        showCoreError(null);
+
+        if (!core) {
+            return;
+        }
+
+        setCoreVersionsLoading(true);
+        getCoreVersions(core)
+            .then((data) => {
+                if (coreRef.current !== core) {
+                    return; // 已切换核心，丢弃过期结果
+                }
+                setCoreVersions(data);
+                if (data.length > 0) {
+                    const first = data[0];
+                    setCoreVersion(first);
+                    // 自动选中第一个核心版本后，立即拉取其具体版本列表。
+                    return loadCoreBuilds(core, first);
+                }
+                return undefined;
+            })
+            .catch((e) => {
+                if (coreRef.current !== core) {
+                    return;
+                }
+                console.error(e);
+                const rateLimited = (e as Error & { rateLimited?: boolean }).rateLimited;
+                showCoreError(
+                    rateLimited ? '官方 API 请求过于频繁，请稍后再试' : httpErrorToHuman(e),
+                    !!rateLimited
+                );
+            })
+            .finally(() => {
+                if (coreRef.current === core) {
+                    setCoreVersionsLoading(false);
+                }
+            });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [core]);
+
+    const handleCoreVersionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const v = e.target.value;
+        setCoreVersion(v);
+        loadCoreBuilds(core, v);
+    };
+
+    const handleCoreInstall = async () => {
+        if (!coreSelected) {
+            return;
+        }
+
+        setCoreInstalling(true);
+        clearFlashes();
+
+        try {
+            await installCoreVersion(uuid, variables, coreSelected.core, coreSelected.coreVersion, coreSelected.build);
+            // 安装成功后直接跳转到控制台页面。
+            window.location.href = `/server/${match.params.id}`;
+        } catch (e) {
+            console.error(e);
+            clearAndAddHttpError(e);
+            setCoreInstalling(false);
+        }
+    };
+
     if (!hasModpack) {
         return (
             <ServerContentBlock title={'国产模组包'}>
@@ -232,6 +435,83 @@ export default () => {
                     </div>
                 )}
             </div>
+
+            <CorePanel>
+                <CoreTitle>核心快切</CoreTitle>
+                <CoreRow>
+                    <CoreField>
+                        <label>核心选择</label>
+                        <select value={core} onChange={(e) => setCore(e.target.value)}>
+                            <option value="" disabled>
+                                选择核心...
+                            </option>
+                            {CORE_KEYS.map((key) => (
+                                <option key={key} value={key}>
+                                    {CORE_SERVER_TYPES[key].split(' ')[0]}
+                                </option>
+                            ))}
+                        </select>
+                    </CoreField>
+                    <CoreField>
+                        <label>核心版本</label>
+                        <select
+                            className={coreRateLimited ? 'rate-limited' : undefined}
+                            value={coreVersion}
+                            onChange={handleCoreVersionChange}
+                            disabled={!core || coreVersionsLoading || coreVersions.length === 0}
+                        >
+                            <option value="" disabled>
+                                {coreVersionsLoading ? '加载中...' : coreVersions.length === 0 ? '无可选版本' : '选择核心版本...'}
+                            </option>
+                            {coreVersions.map((v) => (
+                                <option key={v} value={v}>
+                                    {v}
+                                </option>
+                            ))}
+                        </select>
+                    </CoreField>
+                    <CoreField>
+                        <label>具体版本</label>
+                        <select
+                            className={coreRateLimited ? 'rate-limited' : undefined}
+                            value={buildNumber}
+                            onChange={(e) => setBuildNumber(e.target.value)}
+                            disabled={!coreVersion || buildsLoading || builds.length === 0}
+                        >
+                            <option value="" disabled>
+                                {buildsLoading
+                                    ? '加载中...'
+                                    : builds.length === 0
+                                    ? '无可选版本'
+                                    : '选择具体版本...'}
+                            </option>
+                            {builds.map((b) => (
+                                <option key={b} value={b}>
+                                    {b}
+                                </option>
+                            ))}
+                        </select>
+                    </CoreField>
+                    <CoreAction>
+                        <Button
+                            className={coreRateLimited ? 'rate-limited' : undefined}
+                            size={'small'}
+                            color={'primary'}
+                            disabled={!core || !coreVersion || !buildNumber || buildsLoading || coreInstalling}
+                            onClick={() =>
+                                core && coreVersion && buildNumber && setCoreSelected({ core, coreVersion, build: buildNumber })
+                            }
+                        >
+                            一键安装
+                        </Button>
+                    </CoreAction>
+                </CoreRow>
+                {coreError && (
+                    <div css={tw`text-xs text-red-400`}>核心版本数据加载失败：{coreError}</div>
+                )}
+            </CorePanel>
+
+            <CoreDivider />
 
             {!filtered ? (
                 <Spinner centered size={Spinner.Size.LARGE} />
@@ -317,16 +597,41 @@ export default () => {
                                 服务器重装并清空所有数据
                             </StepRow>
                         </div>
-                        <Warn>
-                            警告: 将清空服务器全部数据且无法找回，请前往
-                            <WarnLink href={`/server/${match.params.id}/backups`}>备份数据</WarnLink>
-                            。
-                        </Warn>
+                        <Warn>{`警告: 将清空服务器全部数据且无法找回，前往`}<WarnLink href={`/server/${match.params.id}/backups`}>备份数据</WarnLink>{`。`}</Warn>
                         <div css={tw`mt-6 flex justify-end gap-3`}>
                             <Button color={'grey'} isSecondary disabled={installing} onClick={() => setSelected(null)}>
                                 取消
                             </Button>
                             <Button color={'primary'} isLoading={installing} onClick={handleInstall}>
+                                开始安装
+                            </Button>
+                        </div>
+                    </>
+                )}
+            </Modal>
+
+            <Modal
+                visible={!!coreSelected}
+                onDismissed={() => !coreInstalling && setCoreSelected(null)}
+                dismissable={!coreInstalling}
+            >
+                {coreSelected && (
+                    <>
+                        <div css={tw`text-xl font-semibold leading-snug`}>一键安装具体MC游戏版本</div>
+                        <div css={tw`mt-4 flex flex-col gap-2.5 text-[15px] text-neutral-300 leading-relaxed`}>
+                            <div>
+                                核心版本：<span css={tw`text-primary-400 font-medium`}>{coreSelected.coreVersion}</span>
+                            </div>
+                            <div>
+                                具体版本：<span css={tw`text-primary-400 font-medium`}>{coreSelected.build}</span>
+                            </div>
+                        </div>
+                        <Warn>{`警告：除world文件夹外将被永久删除，前往`}<WarnLink href={`/server/${match.params.id}/backups`}>备份数据</WarnLink>{`。`}</Warn>
+                        <div css={tw`mt-6 flex justify-end gap-3`}>
+                            <Button color={'grey'} isSecondary disabled={coreInstalling} onClick={() => setCoreSelected(null)}>
+                                取消
+                            </Button>
+                            <Button color={'primary'} isLoading={coreInstalling} onClick={handleCoreInstall}>
                                 开始安装
                             </Button>
                         </div>
