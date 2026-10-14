@@ -617,7 +617,7 @@ export default () => {
             >
                 {coreSelected && (
                     <>
-                        <div css={tw`text-xl font-semibold leading-snug`}>一键安装具体MC游戏版本</div>
+                        <div css={tw`text-xl font-semibold leading-snug`}>{`安装 `}<span css={tw`text-primary-400`}>{CORE_SERVER_TYPES[coreSelected.core].split(' ')[0]}</span>{` 服务器端`}</div>
                         <div css={tw`mt-4 flex flex-col gap-2.5 text-[15px] text-neutral-300 leading-relaxed`}>
                             <div>
                                 核心版本：<span css={tw`text-primary-400 font-medium`}>{coreSelected.coreVersion}</span>
