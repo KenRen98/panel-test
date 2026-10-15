@@ -11,21 +11,20 @@ import http from '@/api/http';
  *   - 只含 "mod_install" 或其它值 → 不支持的游戏
  * 能力值统一用连字符 "-" 分隔后缀，不用冒号 ":"：
  * Laravel 校验规则字符串里冒号是规则参数语法（如 max:20），值中带冒号易与规则解析混淆。
- * （解析时同时兼容旧写法 mod_install:pal / mod_install:dst，防止已按旧说明改 egg 的服务器闪断）
  * appid 始终只在后端维护，前端只传 mode，避免向用户暴露 appid。
  */
 
 /** 支持的游戏模式（与后端 SteamWorkshopController::APPID_MAP 对齐） */
 export type SteamModMode = 'pal' | 'dst';
 
-/** 从 EGG_CAPABILITIES 解析模组安装模式；不支持返回 null */
+/** 从 EGG_CAPABILITIES 解析模组安装模式；不支持返回 null（只认连字符写法） */
 export const resolveSteamModMode = (variables?: ServerEggVariable[]): SteamModMode | null => {
     if (!variables) {
         return null;
     }
     const caps = getEggCapabilitiesRaw(variables);
-    if (caps.includes('mod_install-pal') || caps.includes('mod_install:pal')) return 'pal';
-    if (caps.includes('mod_install-dst') || caps.includes('mod_install:dst')) return 'dst';
+    if (caps.includes('mod_install-pal')) return 'pal';
+    if (caps.includes('mod_install-dst')) return 'dst';
     return null;
 };
 
