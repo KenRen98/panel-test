@@ -84,6 +84,7 @@ const AdminLink = styled.a<{ collapsed?: boolean }>`
 export default ({ collapsed = false }: { collapsed?: boolean }) => {
     const match = useRouteMatch<{ id: string }>();
     const rootAdmin = useStoreState((state) => state.user.data?.rootAdmin);
+    const server = ServerContext.useStoreState((state) => state.server.data);
     const variables = ServerContext.useStoreState((state) => state.server.data?.variables);
     const hasModpack = hasCapability(variables, 'modpack');
     const hasSteamMod = hasSteamModCapability(variables);
@@ -145,10 +146,12 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
         );
     });
 
-    // 跳转管理后台（仅管理员可见）：侧边模式与上方按钮组用分隔线隔开，顶部模式直接排最后
+    // 跳转管理后台（仅管理员可见）：跳到当前服务器的管理界面（/admin/servers/view/{DB id}），
+    // 侧边模式与上方按钮组用分隔线隔开，顶部模式直接排最后
     if (rootAdmin) {
+        const adminHref = `/admin/servers/view/${server?.internalId ?? ''}`;
         const adminLink = (
-            <AdminLink href={'/admin'} collapsed={collapsed}>
+            <AdminLink href={adminHref} collapsed={collapsed}>
                 <FontAwesomeIcon icon={faCogs} fixedWidth />
                 <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms]`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
                     跳转管理
