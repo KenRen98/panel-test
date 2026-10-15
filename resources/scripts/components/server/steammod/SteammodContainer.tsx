@@ -11,8 +11,8 @@ import { useFlashKey } from '@/plugins/useFlash';
 import { httpErrorToHuman } from '@/api/http';
 
 const MODE_META = {
-    pal: { name: '幻兽帕鲁', installScript: 'pal_auto_mods.sh' },
-    dst: { name: '饥荒联机版', installScript: 'dst_auto_mods.sh' },
+    pal: { name: '幻兽帕鲁' },
+    dst: { name: '饥荒联机版' },
 } as const;
 
 const PAGE_SIZE = 9; // 一行三个 × 三行正好填满（与后端一致）
@@ -408,7 +408,6 @@ export default () => {
                     <div css={tw`text-xs text-neutral-400`}>
                         当前游戏：<b css={tw`text-neutral-100 font-semibold`}>{meta.name}</b>
                     </div>
-                    <div css={tw`text-[11px] text-neutral-500`}>重启后由 {meta.installScript} 执行安装</div>
                 </div>
             </div>
 
@@ -436,13 +435,11 @@ export default () => {
                 <SearchStatus>
                     {loading ? (
                         '搜索中...'
-                    ) : error ? (
-                        <span css={tw`text-red-400`}>{error}</span>
-                    ) : (
+                    ) : !error ? (
                         <>
                             共 <b>{total}</b> 个模组 · 第 <b>{page}</b> / {Math.max(1, pages)} 页
                         </>
-                    )}
+                    ) : null}
                 </SearchStatus>
             </SearchPanel>
 
