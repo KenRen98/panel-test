@@ -82,12 +82,13 @@ export const searchSteamMods = async (mode: SteamModMode, q: string, page: numbe
 /**
  * 更新 MODS_LIST 变量（逗号分隔的 mod id）。
  * 仅当 MODS_LIST 变量存在于该服务器且 user_editable 时才调用，否则抛错。
+ * 返回更新后的变量（供调用方同步 store，保证刷新/重挂载后显示一致）。
  */
 export const saveModsList = async (
     uuid: string,
     variables: ServerEggVariable[],
     ids: string[]
-): Promise<void> => {
+): Promise<ServerEggVariable> => {
     const varDef = variables.find((v) => v.envVariable === 'MODS_LIST');
     if (!varDef) {
         throw new Error('当前 egg 未提供 MODS_LIST 变量，无法保存模组列表。');
@@ -95,5 +96,6 @@ export const saveModsList = async (
     if (!varDef.isEditable) {
         throw new Error('MODS_LIST 变量不可编辑，无法保存模组列表。');
     }
-    await updateStartupVariable(uuid, 'MODS_LIST', ids.join(','));
+    const [updated] = await updateStartupVariable(uuid, 'MODS_LIST', ids.join(','));
+    return updated;
 };

@@ -7,6 +7,7 @@ import Spinner from '@/components/elements/Spinner';
 import Button from '@/components/elements/Button';
 import { ServerContext } from '@/state/server';
 import { searchSteamMods, saveModsList, resolveSteamModMode, SteamMod } from '@/api/server/steamMods';
+import { ServerEggVariable } from '@/api/server/types';
 import { useFlashKey } from '@/plugins/useFlash';
 import { httpErrorToHuman } from '@/api/http';
 
@@ -249,6 +250,7 @@ export default () => {
 
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const variables = ServerContext.useStoreState((state) => state.server.data!.variables);
+    const setServerFromState = ServerContext.useStoreActions((actions) => actions.server.setServerFromState);
 
     const mode = resolveSteamModMode(variables);
 
@@ -361,7 +363,15 @@ export default () => {
         doSearch(query.trim(), next, 0);
     };
 
-    // 添加/移除并写回 MODS_LIST
+    // 保存成功后同步 store 中的 MODS_LIST 变量（保证重挂载/刷新后显示一致）
+    const syncVariable = (updated: ServerEggVariable) => {
+        setServerFromState((s) => ({
+            ...s,
+            variables: s.variables.map((v) => (v.envVariable === 'MODS_LIST' ? updated : v)),
+        }));
+    };
+
+    // 添加/移除并写回 MODS_LIST（乐观更新，失败回滚）
     const toggleMod = async (id: string, add: boolean) => {
         if (saving) return;
         const next = add ? [...ids, id] : ids.filter((x) => x !== id);
@@ -369,7 +379,8 @@ export default () => {
         setSaving(true);
         clearFlashes();
         try {
-            await saveModsList(uuid, variables, next);
+            const updated = await saveModsList(uuid, variables, next);
+            syncVariable(updated);
         } catch (e) {
             console.error(e);
             setIds(ids); // 失败回滚
@@ -380,17 +391,17 @@ export default () => {
     };
 
     // 清空 MODS_LIST（一键清除所有模组）
+    // 非乐观：先等保存成功再清 UI，避免"看着清空了实际未落库"（此前刷新中断请求导致清空无效）
     const clearAll = async () => {
         if (saving) return;
-        const next: string[] = [];
-        setIds(next); // 乐观更新
         setSaving(true);
         clearFlashes();
         try {
-            await saveModsList(uuid, variables, next);
+            const updated = await saveModsList(uuid, variables, []);
+            setIds([]);
+            syncVariable(updated);
         } catch (e) {
             console.error(e);
-            setIds(ids); // 失败回滚
             clearAndAddHttpError(e as Error);
         } finally {
             setSaving(false);
