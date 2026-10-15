@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouteMatch } from 'react-router-dom';
 import styled from 'styled-components/macro';
 import tw from 'twin.macro';
@@ -15,8 +15,9 @@ const MODE_META = {
     dst: { name: '饥荒联机版' },
 } as const;
 
-const PAGE_SIZE = 9; // 一行三个 × 三行正好填满（与后端一致）
-const DEBOUNCE_MS = 3000; // 防抖 3s：期间显示波浪加载点，让用户感知"正在加载"
+// 每页数量由后端固定 PER_PAGE=12（3 列 3×4 / 4 列 4×3 正好填满），前端不传
+const DEBOUNCE_MS = 1500;   // 输入停止 1.5s 后才发请求（跟手且不刷请求）
+const MIN_INTERVAL_MS = 4000; // 距上次请求不足 4s 时顺延（对齐后端 15/min 限流）
 
 const SearchPanel = styled.div`
     ${tw`flex flex-col gap-2`};
@@ -262,13 +263,54 @@ export default () => {
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
-    // 防抖 + 过期请求丢弃：seq 变化时旧结果作废
+    // 防抖 + 最小请求间隔 + 过期请求丢弃：
+    //   - 输入停止 DEBOUNCE_MS(1.5s) 后才发请求（体验）
+    //   - 距上次请求不足 MIN_INTERVAL_MS(4s) 时自动顺延到 4s 边界（对齐后端 15/min 限流）
+    //   - seq 变化时旧结果作废
     const seqRef = useRef(0);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastFireRef = useRef(0);
 
     const idSet = useMemo(() => new Set(ids), [ids]);
 
-    // 切换模式/挂载后：搜索框清空，拉第一页
+    // 公共请求入口：debounceMs=0 表示立即发起（仍受最小间隔约束）
+    const doSearch = useCallback(
+        (q: string, page: number, debounceMs: number) => {
+            if (!mode) return;
+            const seq = ++seqRef.current;
+            setPage(page);
+            setLoading(true);
+            setError(null);
+            const attempt = () => {
+                const wait = MIN_INTERVAL_MS - (Date.now() - lastFireRef.current);
+                if (wait > 0) {
+                    debounceRef.current = setTimeout(attempt, wait);
+                    return;
+                }
+                lastFireRef.current = Date.now();
+                searchSteamMods(mode, q, page)
+                    .then((r) => {
+                        if (seq !== seqRef.current) return;
+                        setItems(r.items);
+                        setTotal(r.total);
+                        setPages(r.pages);
+                    })
+                    .catch((e) => {
+                        if (seq !== seqRef.current) return;
+                        console.error(e);
+                        setError(httpErrorToHuman(e));
+                    })
+                    .finally(() => {
+                        if (seq === seqRef.current) setLoading(false);
+                    });
+            };
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+            debounceRef.current = setTimeout(attempt, debounceMs);
+        },
+        [mode]
+    );
+
+    // 切换模式/挂载后：搜索框清空，拉第一页（低频操作，不走间隔锁）
     useEffect(() => {
         if (!mode) {
             return;
@@ -296,57 +338,18 @@ export default () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode]);
 
-    // 搜索输入：500ms 防抖
+    // 搜索输入：1.5s 防抖 + 4s 最小间隔
     const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const q = e.target.value;
         setQuery(q);
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        const seq = ++seqRef.current;
-        setLoading(true);
-        setError(null);
-        debounceRef.current = setTimeout(() => {
-            setPage(1);
-            searchSteamMods(mode!, q.trim(), 1)
-                .then((r) => {
-                    if (seq !== seqRef.current) return;
-                    setItems(r.items);
-                    setTotal(r.total);
-                    setPages(r.pages);
-                })
-                .catch((e) => {
-                    if (seq !== seqRef.current) return;
-                    console.error(e);
-                    setError(httpErrorToHuman(e));
-                })
-                .finally(() => {
-                    if (seq === seqRef.current) setLoading(false);
-                });
-        }, DEBOUNCE_MS);
+        doSearch(q.trim(), 1, DEBOUNCE_MS);
     };
 
-    // 翻页
+    // 翻页：立即发起（仍受 4s 最小间隔约束）
     const handlePage = (delta: number) => {
         const next = Math.min(Math.max(1, page + delta), Math.max(1, pages));
         if (next === page) return;
-        setPage(next);
-        const seq = ++seqRef.current;
-        setLoading(true);
-        setError(null);
-        searchSteamMods(mode!, query.trim(), next)
-            .then((r) => {
-                if (seq !== seqRef.current) return;
-                setItems(r.items);
-                setTotal(r.total);
-                setPages(r.pages);
-            })
-            .catch((e) => {
-                if (seq !== seqRef.current) return;
-                console.error(e);
-                setError(httpErrorToHuman(e));
-            })
-            .finally(() => {
-                if (seq === seqRef.current) setLoading(false);
-            });
+        doSearch(query.trim(), next, 0);
     };
 
     // 添加/移除并写回 MODS_LIST
