@@ -29,7 +29,30 @@ class StartupModificationService
     public function handle(Server $server, array $data): Server
     {
         return $this->connection->transaction(function () use ($server, $data) {
-            if (!empty($data['environment'])) {
+            // 管理员切换 EGG：本 nest 中每个 egg 均为唯一游戏预设，切换即全新环境。
+            // 为防止旧 egg 的同名变量（如 EGG_CAPABILITIES / MODS_LIST）残留旧值导致
+            // 功能错乱（管理员忘记修改默认值），此处将服务器全部变量重置为新 egg 的默认值，
+            // 并跳过本次提交的 environment（旧 egg 的值不再有意义）。
+            $eggSwitched = $this->isUserLevel(User::USER_LEVEL_ADMIN)
+                && is_digit(Arr::get($data, 'egg_id'))
+                && $server->egg_id !== (int) $data['egg_id'];
+
+            if ($eggSwitched) {
+                /** @var Egg $egg */
+                $egg = Egg::query()->findOrFail($data['egg_id']);
+
+                ServerVariable::query()->where('server_id', $server->id)->delete();
+
+                foreach ($egg->variables as $variable) {
+                    ServerVariable::query()->create([
+                        'server_id' => $server->id,
+                        'variable_id' => $variable->id,
+                        'variable_value' => $variable->default_value ?? '',
+                    ]);
+                }
+            }
+
+            if (!empty($data['environment']) && !$eggSwitched) {
                 $egg = $this->isUserLevel(User::USER_LEVEL_ADMIN) ? ($data['egg_id'] ?? $server->egg_id) : $server->egg_id;
 
                 $results = $this->validatorService

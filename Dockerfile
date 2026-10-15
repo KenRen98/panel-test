@@ -29,6 +29,8 @@ COPY app/Http/Controllers/Api/Client/SteamWorkshopController.php app/Http/Contro
 COPY app/Http/Controllers/Base/ModpackSyncController.php app/Http/Controllers/Base/ModpackSyncController.php
 COPY app/Services/Modpacks/ModpackEggSyncService.php app/Services/Modpacks/ModpackEggSyncService.php
 COPY app/Console/Commands/Overrides/ModpackSyncEggCommand.php app/Console/Commands/Overrides/ModpackSyncEggCommand.php
+# 换 EGG 时变量重置为新 egg 默认值（防呆：旧 egg 同名变量残留导致功能错乱）
+COPY app/Services/Servers/StartupModificationService.php app/Services/Servers/StartupModificationService.php
 # 限流器注册（throttle:steam.search 依赖此处；官方镜像无 steam.search 限流器，
 # 不覆盖会直接 500 "Rate limiter [steam.search] not found"）
 COPY app/Providers/RouteServiceProvider.php app/Providers/RouteServiceProvider.php
