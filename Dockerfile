@@ -29,6 +29,9 @@ COPY app/Http/Controllers/Api/Client/SteamWorkshopController.php app/Http/Contro
 COPY app/Http/Controllers/Base/ModpackSyncController.php app/Http/Controllers/Base/ModpackSyncController.php
 COPY app/Services/Modpacks/ModpackEggSyncService.php app/Services/Modpacks/ModpackEggSyncService.php
 COPY app/Console/Commands/Overrides/ModpackSyncEggCommand.php app/Console/Commands/Overrides/ModpackSyncEggCommand.php
+# 限流器注册（throttle:steam.search 依赖此处；官方镜像无 steam.search 限流器，
+# 不覆盖会直接 500 "Rate limiter [steam.search] not found"）
+COPY app/Providers/RouteServiceProvider.php app/Providers/RouteServiceProvider.php
 COPY routes/api-client.php routes/api-client.php
 COPY routes/base.php routes/base.php
 COPY config/pterodactyl.php config/pterodactyl.php
