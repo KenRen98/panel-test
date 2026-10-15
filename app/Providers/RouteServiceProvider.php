@@ -108,12 +108,17 @@ class RouteServiceProvider extends ServiceProvider
             )->by($key);
         });
 
-        // Steam 创意工坊搜索代理的独立限流：每用户每分钟 30 次。
-        // 防止滥用后端代理（key 只存在于后端），叠加在全局 api.client 限流之上。
+        // Steam 创意工坊搜索代理的双重限流，叠加在全局 api.client 限流之上：
+        //  1. 按用户 30 次/分钟 —— 防止单个用户滥用后端代理（key 只存在于后端）；
+        //  2. 全局合计 30 次/分钟 —— 对齐 Steam Web API 按 key 的总限额，防止多用户
+        //     同时使用把请求数打爆、触发 Valve 对 key 的限流/封禁。
         RateLimiter::for('steam.search', function (Request $request) {
             $key = optional($request->user())->uuid ?: $request->ip();
 
-            return Limit::perMinute(30)->by($key);
+            return [
+                Limit::perMinute(30)->by($key),
+                Limit::perMinute(30)->by('steam-api-global'),
+            ];
         });
 
         ResourceLimit::boot();
