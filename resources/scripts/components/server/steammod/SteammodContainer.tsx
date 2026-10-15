@@ -75,13 +75,16 @@ const GridTitle = styled.div`
     }
 `;
 
-// 固定一行三个；移动端一行一个（不设 2 列中间态）
+// 固定列数三档：手机一行 1 个、默认桌面一行 3 个、宽屏(≥1280px，16:9 屏)一行 4 个
 const Grid = styled.div`
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
     @media (max-width: 700px) {
         grid-template-columns: 1fr;
+    }
+    @media (min-width: 1280px) {
+        grid-template-columns: repeat(4, 1fr);
     }
 `;
 
@@ -404,10 +407,10 @@ export default () => {
                     </div>
                     <h1 css={tw`text-[30px] font-bold leading-tight`}>模组安装</h1>
                 </div>
-                <div css={tw`ml-auto flex flex-col items-end gap-1`}>
-                    <div css={tw`text-xs text-neutral-400`}>
+                <div css={tw`ml-auto`}>
+                    <span css={tw`inline-flex items-center gap-1.5 rounded-full border border-neutral-600 bg-neutral-700 px-3 py-1 text-xs text-neutral-400`}>
                         当前游戏：<b css={tw`text-neutral-100 font-semibold`}>{meta.name}</b>
-                    </div>
+                    </span>
                 </div>
             </div>
 

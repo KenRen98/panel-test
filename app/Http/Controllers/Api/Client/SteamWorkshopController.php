@@ -31,7 +31,7 @@ class SteamWorkshopController extends ClientApiController
         'dst' => 322330,
     ];
 
-    private const PER_PAGE = 9; // 一行三个 × 三行正好填满，不超过"一页最多 10 个"
+    private const PER_PAGE = 12; // 3 列=3×4、4 列=4×3 均正好填满，无孤儿卡；12 ≤ 一页上限
 
     private const MAX_Q_LEN = 100;
     private const MAX_PAGE = 1000;
