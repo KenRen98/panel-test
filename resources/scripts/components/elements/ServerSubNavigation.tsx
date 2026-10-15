@@ -3,9 +3,11 @@ import { NavLink, useRouteMatch } from 'react-router-dom';
 import styled from 'styled-components/macro';
 import tw, { theme } from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCogs } from '@fortawesome/free-solid-svg-icons';
 import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 import { ServerContext } from '@/state/server';
+import { useStoreState } from '@/state/hooks';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
 import { hasCapability } from '@/api/server/eggCapabilities';
 import { hasSteamModCapability } from '@/api/server/steamMods';
@@ -64,8 +66,24 @@ const Item = styled(NavLink)<{ collapsed?: boolean }>`
     }
 `;
 
+// 跳转管理后台：整页跳转 /admin（与顶部导航栏一致），样式与 Item 保持一致
+const AdminLink = styled.a<{ collapsed?: boolean }>`
+    ${tw`flex items-center px-3 py-2 rounded text-sm text-neutral-300 no-underline whitespace-nowrap transition-all duration-150 cursor-pointer`};
+
+    &:hover {
+        ${tw`text-neutral-100 bg-neutral-800`};
+    }
+
+    ${(props) => props.collapsed && tw`lg:pl-[15px] lg:pr-0 lg:h-9`};
+
+    @media (max-width: 1023px) {
+        ${tw`px-3 py-2`};
+    }
+`;
+
 export default ({ collapsed = false }: { collapsed?: boolean }) => {
     const match = useRouteMatch<{ id: string }>();
+    const rootAdmin = useStoreState((state) => state.user.data?.rootAdmin);
     const variables = ServerContext.useStoreState((state) => state.server.data?.variables);
     const hasModpack = hasCapability(variables, 'modpack');
     const hasSteamMod = hasSteamModCapability(variables);
@@ -126,6 +144,31 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
             </Group>
         );
     });
+
+    // 跳转管理后台（仅管理员可见）：侧边模式与上方按钮组用分隔线隔开，顶部模式直接排最后
+    if (rootAdmin) {
+        const adminLink = (
+            <AdminLink href={'/admin'} collapsed={collapsed}>
+                <FontAwesomeIcon icon={faCogs} fixedWidth />
+                <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms]`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+                    跳转管理
+                </span>
+            </AdminLink>
+        );
+
+        rendered.push(<Separator key={'sep-admin'} collapsed={collapsed} />);
+        rendered.push(
+            <Group key={'group-admin'}>
+                {collapsed ? (
+                    <Tooltip placement={'right'} content={'跳转管理'}>
+                        {adminLink}
+                    </Tooltip>
+                ) : (
+                    adminLink
+                )}
+            </Group>
+        );
+    }
 
     return <Nav>{rendered}</Nav>;
 };
