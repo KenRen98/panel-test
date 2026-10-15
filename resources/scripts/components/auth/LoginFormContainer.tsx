@@ -54,14 +54,14 @@ export default forwardRef<HTMLFormElement, Props>(({ title, ...props }, ref) => 
             >
                 Pterodactyl Software
             </a>
-            &nbsp;| Sinicizated by&nbsp;
+            &nbsp;| Powered by&nbsp;
             <a
                 rel={'noopener nofollow noreferrer'}
-                href={'https://pterodactyl.top'}
+                href={'https://mlsg.mr-leaves.com'}
                 target={'_blank'}
                 css={tw`no-underline text-neutral-500 hover:text-neutral-300`}
             >
-                翼龙中国
+                MLSG&reg;
             </a>
         </p>
         {useStoreState((state) => state.settings.data?.icp.enabled) && (
