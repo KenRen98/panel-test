@@ -383,7 +383,7 @@ export default () => {
 
     if (!hasModpack) {
         return (
-            <ServerContentBlock title={'国产模组包'}>
+            <ServerContentBlock title={'一键安装'}>
                 <div css={tw`text-sm text-neutral-300`}>
                     当前服务器未使用全能 MC egg，无法使用一键安装功能。
                 </div>
@@ -393,14 +393,14 @@ export default () => {
 
     if (error) {
         return (
-            <ServerContentBlock title={'国产模组包'} showFlashKey={'modpack'}>
+            <ServerContentBlock title={'一键安装'} showFlashKey={'modpack'}>
                 <div css={tw`text-sm text-red-400`}>加载模组包列表失败：{error}</div>
             </ServerContentBlock>
         );
     }
 
     return (
-        <ServerContentBlock title={'国产模组包'} showFlashKey={'modpack'}>
+        <ServerContentBlock title={'一键安装'} showFlashKey={'modpack'}>
             <div css={tw`flex items-start mb-7`}>
                 <div css={tw`flex items-center gap-3`}>
                     <div
@@ -411,7 +411,7 @@ export default () => {
                             <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
                         </svg>
                     </div>
-                    <h1 css={tw`text-[30px] font-bold leading-tight`}>国产模组包</h1>
+                    <h1 css={tw`text-[30px] font-bold leading-tight`}>一键安装</h1>
                 </div>
                 {filtered && (
                     <div css={tw`ml-auto flex flex-col items-start gap-1`}>
