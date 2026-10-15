@@ -243,7 +243,7 @@ export default () => {
             window.location.href = `/server/${match.params.id}`;
         } catch (e) {
             console.error(e);
-            clearAndAddHttpError(e);
+            clearAndAddHttpError(e as Error);
             setInstalling(false);
         }
     };
@@ -376,7 +376,7 @@ export default () => {
             window.location.href = `/server/${match.params.id}`;
         } catch (e) {
             console.error(e);
-            clearAndAddHttpError(e);
+            clearAndAddHttpError(e as Error);
             setCoreInstalling(false);
         }
     };

@@ -49,8 +49,9 @@ export const CORE_CACHE_FILES: Record<string, string> = {
 /**
  * 核心版本列表（一级版本）。
  * 优先级：cron 缓存文件（/modpacks/core-versions/{core}.json，每天更新）→ 官方 API 直连（24h localStorage 缓存）。
- * Paper/Forge 有一级+二级：一级版本=API MC 版本列表（含 26.x，倒序）
- * NeoForge/Fabric 无二级：一级版本=全部版本（NeoForge 完整版本号 / Fabric loader 0.x.x），过滤 beta
+ * Paper/Forge/Fabric 有一级+二级：一级版本=API MC 版本列表（含 26.x，倒序），
+ *                                 Paper/Forge 二级=builds；Fabric 二级=该 MC 的 loader 版本
+ * NeoForge 无二级：一级版本=全部完整版本号（如 21.8.35），过滤 beta
  */
 export const getCoreVersions = async (core: string): Promise<string[]> => {
     // 1) cron 缓存优先（nginx alias /modpacks/ -> storage/modpacks/）
@@ -61,7 +62,7 @@ export const getCoreVersions = async (core: string): Promise<string[]> => {
             if (res.ok) {
                 const data = (await res.json()) as string[];
                 if (Array.isArray(data) && data.length > 0) {
-                    // 过滤带 '-' / '+' 的（分支 dev 版本如 Paper 1.21.4-rc1、Fabric loader +build；正式版号不带）
+                    // 过滤带 '-' / '+' 的（分支 dev 版本如 Paper 1.21.4-rc1；正式版号不带，MC 版本列表同规则）
                     const clean = data.filter((v) => !v.includes('-') && !v.includes('+'));
                     if (clean.length > 0) {
                         return clean;
@@ -116,11 +117,14 @@ export const getCoreVersions = async (core: string): Promise<string[]> => {
         }
         case 'fabric': {
             return withCache('versions:fabric', async () => {
-                const res = await apiFetch('https://meta.fabricmc.net/v2/versions/loader');
+                const res = await apiFetch('https://meta.fabricmc.net/v2/versions/game');
                 const data = await res.json();
-                // 无二级版本：全部 loader 版本（0.x.x，过滤带 '-' / '+build' 的）
+                // 一级版本 = Fabric 官方 API 的 MC 版本列表（stable，含 26.x），过滤带 '-' / '+' 的
                 return Array.isArray(data)
-                    ? data.map((i: { version?: string }) => i.version ?? '').filter((v) => v && !v.includes('-') && !v.includes('+'))
+                    ? data
+                          .filter((i: { stable?: boolean; version?: string }) => i.stable && i.version)
+                          .map((i: { version: string }) => i.version)
+                          .filter((v: string) => v && !v.includes('-') && !v.includes('+'))
                     : [];
             });
         }
@@ -243,7 +247,8 @@ const fetchNeoForgeMeta = async (): Promise<Document> => {
 
 /**
  * 按核心拉取具体版本（二级版本）列表。
- * Paper/Forge 有子版本（build 列表）；NeoForge/Fabric 无子版本（具体版本=所选核心版本本身，唯一）。
+ * Paper/Forge 有子版本（build 列表）；Fabric 有子版本（该 MC 版本的 loader 列表）；
+ * NeoForge 无子版本（具体版本=所选核心版本本身，唯一）。
  * 抛出的错误若带 rateLimited 标记，表示官方 API 限流。
  */
 export const getCoreBuilds = async (core: string, coreVersion: string): Promise<string[]> => {
@@ -267,8 +272,21 @@ export const getCoreBuilds = async (core: string, coreVersion: string): Promise<
                     .map((v) => v.slice(coreVersion.length + 1));
             });
         }
+        case 'fabric': {
+            return withCache(`builds:fabric:${coreVersion}`, async () => {
+                const res = await apiFetch(
+                    `https://meta.fabricmc.net/v2/versions/loader/${encodeURIComponent(coreVersion)}`
+                );
+                const data = await res.json();
+                // 二级版本 = 该 MC 版本可用的 Fabric loader 版本（0.x.x，过滤带 '-' / '+build' 的）
+                return Array.isArray(data)
+                    ? data
+                          .map((i: { loader?: { version?: string } }) => i.loader?.version ?? '')
+                          .filter((v: string) => v && !v.includes('-') && !v.includes('+'))
+                    : [];
+            });
+        }
         case 'neoforge':
-        case 'fabric':
             // 无二级版本：具体版本即所选核心版本本身（唯一）
             return [coreVersion];
         default:
@@ -437,9 +455,9 @@ export const matchCoreServerType = (variables: ServerEggVariable[], core: string
 /**
  * 一键安装具体核心版本流程：
  * 1. 切换服务器类型为目标核心（Forge/Paper/NeoForge/Fabric）
- * 2. 写入手动游戏版本（MINECRAFT_VERSION_MANUAL，🔴【高级】）——Paper/Forge 取所选核心版本（= MC 版本号）；
- *    NeoForge/Fabric 显式清空（具体版本即核心版本本身，egg 留空时按 BUILD_NUMBER 自动匹配，避免残留旧 MC 版本）
- * 3. 写入具体版本号（BUILD_NUMBER，🧩【模组】）
+ * 2. 写入手动游戏版本（MINECRAFT_VERSION_MANUAL，🔴【高级】）——Paper/Forge/Fabric 取所选核心版本（= MC 版本号）；
+ *    NeoForge 显式清空（NeoForge 无二级版本，具体版本即核心版本本身，egg 留空时按 BUILD_NUMBER 自动匹配，避免残留旧 MC 版本）
+ * 3. 写入具体版本号（BUILD_NUMBER，🧩【模组】）——Paper/Forge=build；Fabric=loader；NeoForge=完整版本号
  * 4. 触发服务器重装
  */
 export const installCoreVersion = async (
@@ -455,10 +473,10 @@ export const installCoreVersion = async (
     }
 
     await updateStartupVariable(uuid, 'SERVER_TYPE', serverType);
-    // Paper/Forge：写入手动游戏版本（= MC 版本号）
-    // NeoForge/Fabric：清空游戏版本（具体版本即核心版本本身，egg 留空时按 BUILD_NUMBER 自动匹配；
-    //                  显式写空可避免残留上一次安装的旧 MC 版本）
-    await updateStartupVariable(uuid, 'MINECRAFT_VERSION_MANUAL', core !== 'neoforge' && core !== 'fabric' ? coreVersion : '');
+    // Paper/Forge/Fabric：写入手动游戏版本（= MC 版本号，Fabric 的 loader 不包含 MC 信息，必须显式写 MC）
+    // NeoForge：清空游戏版本（NeoForge 无二级版本，具体版本即核心版本本身，egg 留空时按 BUILD_NUMBER 自动匹配；
+    //           显式写空可避免残留上一次安装的旧 MC 版本）
+    await updateStartupVariable(uuid, 'MINECRAFT_VERSION_MANUAL', core !== 'neoforge' ? coreVersion : '');
     await updateStartupVariable(uuid, 'BUILD_NUMBER', buildNumber);
 
     await reinstallServer(uuid);
