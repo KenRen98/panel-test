@@ -71,7 +71,7 @@ const SearchStatus = styled.div`
 const GridTitle = styled.div`
     ${tw`flex items-center gap-2 text-[15px] font-semibold text-neutral-100 mt-5 mb-3`};
     & > .count {
-        ${tw`text-[11px] font-normal text-neutral-400 bg-neutral-800 border border-neutral-700 rounded-full px-2 py-0.5 leading-none`};
+        ${tw`text-[11px] font-normal text-neutral-400 bg-neutral-700 border border-neutral-600 rounded-full px-2 py-0.5 leading-none`};
     }
 `;
 
@@ -87,7 +87,7 @@ const Grid = styled.div`
 
 // 卡片高度固定统一；描述在卡内尽量展开，超出裁剪（无省略号），底部淡出提示未尽
 const Card = styled.div`
-    ${tw`flex flex-col bg-neutral-800 border border-neutral-700 rounded-xl p-3 h-[240px] overflow-hidden transition-colors duration-150 hover:border-primary-500`};
+    ${tw`flex flex-col bg-neutral-700 border border-neutral-600 rounded-xl p-3 h-[240px] overflow-hidden transition-colors duration-150 hover:border-primary-500`};
 `;
 
 const CardHead = styled.div`
@@ -189,7 +189,7 @@ const ModsListRow = styled.div`
 `;
 // 值框：始终满宽、高度随内容动态（无 min-height），内容换行时自动撑开
 const ModsListValue = styled.div`
-    ${tw`flex-1 rounded-lg border border-neutral-700 bg-neutral-800 px-2.5 py-1 text-[11px] leading-[1.25] break-all text-neutral-200`};
+    ${tw`flex-1 rounded-lg border border-neutral-600 bg-neutral-700 px-2.5 py-1 text-[11px] leading-[1.25] break-all text-neutral-200`};
 `;
 const ModsPrefix = styled.span`
     ${tw`text-neutral-500`};
