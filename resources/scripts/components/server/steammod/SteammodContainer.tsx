@@ -110,6 +110,11 @@ const Name = styled.div`
     ${tw`text-sm font-semibold text-neutral-100 line-clamp-2`};
 `;
 
+// 标题下方一行显示 mod id（等宽灰字，与标题区分）
+const ModId = styled.div`
+    ${tw`text-[11px] font-mono text-neutral-400 mt-0.5 leading-none`};
+`;
+
 // 右上角：订阅数 + 已添加标签（与 logo 顶部对齐，标题换行不挤压）
 const Corner = styled.div`
     ${tw`flex flex-col items-end gap-1 flex-shrink-0`};
@@ -139,7 +144,7 @@ const Actions = styled.div`
 `;
 
 const CardDate = styled.div`
-    ${tw`text-[13px] text-neutral-400 whitespace-nowrap font-medium`};
+    ${tw`text-[13px] text-neutral-400 whitespace-nowrap font-medium leading-none`};
 `;
 
 const AddBtn = styled(Button)`
@@ -500,6 +505,7 @@ export default () => {
                                     <Logo src={m.preview_url} alt={m.title} loading="lazy" />
                                     <HeadMain>
                                         <Name>{m.title}</Name>
+                                        <ModId>{m.id}</ModId>
                                     </HeadMain>
                                     <Corner>
                                         <BadgeSubs>⬇ {fmtSubs(m.subscriptions)}</BadgeSubs>
