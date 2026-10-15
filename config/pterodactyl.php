@@ -224,4 +224,16 @@ return [
     */
 
     'modpacks_sync_token' => env('MODPACKS_SYNC_TOKEN', ''),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Steam Web API Key
+    |--------------------------------------------------------------------------
+    |
+    | Steam 创意工坊搜索代理（/api/client/mods/steam/search）使用。
+    | 仅存在于后端环境变量（STEAM_API_KEY），绝不进入前端代码。
+    | 未配置时搜索端点返回 503。
+    */
+
+    'steam_api_key' => env('STEAM_API_KEY', ''),
 ];

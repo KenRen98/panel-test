@@ -23,6 +23,13 @@ Route::get('/permissions', [Client\ClientController::class, 'permissions']);
 // 模组包元数据（本地挂载，浏览器不直连 GitHub raw）
 Route::get('/modpacks', [Client\ModpackController::class, 'index'])->name('api:client.modpacks');
 
+// Steam 创意工坊模组搜索代理（模组安装功能）。
+// key 只存在于后端；game 模式由前端按 EGG_CAPABILITIES 侦测传入。
+// 单独叠加 throttle:steam.search（每用户每分钟 30 次），叠加在全局 client-api 限流之上。
+Route::get('/mods/steam/search', [Client\SteamWorkshopController::class, 'search'])
+    ->middleware('throttle:steam.search')
+    ->name('api:client.mods.steam.search');
+
 Route::prefix('/account')->middleware(AccountSubject::class)->group(function () {
     Route::prefix('/')->withoutMiddleware(RequireTwoFactorAuthentication::class)->group(function () {
         Route::get('/', [Client\AccountController::class, 'index'])->name('api:client.account');

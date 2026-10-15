@@ -108,6 +108,14 @@ class RouteServiceProvider extends ServiceProvider
             )->by($key);
         });
 
+        // Steam 创意工坊搜索代理的独立限流：每用户每分钟 30 次。
+        // 防止滥用后端代理（key 只存在于后端），叠加在全局 api.client 限流之上。
+        RateLimiter::for('steam.search', function (Request $request) {
+            $key = optional($request->user())->uuid ?: $request->ip();
+
+            return Limit::perMinute(30)->by($key);
+        });
+
         ResourceLimit::boot();
     }
 }

@@ -8,6 +8,7 @@ import routes from '@/routers/routes';
 import { ServerContext } from '@/state/server';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
 import { hasCapability } from '@/api/server/eggCapabilities';
+import { hasSteamModCapability } from '@/api/server/steamMods';
 
 const Nav = styled.nav`
     ${tw`flex flex-col px-2 py-3 gap-0.5`};
@@ -67,6 +68,7 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
     const match = useRouteMatch<{ id: string }>();
     const variables = ServerContext.useStoreState((state) => state.server.data?.variables);
     const hasModpack = hasCapability(variables, 'modpack');
+    const hasSteamMod = hasSteamModCapability(variables);
 
     const to = (path: string) => {
         if (path === '/') {
@@ -75,7 +77,12 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
         return `${match.url.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
     };
 
-    const visible = routes.server.filter((route) => !!route.name && !(route.path === '/modpack' && !hasModpack));
+    const visible = routes.server.filter(
+        (route) =>
+            !!route.name &&
+            !(route.path === '/modpack' && !hasModpack) &&
+            !(route.path === '/steammod' && !hasSteamMod)
+    );
 
     const groups: number[] = [1, 2, 3];
     const rendered: React.ReactNode[] = [];
