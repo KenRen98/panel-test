@@ -6,9 +6,12 @@ import http from '@/api/http';
  * Steam 创意工坊模组安装功能（模组安装）。
  *
  * 游戏模式由 EGG_CAPABILITIES 变量侦测（值为逗号分隔的能力列表）：
- *   - 含 "mod_install:pal" → 幻兽帕鲁（appid 由后端映射，前端不感知）
- *   - 含 "mod_install:dst" → 饥荒联机版
+ *   - 含 "mod_install-pal" → 幻兽帕鲁（appid 由后端映射，前端不感知）
+ *   - 含 "mod_install-dst" → 饥荒联机版
  *   - 只含 "mod_install" 或其它值 → 不支持的游戏
+ * 能力值统一用连字符 "-" 分隔后缀，不用冒号 ":"：
+ * Laravel 校验规则字符串里冒号是规则参数语法（如 max:20），值中带冒号易与规则解析混淆。
+ * （解析时同时兼容旧写法 mod_install:pal / mod_install:dst，防止已按旧说明改 egg 的服务器闪断）
  * appid 始终只在后端维护，前端只传 mode，避免向用户暴露 appid。
  */
 
@@ -21,8 +24,8 @@ export const resolveSteamModMode = (variables?: ServerEggVariable[]): SteamModMo
         return null;
     }
     const caps = getEggCapabilitiesRaw(variables);
-    if (caps.includes('mod_install:pal')) return 'pal';
-    if (caps.includes('mod_install:dst')) return 'dst';
+    if (caps.includes('mod_install-pal') || caps.includes('mod_install:pal')) return 'pal';
+    if (caps.includes('mod_install-dst') || caps.includes('mod_install:dst')) return 'dst';
     return null;
 };
 
@@ -34,7 +37,7 @@ export const hasSteamModCapability = (variables?: ServerEggVariable[]): boolean 
     return getEggCapabilitiesRaw(variables).some((c) => c.startsWith('mod_install'));
 };
 
-/** 复用 eggCapabilities 的取值逻辑，但保留完整能力串（含冒号后缀） */
+/** 复用 eggCapabilities 的取值逻辑，但保留完整能力串（含 - 后缀） */
 const getEggCapabilitiesRaw = (variables: ServerEggVariable[]): string[] => {
     const capVar = variables.find((v) => v.envVariable === 'EGG_CAPABILITIES');
     if (!capVar) {
