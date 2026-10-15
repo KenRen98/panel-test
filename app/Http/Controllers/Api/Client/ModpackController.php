@@ -49,13 +49,18 @@ class ModpackController extends ClientApiController
 
         $logosDir = $base . '/logos';
         foreach ($packs as &$pack) {
-            // 把外链 logo 改写为面板本地相对路径。图标由宿主机按原格式保存为 <id>.<ext>，
-            // 这里用 glob 动态匹配实际存在的文件（webp/png 均可）。
-            if (!isset($pack['id'])) {
+            // 把外链 logo 改写为面板本地相对路径。图标由宿主机按原始文件名保存
+            // （如 the-fool.webp / AFoP.webp），这里取原始 logo_url 的文件名在挂载目录
+            // 中匹配实际存在的文件（webp/png 均可）。
+            $originalUrl = $pack['logo_url'] ?? '';
+            $originalName = basename((string) parse_url($originalUrl, PHP_URL_PATH));
+
+            if ($originalName === '') {
+                $pack['logo_url'] = null;
                 continue;
             }
 
-            $matched = File::glob($logosDir . '/' . (int) $pack['id'] . '.*');
+            $matched = File::glob($logosDir . '/' . $originalName);
             if (!empty($matched)) {
                 $pack['logo_url'] = '/modpacks/logos/' . basename($matched[0]);
             } else {
