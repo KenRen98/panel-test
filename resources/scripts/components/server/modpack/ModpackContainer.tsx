@@ -522,7 +522,7 @@ export default () => {
                         return (
                             <Card key={pack.id}>
                                 <CardHead>
-                                    <Logo src={pack.logo_url} alt={pack.name} />
+                                    <Logo src={pack.logo_url} alt={pack.name} loading="lazy" />
                                     <HeadMain>
                                         <HeadLeft>
                                             <Name>{pack.name}</Name>
