@@ -204,10 +204,11 @@ const ModsListHead = styled.div`
 const ModsLabel = styled.span`
     ${tw`text-[15px] font-semibold text-neutral-100`};
 `;
+// MODS_LIST 徽章：压矮（11px 字 + 16px 行高），明显矮于左侧"模组列表"（15px 标题）
 const VarName = styled.span`
-    ${tw`text-xs text-primary-400 rounded-md border border-primary-500/30 px-2 font-mono`};
+    ${tw`text-[11px] text-primary-400 rounded-md border border-primary-500/30 px-1.5 font-mono`};
     background: rgba(47, 129, 247, 0.1);
-    line-height: 21px;
+    line-height: 16px;
 `;
 const ModsListRow = styled.div`
     ${tw`flex items-stretch gap-2.5`};
