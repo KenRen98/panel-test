@@ -29,6 +29,7 @@ import ActivityLogContainer from '@/components/dashboard/activity/ActivityLogCon
 import ServerActivityLogContainer from '@/components/server/ServerActivityLogContainer';
 import ModpackContainer from '@/components/server/modpack/ModpackContainer';
 import SteammodContainer from '@/components/server/steammod/SteammodContainer';
+import DstModManagerContainer from '@/components/server/dstmodmanager/DstModManagerContainer';
 
 // Each of the router files is already code split out appropriately — so
 // all of the items above will only be loaded in when that router is loaded.
@@ -142,6 +143,14 @@ export default {
             component: SteammodContainer,
             group: 1,
             icon: faPuzzlePiece,
+        },
+        {
+            path: '/dstmodmanager',
+            permission: 'startup.*',
+            name: '模组管理',
+            component: DstModManagerContainer,
+            group: 1,
+            icon: faSlidersH,
         },
         // ===== 组2 =====
         {

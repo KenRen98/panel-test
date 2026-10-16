@@ -35,11 +35,32 @@ class SteamWorkshopController extends ClientApiController
 
     private const MAX_Q_LEN = 100;
     private const MAX_PAGE = 1000;
+    private const MAX_DETAIL_IDS = 100; // GetDetails 单次批量上限（保守值）
+
+    /**
+     * 把 Steam publishedfiledetails 条目裁剪为前端卡片最小集。
+     * QueryFiles 与 GetDetails 返回的 publishedfiledetails 结构同构，共用此映射。
+     */
+    private function mapDetail(array $it): array
+    {
+        return [
+            'id' => (string) ($it['publishedfileid'] ?? ''),
+            'title' => (string) ($it['title'] ?? ''),
+            'preview_url' => (string) ($it['preview_url'] ?? ''),
+            'short_description' => mb_substr((string) ($it['short_description'] ?? ''), 0, 140),
+            'subscriptions' => (int) ($it['subscriptions'] ?? 0),
+            'time_updated' => (int) ($it['time_updated'] ?? 0),
+        ];
+    }
 
     /**
      * 搜索创意工坊模组。
      *
      * GET /api/client/mods/steam/search?mode=pal&q=ue4ss&page=1
+     *
+     * 注意：QueryFiles 的 search_text 是标题+描述全文搜索——纯数字 workshop id
+     * 会被命中"描述里恰好含该数字"的无关模组。因此当 q 为纯数字（疑似 workshop id）
+     * 时改走 IPublishedFileService/GetDetails/v1/ 按 publishedfileid 精确查询。
      *
      * @return JsonResponse
      */
@@ -65,21 +86,37 @@ class SteamWorkshopController extends ClientApiController
             return new JsonResponse(['error' => 'steam api key not configured'], 503);
         }
 
-        $params = [
-            'key' => $key,
-            'querytype' => 0,
-            'page' => $page,
-            'numperpage' => self::PER_PAGE,
-            'appid' => self::APPID_MAP[$mode],
-            'return_details' => true,
-            'return_short_description' => true,
-            'language' => 'schinese',
-        ];
-        if ($q !== '') {
-            $params['search_text'] = $q;
-        }
+        // 纯数字 → 疑似 workshop id → GetDetails 精确查询（不走全文搜索）
+        $byId = $q !== '' && preg_match('/^\d{5,}$/', $q);
 
         try {
+            if ($byId) {
+                $resp = $this->getDetails($key, self::APPID_MAP[$mode], [(int) $q]);
+                $items = $resp['publishedfiledetails'] ?? [];
+                return new JsonResponse([
+                    'items' => array_map([$this, 'mapDetail'], $items),
+                    'total' => count($items),
+                    'page' => 1,
+                    'pages' => count($items) > 0 ? 1 : 0,
+                    'mode' => $mode,
+                    'by_id' => true,
+                ], 200);
+            }
+
+            $params = [
+                'key' => $key,
+                'querytype' => 0,
+                'page' => $page,
+                'numperpage' => self::PER_PAGE,
+                'appid' => self::APPID_MAP[$mode],
+                'return_details' => true,
+                'return_short_description' => true,
+                'language' => 'schinese',
+            ];
+            if ($q !== '') {
+                $params['search_text'] = $q;
+            }
+
             $resp = Http::connectTimeout(10)
                 ->timeout(20)
                 ->withUserAgent('MLSG-Panel/1.0')
@@ -93,27 +130,89 @@ class SteamWorkshopController extends ClientApiController
             $response = $data['response'] ?? [];
             $items = $response['publishedfiledetails'] ?? [];
 
-            $out = [];
-            foreach ($items as $it) {
-                $out[] = [
-                    'id' => (string) ($it['publishedfileid'] ?? ''),
-                    'title' => (string) ($it['title'] ?? ''),
-                    'preview_url' => (string) ($it['preview_url'] ?? ''),
-                    'short_description' => mb_substr((string) ($it['short_description'] ?? ''), 0, 140),
-                    'subscriptions' => (int) ($it['subscriptions'] ?? 0),
-                    'time_updated' => (int) ($it['time_updated'] ?? 0),
-                ];
-            }
-
             return new JsonResponse([
-                'items' => $out,
+                'items' => array_map([$this, 'mapDetail'], $items),
                 'total' => (int) ($response['total'] ?? 0),
                 'page' => $page,
                 'pages' => (int) ceil(((int) ($response['total'] ?? 0)) / self::PER_PAGE),
+                'mode' => $mode,
+                'by_id' => false,
+            ], 200);
+        } catch (\Throwable $e) {
+            return new JsonResponse(['error' => 'steam api unreachable', 'detail' => $e->getMessage()], 502);
+        }
+    }
+
+    /**
+     * 已安装模组批量详情（模组管理页）。
+     *
+     * POST /api/client/mods/steam/details   body: { mode, ids: string[] }
+     * 一次 GetDetails 取回全部 id 的元信息（title/preview_url/short_description/
+     * subscriptions/time_updated），前端卡片展示完全不用解码服务器本地文件。
+     *
+     * @return JsonResponse
+     */
+    public function details(Request $request): JsonResponse
+    {
+        $mode = strtolower(trim((string) $request->input('mode', '')));
+        if (!isset(self::APPID_MAP[$mode])) {
+            return new JsonResponse(['error' => 'unsupported game mode'], 422);
+        }
+
+        $ids = $request->input('ids');
+        if (!is_array($ids)) {
+            return new JsonResponse(['error' => 'ids must be an array'], 422);
+        }
+        $ids = array_values(array_filter(array_map('trim', $ids), fn ($v) => preg_match('/^\d{5,}$/', (string) $v)));
+        $ids = array_slice($ids, 0, self::MAX_DETAIL_IDS);
+        if (count($ids) === 0) {
+            return new JsonResponse(['items' => [], 'mode' => $mode], 200);
+        }
+
+        $key = (string) config('pterodactyl.steam_api_key', '');
+        if ($key === '') {
+            return new JsonResponse(['error' => 'steam api key not configured'], 503);
+        }
+
+        try {
+            $resp = $this->getDetails($key, self::APPID_MAP[$mode], array_map('intval', $ids));
+            $items = $resp['publishedfiledetails'] ?? [];
+            return new JsonResponse([
+                'items' => array_map([$this, 'mapDetail'], $items),
                 'mode' => $mode,
             ], 200);
         } catch (\Throwable $e) {
             return new JsonResponse(['error' => 'steam api unreachable', 'detail' => $e->getMessage()], 502);
         }
+    }
+
+    /**
+     * 调 IPublishedFileService/GetDetails/v1/ 批量取详情。
+     * 返回完整响应数组（response.publishedfiledetails 由调用方取）。
+     *
+     * @param int[] $publishedfileids
+     */
+    private function getDetails(string $key, int $appid, array $publishedfileids): array
+    {
+        $params = [
+            'key' => $key,
+            'appid' => $appid,
+            'language' => 'schinese',
+            'short_description' => true,
+            'strip_description_bbcode' => true,
+        ];
+        foreach ($publishedfileids as $i => $pid) {
+            $params['publishedfileids[' . $i . ']'] = $pid;
+        }
+
+        $resp = Http::connectTimeout(10)
+            ->timeout(20)
+            ->withUserAgent('MLSG-Panel/1.0')
+            ->get('https://api.steampowered.com/IPublishedFileService/GetDetails/v1/', $params);
+
+        if (!$resp->successful()) {
+            throw new \RuntimeException('steam api request failed: ' . $resp->status());
+        }
+        return $resp->json()['response'] ?? [];
     }
 }

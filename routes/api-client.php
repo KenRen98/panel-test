@@ -30,6 +30,11 @@ Route::get('/mods/steam/search', [Client\SteamWorkshopController::class, 'search
     ->middleware('throttle:steam.search')
     ->name('api:client.mods.steam.search');
 
+// 已安装模组批量详情（模组管理页，GetDetails 一次取全部；与搜索共用 steam.search 限流）
+Route::post('/mods/steam/details', [Client\SteamWorkshopController::class, 'details'])
+    ->middleware('throttle:steam.search')
+    ->name('api:client.mods.steam.details');
+
 Route::prefix('/account')->middleware(AccountSubject::class)->group(function () {
     Route::prefix('/')->withoutMiddleware(RequireTwoFactorAuthentication::class)->group(function () {
         Route::get('/', [Client\AccountController::class, 'index'])->name('api:client.account');

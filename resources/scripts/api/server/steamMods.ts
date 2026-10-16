@@ -36,6 +36,14 @@ export const hasSteamModCapability = (variables?: ServerEggVariable[]): boolean 
     return getEggCapabilitiesRaw(variables).some((c) => c.startsWith('mod_install'));
 };
 
+/** 是否具备 DST 模组管理能力（用于模组管理页门控） */
+export const hasDstModManagerCapability = (variables?: ServerEggVariable[]): boolean => {
+    if (!variables) {
+        return false;
+    }
+    return getEggCapabilitiesRaw(variables).includes('dst_mod_manager');
+};
+
 /** 复用 eggCapabilities 的取值逻辑，但保留完整能力串（含 - 后缀） */
 const getEggCapabilitiesRaw = (variables: ServerEggVariable[]): string[] => {
     const capVar = variables.find((v) => v.envVariable === 'EGG_CAPABILITIES');
@@ -77,6 +85,18 @@ export const searchSteamMods = async (mode: SteamModMode, q: string, page: numbe
     }
     const { data } = await http.get<SteamSearchResult>('/api/client/mods/steam/search', { params });
     return data;
+};
+
+/** 已安装模组批量详情（GetDetails 一次取全部元信息；卡片展示不解码服务器本地文件） */
+export const getSteamModDetails = async (mode: SteamModMode, ids: string[]): Promise<SteamMod[]> => {
+    const pure = ids
+        .map((s) => String(s).trim().replace(/^workshop-/i, ''))
+        .filter((s) => /^\d{5,}$/.test(s));
+    if (pure.length === 0) {
+        return [];
+    }
+    const { data } = await http.post<{ items: SteamMod[] }>('/api/client/mods/steam/details', { mode, ids: pure });
+    return data.items;
 };
 
 /**

@@ -10,7 +10,7 @@ import { ServerContext } from '@/state/server';
 import { useStoreState } from '@/state/hooks';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
 import { hasCapability } from '@/api/server/eggCapabilities';
-import { hasSteamModCapability } from '@/api/server/steamMods';
+import { hasSteamModCapability, hasDstModManagerCapability } from '@/api/server/steamMods';
 
 const Nav = styled.nav`
     ${tw`flex flex-col px-2 py-3 gap-0.5`};
@@ -88,6 +88,7 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
     const variables = ServerContext.useStoreState((state) => state.server.data?.variables);
     const hasModpack = hasCapability(variables, 'modpack');
     const hasSteamMod = hasSteamModCapability(variables);
+    const hasDstModManager = hasDstModManagerCapability(variables);
 
     const to = (path: string) => {
         if (path === '/') {
@@ -100,7 +101,8 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
         (route) =>
             !!route.name &&
             !(route.path === '/modpack' && !hasModpack) &&
-            !(route.path === '/steammod' && !hasSteamMod)
+            !(route.path === '/steammod' && !hasSteamMod) &&
+            !(route.path === '/dstmodmanager' && !hasDstModManager)
     );
 
     const groups: number[] = [1, 2, 3];
