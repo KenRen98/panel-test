@@ -213,9 +213,9 @@ const ModsListRow = styled.div`
     ${tw`flex items-stretch gap-2.5`};
 `;
 // 值框：始终满宽、高度随内容动态（无 min-height），内容换行时自动撑开
-// 字号比左侧 MODS_LIST 徽章（12px）再小一档，整体更紧凑
+// 字号 10px 比左侧 MODS_LIST 徽章（12px）小一档；行高/内边距压紧，单行框明显矮于左侧文字行（21px）
 const ModsListValue = styled.div`
-    ${tw`flex-1 rounded-lg border border-neutral-600 bg-neutral-700 px-2 py-0.5 text-[10px] leading-[1.3] break-all text-neutral-200`};
+    ${tw`flex-1 rounded-lg border border-neutral-600 bg-neutral-700 px-2 py-[1px] text-[10px] leading-[1.2] break-all text-neutral-200`};
 `;
 const ModsPrefix = styled.span`
     ${tw`text-neutral-500`};
