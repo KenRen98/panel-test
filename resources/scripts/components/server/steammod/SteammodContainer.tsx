@@ -470,15 +470,7 @@ export default () => {
                         </LoadingDots>
                     )}
                 </SearchField>
-                <SearchStatus>
-                    {loading ? (
-                        '搜索中...'
-                    ) : !error ? (
-                        <>
-                            共 <b>{total}</b> 个模组 · 第 <b>{page}</b> / {Math.max(1, pages)} 页
-                        </>
-                    ) : null}
-                </SearchStatus>
+                <SearchStatus>{loading ? '搜索中...' : null}</SearchStatus>
             </SearchPanel>
 
             {/* ===== 模组列表 + 提示（与 demo 定稿一致） ===== */}
