@@ -27,7 +27,7 @@ const Aside = styled.aside<{ collapsed?: boolean }>`
     }
 
     @media (min-width: 1024px) {
-        ${(props) => (props.collapsed ? tw`w-16` : tw`w-64`)};
+        ${(props) => (props.collapsed ? tw`w-16` : tw`w-52`)};
         height: 100vh;
         position: sticky;
         top: 0;
@@ -45,7 +45,7 @@ const Brand = styled.div`
 // inline-flex：tailwind preflight 会把 img 置为 display:block，若 a 不是 flex 容器，
 // block 的 logo 会独占一行把站点名挤到下一行（单文本时代无此问题）。
 const BrandLink = styled(Link)`
-    ${tw`inline-flex items-center text-2xl font-header font-medium no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150 whitespace-nowrap flex-shrink-0`};
+    ${tw`inline-flex items-center text-2xl font-header font-medium no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150 whitespace-nowrap flex-shrink-0 max-w-full`};
 `;
 
 const BrandLogo = styled.img`
@@ -82,7 +82,7 @@ export default () => {
                     ) : (
                         <>
                             <BrandLogo src={LOGO_URL} alt={'logo'} />
-                            <span css={tw`ml-2`}>{name}</span>
+                            <span css={tw`ml-2 truncate`}>{name}</span>
                         </>
                     )}
                 </BrandLink>
