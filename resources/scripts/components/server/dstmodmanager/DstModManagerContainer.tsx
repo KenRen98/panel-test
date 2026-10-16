@@ -26,13 +26,16 @@ const SearchField = styled.div`
     }
 `;
 
-// 搜索框下方状态文字：常规（搜索匹配/已安装总数）+ 有未下载模组时红色提示（与移除按钮同色）
-const Status = styled.div<{ warn?: boolean }>`
-    ${tw`text-xs mt-1`};
-    color: ${(props) => (props.warn ? '#f87171' : undefined)};
-    & > b {
-        ${tw`font-semibold`};
-    }
+const Status = styled.div`
+    ${tw`text-xs text-neutral-400 mt-1`};
+`;
+
+// "修改后，需重启服务器。"提示（MODS_LIST 头部）：无未下载 → 常规（橙）；有未下载 → 红色模式（与移除按钮同色）
+const RestartHint = styled.div<{ red?: boolean }>`
+    ${tw`ml-auto px-2.5 leading-[21px] rounded-lg border text-xs whitespace-nowrap flex items-center gap-1.5`};
+    background: ${(props) => (props.red ? 'rgba(248, 81, 73, 0.08)' : 'rgba(255, 170, 0, 0.08)')};
+    border-color: ${(props) => (props.red ? 'rgba(248, 81, 73, 0.45)' : 'rgba(255, 170, 0, 0.35)')};
+    color: ${(props) => (props.red ? 'hsl(0, 80%, 72%)' : 'hsl(40, 90%, 72%)')};
 `;
 
 // ===== MODS_LIST 面板（搜索框与已安装列表之间，与模组安装页一致） =====
@@ -363,8 +366,8 @@ export default () => {
                     />
                 </SearchField>
             </SearchRow>
-            <Status warn={mods.some((m) => m.downloaded === false)}>
-                {loading ? '正在获取模组信息…' : error ? error : mods.some((m) => m.downloaded === false) ? '有未下载模组，请重启下载。' : query.trim() ? `搜索“${query}”，共 ${filtered.length} 个匹配模组` : `已安装 ${mods.length} 个模组`}
+            <Status>
+                {loading ? '正在获取模组信息…' : error ? error : `已安装 ${mods.length} 个模组`}
             </Status>
 
             {/* MODS_LIST 面板：搜索框与已安装列表之间 */}
@@ -372,6 +375,12 @@ export default () => {
                 <ModsListHead>
                     <ModsLabel>模组列表</ModsLabel>
                     <VarName>MODS_LIST</VarName>
+                    <RestartHint red={mods.some((m) => m.downloaded === false)}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                        </svg>
+                        <span>{mods.some((m) => m.downloaded === false) ? '有未下载模组，请重启下载。' : '修改后，需重启服务器。'}</span>
+                    </RestartHint>
                 </ModsListHead>
                 <ModsListRow>
                     <ModsListValue>{ids.length ? ids.join(',') : '（空）'}</ModsListValue>
