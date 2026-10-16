@@ -4,7 +4,7 @@ import tw from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import Button from '@/components/elements/Button';
 import { ServerContext } from '@/state/server';
-import { getSteamModDetails, saveModsList, resolveSteamModMode, SteamMod } from '@/api/server/steamMods';
+import { getSteamModDetails, getInstalledModIds, saveModsList, resolveSteamModMode, SteamMod } from '@/api/server/steamMods';
 import { ServerEggVariable } from '@/api/server/types';
 import { useFlashKey } from '@/plugins/useFlash';
 import { httpErrorToHuman } from '@/api/http';

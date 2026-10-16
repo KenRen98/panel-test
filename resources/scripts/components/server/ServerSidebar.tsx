@@ -34,9 +34,8 @@ const Aside = styled.aside<{ collapsed?: boolean }>`
     }
 `;
 
-const Brand = styled.div<{ collapsed?: boolean }>`
+const Brand = styled.div`
     ${tw`flex items-center h-[3.5rem] px-4 border-b border-neutral-600 flex-shrink-0`};
-    ${(props) => props.collapsed && tw`justify-center px-0`};
 
     @media (max-width: 1023px) {
         display: none;
@@ -76,7 +75,7 @@ export default () => {
 
     return (
         <Aside collapsed={collapsed}>
-            <Brand collapsed={collapsed}>
+            <Brand>
                 <BrandLink to={'/'}>
                     {collapsed ? (
                         <BrandLogo src={LOGO_URL} alt={'logo'} />
