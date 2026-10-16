@@ -54,7 +54,9 @@ export default () => {
             <SpinnerOverlay visible={isLoggingOut} />
             <div className={'w-full flex items-center h-[3.5rem]'}>
                 <div id={'logo'} className={'flex flex-1'}>
-                    <div className={isServerPage ? 'lg:hidden' : ''}>
+                    {/* flex items-center：父级 #logo 是 flex，子 div 默认被 align-items:stretch
+                        拉满整行高，内部 logo 会顶部对齐导致整体偏上；加 items-center 垂直居中 */}
+                    <div className={(isServerPage ? 'lg:hidden ' : '') + 'flex items-center'}>
                         <Link
                             to={'/'}
                             className={

@@ -43,8 +43,10 @@ const Brand = styled.div<{ collapsed?: boolean }>`
     }
 `;
 
+// inline-flex：tailwind preflight 会把 img 置为 display:block，若 a 不是 flex 容器，
+// block 的 logo 会独占一行把站点名挤到下一行（单文本时代无此问题）。
 const BrandLink = styled(Link)`
-    ${tw`text-2xl font-header font-medium no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150 whitespace-nowrap`};
+    ${tw`inline-flex items-center text-2xl font-header font-medium no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150 whitespace-nowrap`};
 `;
 
 const BrandLogo = styled.img`
