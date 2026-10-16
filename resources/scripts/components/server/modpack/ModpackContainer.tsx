@@ -82,9 +82,14 @@ const CoreDivider = styled.hr`
     margin: 0 auto 24px;
 `;
 
+// 页面级容器查询：grid 列数断点基于内容区实际宽度（自动扣除侧边栏）
+const PageContainer = styled.div`
+    container-type: inline-size;
+`;
+
 const Grid = styled.div`
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.25rem;
 `;
 
@@ -401,6 +406,7 @@ export default () => {
 
     return (
         <ServerContentBlock title={'一键安装'} showFlashKey={'modpack'}>
+            <PageContainer>
             <div css={tw`flex items-start mb-7`}>
                 <div css={tw`flex items-center gap-3`}>
                     <div
@@ -638,6 +644,7 @@ export default () => {
                     </>
                 )}
             </Modal>
+            </PageContainer>
         </ServerContentBlock>
     );
 };

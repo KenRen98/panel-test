@@ -71,14 +71,19 @@ const GridTitle = styled.div`
     }
 `;
 
+// 页面级容器查询：grid 列数断点基于内容区实际宽度（自动扣除侧边栏）
+const PageContainer = styled.div`
+    container-type: inline-size;
+`;
+
 const Grid = styled.div`
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
-    @media (max-width: 700px) {
+    @container (max-width: 700px) {
         grid-template-columns: 1fr;
     }
-    @media (min-width: 1280px) {
+    @container (min-width: 1280px) {
         grid-template-columns: repeat(4, 1fr);
     }
 `;
@@ -349,6 +354,7 @@ export default () => {
 
     return (
         <ServerContentBlock title={'模组管理'} showFlashKey={'dstmodmanager'}>
+            <PageContainer>
             <SearchRow>
                 <SearchField>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -445,6 +451,7 @@ export default () => {
                     </PgBtn>
                 </Pager>
             )}
+            </PageContainer>
         </ServerContentBlock>
     );
 };
