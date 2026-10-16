@@ -38,6 +38,8 @@ export default () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     // 服务器内页：logo 移到侧边栏顶上，桌面端这里不显示 logo，顶部栏不再横向贯穿。
     const isServerPage = !!useRouteMatch('/server/:id');
+    // 品牌 logo：与侧边栏一致（public 下静态引用，不经 webpack 打包）
+    const LOGO_URL = '/assets/svgs/logo.png';
 
     const onTriggerLogout = () => {
         setIsLoggingOut(true);
@@ -56,13 +58,11 @@ export default () => {
                         <Link
                             to={'/'}
                             className={
-                                'text-2xl font-header font-medium px-4 no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150'
+                                'text-2xl font-header font-medium px-4 no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150 inline-flex items-center'
                             }
                         >
-                            {useStoreState((state) => {
-                                const logoTitle = state.settings.data?.logo.title;
-                                return logoTitle ? <img src={logoTitle} /> : name;
-                            })}
+                            <img src={LOGO_URL} alt={'logo'} className={'h-8 w-8 object-contain rounded-md'} />
+                            <span className={'ml-2'}>{name}</span>
                         </Link>
                     </div>
                 </div>

@@ -48,7 +48,7 @@ const BrandLink = styled(Link)`
 `;
 
 const BrandLogo = styled.img`
-    ${tw`h-8 w-8 object-contain`};
+    ${tw`h-8 w-8 object-contain rounded-md`};
 `;
 
 const NavScroll = styled.div`
@@ -71,13 +71,19 @@ const CollapseButton = styled.button`
 export default () => {
     const [collapsed, setCollapsed] = useState(false);
     const name = useStoreState((state: ApplicationStore) => state.settings.data!.name);
-    const logoTitle = useStoreState((state: ApplicationStore) => state.settings.data?.logo.title);
 
     return (
         <Aside collapsed={collapsed}>
             <Brand collapsed={collapsed}>
                 <BrandLink to={'/'}>
-                    {collapsed ? <BrandLogo src={LOGO_URL} alt={'logo'} /> : logoTitle ? <img src={logoTitle} /> : name}
+                    {collapsed ? (
+                        <BrandLogo src={LOGO_URL} alt={'logo'} />
+                    ) : (
+                        <>
+                            <BrandLogo src={LOGO_URL} alt={'logo'} />
+                            <span css={tw`ml-2`}>{name}</span>
+                        </>
+                    )}
                 </BrandLink>
             </Brand>
             <NavScroll>

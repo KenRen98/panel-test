@@ -165,13 +165,24 @@ const Pager = styled.div`
 `;
 
 const PgBtn = styled(Button)`
-    ${tw`text-xs px-4 py-1.5`};
+    ${tw`text-xs px-4 py-1.5 whitespace-nowrap`};
 `;
 
+// 底部统计：默认一行"共 x 个模组 · 第 x / x 页"；手机（<=700px）拆成两行（总数 / 页码）
 const PgInfo = styled.div`
-    ${tw`text-xs text-neutral-400`};
+    ${tw`text-xs text-neutral-400 flex items-center justify-center gap-1`};
     & > b {
         ${tw`text-neutral-200 font-semibold`};
+    }
+    & > i {
+        font-style: normal;
+    }
+    @media (max-width: 700px) {
+        flex-direction: column;
+        gap: 2px;
+        & > i {
+            display: none;
+        }
     }
 `;
 
@@ -478,7 +489,7 @@ export default () => {
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                         </svg>
-                        <span>修改保存后，需重启服务器安装所有模组。</span>
+                        <span>修改后，需重启服务器。</span>
                     </Warn>
                 </ModsListHead>
                 <ModsListRow>
@@ -560,7 +571,9 @@ export default () => {
                         ‹ 上一页
                     </PgBtn>
                     <PgInfo>
-                        共 <b>{total}</b> 个模组 · 第 <b>{page}</b> / {pages} 页
+                        <span>共 <b>{total}</b> 个模组</span>
+                        <i>·</i>
+                        <span>第 <b>{page}</b> / {pages} 页</span>
                     </PgInfo>
                     <PgBtn size={'small'} color={'grey'} isSecondary disabled={page >= pages} onClick={() => handlePage(1)}>
                         下一页 ›
