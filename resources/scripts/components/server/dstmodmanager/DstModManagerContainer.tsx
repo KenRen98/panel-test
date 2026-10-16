@@ -27,7 +27,7 @@ const SearchField = styled.div`
 `;
 
 const Status = styled.div`
-    ${tw`text-xs text-neutral-400 mt-1`};
+    ${tw`text-xs text-neutral-400 mt-2`};
 `;
 
 // "修改后，需重启服务器。"提示（MODS_LIST 头部）：无未下载 → 常规（橙）；有未下载 → 红色模式（与移除按钮同色）
@@ -366,9 +366,7 @@ export default () => {
                     />
                 </SearchField>
             </SearchRow>
-            <Status>
-                {loading ? '正在获取模组信息…' : error ? error : `已安装 ${mods.length} 个模组`}
-            </Status>
+            <Status>{loading ? '正在获取模组信息…' : error ? error : null}</Status>
 
             {/* MODS_LIST 面板：搜索框与已安装列表之间 */}
             <ModsListPanel>
