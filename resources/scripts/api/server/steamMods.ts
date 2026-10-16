@@ -1,6 +1,7 @@
 import { ServerEggVariable } from '@/api/server/types';
 import updateStartupVariable from '@/api/server/updateStartupVariable';
 import http from '@/api/http';
+import getFileContents from '@/api/server/files/getFileContents';
 
 /**
  * Steam 创意工坊模组安装功能（模组安装）。
@@ -64,6 +65,8 @@ export interface SteamMod {
     short_description: string;
     subscriptions: number;
     time_updated: number;
+    /** 服务器本地是否已下载（GetDetails 不返回；由服务器端目录扫描提供，暂缺时恒为 undefined） */
+    downloaded?: boolean;
 }
 
 export interface SteamSearchResult {
@@ -97,6 +100,33 @@ export const getSteamModDetails = async (mode: SteamModMode, ids: string[]): Pro
     }
     const { data } = await http.post<{ items: SteamMod[] }>('/api/client/mods/steam/details', { mode, ids: pure });
     return data.items;
+};
+
+/**
+ * 服务器本地已下载的 workshop id 集合。
+ *
+ * steamcmd 下载完成后会生成 appworkshop_*.acf（饥荒为 appworkshop_322330.acf），
+ * 其 "WorkshopItemsInstalled" 段落里每个数字键就是一个已下载 mod 的 id；
+ * dst_auto_mods.sh 已把该文件复制到 ugc_mods/server/Master/ 与 Caves/ 下。
+ * 因此"是否已下载"= 读 acf 文件、提取其中的 id 集合，比扫 mods 目录快得多。
+ * acf 不存在 → 一个 mod 都未下载过 → 返回空集合。
+ */
+export const getInstalledModIds = async (uuid: string): Promise<Set<string>> => {
+    let content: string;
+    try {
+        content = await getFileContents(uuid, 'ugc_mods/server/Master/appworkshop_322330.acf');
+    } catch (e) {
+        // 文件不存在（尚未下载过任何 mod）或读取失败 → 视为未下载
+        console.warn('[getInstalledModIds] 读取 acf 失败，视为未下载任何模组', e);
+        return new Set();
+    }
+    const ids = new Set<string>();
+    const re = /^\s*"(\d{5,})"\s*$/gm;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(content)) !== null) {
+        ids.add(m[1]);
+    }
+    return ids;
 };
 
 /**

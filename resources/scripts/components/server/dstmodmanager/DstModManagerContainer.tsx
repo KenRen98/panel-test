@@ -26,8 +26,13 @@ const SearchField = styled.div`
     }
 `;
 
-const Status = styled.div`
-    ${tw`text-xs text-neutral-400 mt-1`};
+// 搜索框下方状态文字：常规（搜索匹配/已安装总数）+ 有未下载模组时红色提示（与移除按钮同色）
+const Status = styled.div<{ warn?: boolean }>`
+    ${tw`text-xs mt-1`};
+    color: ${(props) => (props.warn ? '#f87171' : undefined)};
+    & > b {
+        ${tw`font-semibold`};
+    }
 `;
 
 // ===== MODS_LIST 面板（搜索框与已安装列表之间，与模组安装页一致） =====
@@ -108,6 +113,14 @@ const Corner = styled.div`
 
 const BadgeSubs = styled.span`
     ${tw`text-[10px] text-neutral-200 bg-neutral-700 rounded px-1.5 py-0.5 whitespace-nowrap`};
+`;
+
+// 未下载徽章（橙黄色，与"修改后，需重启服务器"提示同色系）
+const BadgeUndownloaded = styled.span`
+    ${tw`text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap`};
+    color: hsl(40, 90%, 72%);
+    border: 1px solid rgba(255, 170, 0, 0.35);
+    background: rgba(255, 170, 0, 0.08);
 `;
 
 const Desc = styled.div`
@@ -237,21 +250,23 @@ export default () => {
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
-    // 加载已安装模组详情（GetDetails 一次取全部）
+    // 加载已安装模组详情（GetDetails 一次取全部）+ 服务器本地已下载集合（读 acf）
     const load = useCallback(
         (idList: string[]) => {
             if (!mode) return;
             setLoading(true);
             setError(null);
-            getSteamModDetails(mode, idList)
-                .then(setMods)
+            Promise.all([getSteamModDetails(mode, idList), getInstalledModIds(uuid)])
+                .then(([details, installedIds]) => {
+                    setMods(details.map((m) => ({ ...m, downloaded: installedIds.has(m.id) })));
+                })
                 .catch((e) => {
                     console.error(e);
                     setError(httpErrorToHuman(e));
                 })
                 .finally(() => setLoading(false));
         },
-        [mode]
+        [mode, uuid]
     );
 
     useEffect(() => {
@@ -348,8 +363,8 @@ export default () => {
                     />
                 </SearchField>
             </SearchRow>
-            <Status>
-                {loading ? '正在获取模组信息…' : error ? error : `已安装 ${mods.length} 个模组`}
+            <Status warn={mods.some((m) => m.downloaded === false)}>
+                {loading ? '正在获取模组信息…' : error ? error : mods.some((m) => m.downloaded === false) ? '有未下载模组，请重启下载。' : query.trim() ? `搜索“${query}”，共 ${filtered.length} 个匹配模组` : `已安装 ${mods.length} 个模组`}
             </Status>
 
             {/* MODS_LIST 面板：搜索框与已安装列表之间 */}
@@ -386,7 +401,11 @@ export default () => {
                                     <Name title={m.title}>{m.title || m.id}</Name>
                                 </HeadMain>
                                 <Corner>
-                                    <BadgeSubs>⬇ {fmtSubs(m.subscriptions)}</BadgeSubs>
+                                    {m.downloaded === false ? (
+                                        <BadgeUndownloaded>未下载</BadgeUndownloaded>
+                                    ) : (
+                                        <BadgeSubs>⬇ {fmtSubs(m.subscriptions)}</BadgeSubs>
+                                    )}
                                 </Corner>
                             </CardHead>
                             <Desc>{fmtDesc(m.short_description || '（无描述）')}</Desc>
