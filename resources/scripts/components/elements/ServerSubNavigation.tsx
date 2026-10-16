@@ -47,7 +47,7 @@ const Separator = styled.div<{ collapsed?: boolean }>`
 `;
 
 const Item = styled(NavLink)<{ collapsed?: boolean }>`
-    ${tw`flex items-center px-3 py-2 rounded text-sm text-neutral-300 no-underline whitespace-nowrap transition-all duration-150`};
+    ${tw`flex items-center px-[14px] py-2 rounded text-sm text-neutral-300 no-underline whitespace-nowrap transition-all duration-150`};
 
     &:hover {
         ${tw`text-neutral-100 bg-neutral-800`};
@@ -59,7 +59,9 @@ const Item = styled(NavLink)<{ collapsed?: boolean }>`
         box-shadow: inset 0 0 0 1px ${theme`colors.neutral.600`.toString()};
     }
 
-    ${(props) => props.collapsed && tw`lg:pl-[15px] lg:pr-0 lg:h-9`};
+    // 折叠态与展开态保持相同左 padding（14px）：Nav px-2 + 14 = 22px，
+    // 图标 20px 宽 → 中心 32px = 64px 容器正中，且切换时零位移（不抖动）
+    ${(props) => props.collapsed && tw`lg:h-9`};
 
     @media (max-width: 1023px) {
         ${tw`px-3 py-2`};
@@ -68,13 +70,13 @@ const Item = styled(NavLink)<{ collapsed?: boolean }>`
 
 // 跳转管理后台：整页跳转 /admin（与顶部导航栏一致），样式与 Item 保持一致
 const AdminLink = styled.a<{ collapsed?: boolean }>`
-    ${tw`flex items-center px-3 py-2 rounded text-sm text-neutral-300 no-underline whitespace-nowrap transition-all duration-150 cursor-pointer`};
+    ${tw`flex items-center px-[14px] py-2 rounded text-sm text-neutral-300 no-underline whitespace-nowrap transition-all duration-150 cursor-pointer`};
 
     &:hover {
         ${tw`text-neutral-100 bg-neutral-800`};
     }
 
-    ${(props) => props.collapsed && tw`lg:pl-[15px] lg:pr-0 lg:h-9`};
+    ${(props) => props.collapsed && tw`lg:h-9`};
 
     @media (max-width: 1023px) {
         ${tw`px-3 py-2`};
