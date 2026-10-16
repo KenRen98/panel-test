@@ -73,7 +73,7 @@ const SearchStatus = styled.div`
 const GridTitle = styled.div`
     ${tw`flex items-center gap-2 text-[15px] font-semibold text-neutral-100 mt-5 mb-3`};
     & > .count {
-        ${tw`text-[11px] font-normal text-neutral-400 bg-neutral-700 border border-neutral-600 rounded-full px-2 py-0.5 leading-none`};
+        ${tw`text-[11px] font-normal text-neutral-400 bg-neutral-700 border border-neutral-600 rounded-md px-2 py-0.5 leading-none`};
     }
 `;
 
