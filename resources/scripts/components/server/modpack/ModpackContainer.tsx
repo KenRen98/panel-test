@@ -24,7 +24,7 @@ import { httpErrorToHuman } from '@/api/http';
 const CORE_KEYS = Object.keys(CORE_SERVER_TYPES);
 
 const CorePanel = styled.div`
-    ${tw`mb-7 flex flex-col gap-3 rounded-xl border border-neutral-700 bg-neutral-800 p-4`};
+    ${tw`mb-7 flex flex-col gap-3 rounded-xl border border-neutral-600 bg-neutral-700 p-4`};
 `;
 
 const CoreTitle = styled.h2`
@@ -52,7 +52,7 @@ const CoreField = styled.div`
         ${tw`text-xs text-neutral-400`};
     }
     & > select {
-        ${tw`w-full h-[38px] rounded-lg border border-neutral-600 bg-neutral-700 px-3 text-sm text-neutral-100 outline-none focus:border-primary-500 transition-colors duration-150`};
+        ${tw`w-full h-[38px] rounded-lg border border-neutral-700 bg-neutral-800 px-3 text-sm text-neutral-100 outline-none focus:border-primary-500 transition-colors duration-150`};
     }
     & > select.rate-limited {
         border-color: hsl(0, 75%, 60%);
@@ -89,7 +89,7 @@ const Grid = styled.div`
 `;
 
 const Card = styled.div`
-    ${tw`flex flex-col bg-neutral-800 border border-neutral-700 rounded-xl p-[18px] pb-2 transition-colors duration-150 hover:border-primary-500`};
+    ${tw`flex flex-col bg-neutral-700 border border-neutral-600 rounded-xl p-[18px] pb-2 transition-colors duration-150 hover:border-primary-500`};
 `;
 
 const CardHead = styled.div`
@@ -97,7 +97,7 @@ const CardHead = styled.div`
 `;
 
 const Logo = styled.img`
-    ${tw`w-14 h-14 rounded-lg object-cover bg-neutral-700 flex-shrink-0`};
+    ${tw`w-14 h-14 rounded-lg object-cover bg-neutral-600 flex-shrink-0`};
 `;
 
 const HeadMain = styled.div`
@@ -124,7 +124,7 @@ const Meta = styled.div`
 `;
 
 const Badge = styled.span`
-    ${tw`bg-neutral-700 rounded-md px-2 py-0.5 text-neutral-400`};
+    ${tw`bg-neutral-600 rounded-md px-2 py-0.5 text-neutral-400`};
 `;
 
 const Desc = styled.div`
@@ -157,13 +157,13 @@ const ClientBtn = styled.a`
 `;
 
 const Foot = styled.div`
-    ${tw`mt-2 pt-1.5 border-t border-neutral-700 flex justify-between text-xs text-neutral-400`};
+    ${tw`mt-2 pt-1.5 border-t border-neutral-600 flex justify-between text-xs text-neutral-400`};
 `;
 
 const StepRow = styled.div`
     ${tw`flex items-center gap-2.5 text-sm text-neutral-300 py-2`};
     & > .num {
-        ${tw`w-6 h-6 rounded-full flex items-center justify-center text-[13px] bg-neutral-700 border border-neutral-600 flex-shrink-0`};
+        ${tw`w-6 h-6 rounded-full flex items-center justify-center text-[13px] bg-neutral-600 border border-neutral-500 flex-shrink-0`};
     }
 `;
 
