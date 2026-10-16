@@ -2,6 +2,8 @@ import { ServerEggVariable } from '@/api/server/types';
 import updateStartupVariable from '@/api/server/updateStartupVariable';
 import http from '@/api/http';
 import getFileContents from '@/api/server/files/getFileContents';
+import saveFileContents from '@/api/server/files/saveFileContents';
+import deleteFiles from '@/api/server/files/deleteFiles';
 
 /**
  * Steam 创意工坊模组安装功能（模组安装）。
@@ -148,4 +150,93 @@ export const saveModsList = async (
     }
     const [updated] = await updateStartupVariable(uuid, 'MODS_LIST', ids.join(','));
     return updated;
+};
+
+// ============================================================
+// 阶段二：模组设置管理
+// 数据流：dump_schema.lua（开服时）生成 ugc_mods/schema/<id>.json 供表单渲染；
+//         前端保存只写 ugc_mods/pending_config/<id>.json（JSON）；
+//         下次开服 dst_auto_mods.sh 用 merge_config.lua 合并 pending 覆盖默认值，
+//         重新生成 modoverrides.lua（Master + Caves）。前端不解析/不写 Lua。
+// ============================================================
+
+export interface DstModOption {
+    label?: string;
+    data: string | number | boolean;
+}
+
+export interface DstModSchemaItem {
+    name: string;
+    label?: string;
+    hover?: string;
+    type: 'toggle' | 'enum' | 'slider' | 'text';
+    default?: string | number | boolean;
+    options?: DstModOption[];
+    min?: number;
+    max?: number;
+}
+
+export interface DstModSchema {
+    ok: boolean;
+    items: DstModSchemaItem[];
+}
+
+const SCHEMA_DIR = 'ugc_mods/schema';
+const PENDING_DIR = 'ugc_mods/pending_config';
+
+/**
+ * 读取某 mod 的设置 schema（开服时由 dump_schema.lua 生成）。
+ * 文件不存在 / 解析失败 → 返回 null（调用方按"需重启/不可编辑"处理）。
+ */
+export const getModSchema = async (uuid: string, id: string): Promise<DstModSchema | null> => {
+    try {
+        const content = await getFileContents(uuid, `${SCHEMA_DIR}/${id}.json`);
+        const parsed = JSON.parse(content) as DstModSchema;
+        if (!parsed || !Array.isArray(parsed.items)) {
+            return null;
+        }
+        return parsed;
+    } catch (e) {
+        console.warn(`[getModSchema] ${id} schema 读取失败`, e);
+        return null;
+    }
+};
+
+/**
+ * 读取某 mod 已保存的 pending 设置（用户改过但未重启的值）。
+ * 无 pending → null。返回 { name: value } 映射。
+ */
+export const getPendingConfig = async (uuid: string, id: string): Promise<Record<string, string | number | boolean> | null> => {
+    try {
+        const content = await getFileContents(uuid, `${PENDING_DIR}/${id}.json`);
+        const parsed = JSON.parse(content) as { configuration_options?: Record<string, string | number | boolean> };
+        return parsed?.configuration_options ?? null;
+    } catch (e) {
+        console.warn(`[getPendingConfig] ${id} pending 读取失败`, e);
+        return null;
+    }
+};
+
+/**
+ * 保存某 mod 的设置值 → 写 pending JSON。
+ * 下次开服脚本合并进 modoverrides.lua（Master + Caves）。
+ */
+export const savePendingConfig = async (
+    uuid: string,
+    id: string,
+    values: Record<string, string | number | boolean>
+): Promise<void> => {
+    const payload = JSON.stringify({ configuration_options: values });
+    await saveFileContents(uuid, `${PENDING_DIR}/${id}.json`, payload);
+};
+
+/**
+ * 移除模组时清理其 schema / pending 辅助文件（失败忽略——文件可能不存在）。
+ */
+export const removeModData = async (uuid: string, id: string): Promise<void> => {
+    try {
+        await deleteFiles(uuid, '/', [`${SCHEMA_DIR}/${id}.json`, `${PENDING_DIR}/${id}.json`]);
+    } catch (e) {
+        console.warn(`[removeModData] ${id} 清理辅助文件失败`, e);
+    }
 };

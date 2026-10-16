@@ -1,10 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components/macro';
-import tw from 'twin.macro';
+import tw, { theme } from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import Button from '@/components/elements/Button';
+import Modal from '@/components/elements/Modal';
 import { ServerContext } from '@/state/server';
-import { getSteamModDetails, getInstalledModIds, saveModsList, resolveSteamModMode, SteamMod } from '@/api/server/steamMods';
+import {
+    getSteamModDetails,
+    getInstalledModIds,
+    getModSchema,
+    getPendingConfig,
+    savePendingConfig,
+    removeModData,
+    saveModsList,
+    resolveSteamModMode,
+    DstModSchema,
+    SteamMod,
+} from '@/api/server/steamMods';
 import { ServerEggVariable } from '@/api/server/types';
 import { useFlashKey } from '@/plugins/useFlash';
 import { httpErrorToHuman } from '@/api/http';
@@ -58,6 +70,10 @@ const ModsListRow = styled.div`
 `;
 const ModsListValue = styled.div`
     ${tw`flex-1 rounded-lg border border-neutral-600 bg-neutral-700 px-2 py-[1px] text-[10px] leading-[1.2] break-all text-neutral-200`};
+`;
+
+const ModsPrefix = styled.span`
+    ${tw`text-neutral-500`};
 `;
 const ClearBtn = styled(Button)`
     ${tw`flex-shrink-0 text-xs px-4 bg-transparent border border-neutral-600 text-neutral-400 hover:text-red-400 hover:border-red-500/60`};
@@ -119,16 +135,36 @@ const Corner = styled.div`
     ${tw`flex flex-col items-end gap-1 flex-shrink-0`};
 `;
 
-const BadgeSubs = styled.span`
-    ${tw`text-[10px] text-neutral-200 bg-neutral-700 rounded px-1.5 py-0.5 whitespace-nowrap`};
-`;
-
 // 未下载徽章（橙黄色，与"修改后，需重启服务器"提示同色系）
 const BadgeUndownloaded = styled.span`
     ${tw`text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap`};
     color: hsl(40, 90%, 72%);
     border: 1px solid rgba(255, 170, 0, 0.35);
     background: rgba(255, 170, 0, 0.08);
+`;
+
+// 无设置项徽章（中性灰绿：模组有配置但为空 / 无需配置）
+const BadgeNoOptions = styled.span`
+    ${tw`text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap`};
+    color: hsl(160, 25%, 62%);
+    border: 1px solid rgba(110, 180, 150, 0.35);
+    background: rgba(110, 180, 150, 0.08);
+`;
+
+// 可编辑徽章（绿色：schema 已生成且有配置项）
+const BadgeEditable = styled.span`
+    ${tw`text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap`};
+    color: hsl(150, 60%, 70%);
+    border: 1px solid rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.08);
+`;
+
+// 需重启徽章（灰色：已下载但 schema 未生成——开服脚本还没跑 Phase 7）
+const BadgePending = styled.span`
+    ${tw`text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap`};
+    color: hsl(220, 10%, 62%);
+    border: 1px solid rgba(156, 163, 175, 0.35);
+    background: rgba(156, 163, 175, 0.08);
 `;
 
 const Desc = styled.div`
@@ -155,6 +191,49 @@ const CardDate = styled.div`
 
 const RemoveBtn = styled(Button)`
     ${tw`text-xs px-3.5 py-1.5 inline-flex items-center justify-center bg-transparent border border-red-500 text-red-400 hover:bg-red-500/10`};
+`;
+
+// 管理按钮（蓝色边框，仅 schema 可编辑的 mod 显示）
+const ManageBtn = styled(Button)`
+    ${tw`text-xs px-3.5 py-1.5 inline-flex items-center justify-center bg-transparent border border-primary-500 text-primary-400 hover:bg-primary-500/10`};
+`;
+
+const ActionBtns = styled.div`
+    ${tw`flex items-center gap-2 flex-shrink-0`};
+`;
+
+// ===== 设置抽屉 =====
+const DrawerTitle = styled.h3`
+    ${tw`text-base font-semibold text-neutral-100 mb-4 pr-6`};
+`;
+
+const ConfigField = styled.div`
+    ${tw`mb-4 flex flex-col gap-1.5`};
+`;
+
+const ConfigLabel = styled.label`
+    ${tw`text-sm text-neutral-200`};
+`;
+
+const ConfigInput = styled.input`
+    ${tw`w-full h-[36px] rounded-lg border border-neutral-700 bg-neutral-800 px-3 text-sm text-neutral-100 outline-none focus:border-primary-500 transition-colors duration-150`};
+`;
+
+const ConfigSelect = styled.select`
+    ${tw`w-full h-[36px] rounded-lg border border-neutral-700 bg-neutral-800 px-3 text-sm text-neutral-100 outline-none focus:border-primary-500 transition-colors duration-150`};
+`;
+
+const ConfigToggle = styled.input`
+    ${tw`w-4 h-4`};
+    accent-color: ${theme`colors.primary.500`.toString()};
+`;
+
+const ConfigHint = styled.div`
+    ${tw`text-xs text-neutral-500 leading-relaxed`};
+`;
+
+const DrawerActions = styled.div`
+    ${tw`flex justify-end gap-2 mt-2 pt-3 border-t border-neutral-700`};
 `;
 
 const Pager = styled.div`
@@ -192,12 +271,6 @@ const Unsupported = styled.div`
 const Empty = styled.div`
     ${tw`text-sm text-neutral-500 py-10 text-center`};
 `;
-
-const fmtSubs = (n: number): string => {
-    if (n >= 10000) return `${(n / 1000).toFixed(0)}K`;
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-    return String(n);
-};
 
 const fmtDate = (ts: number): string => {
     if (!ts) return '';
@@ -258,15 +331,30 @@ export default () => {
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
+    // 已下载 mod 的设置 schema（id → schema；null = 未生成/需重启）
+    const [schemas, setSchemas] = useState<Record<string, DstModSchema | null>>({});
+    // 设置抽屉状态
+    const [manageId, setManageId] = useState<string | null>(null);
+    const [draft, setDraft] = useState<Record<string, string | number | boolean>>({});
+    const [savingConfig, setSavingConfig] = useState(false);
+
     // 加载已安装模组详情（GetDetails 一次取全部）+ 服务器本地已下载集合（读 acf）
+    // + 已下载 mod 的设置 schema（读 dump_schema.lua 生成的 JSON）
     const load = useCallback(
         (idList: string[]) => {
             if (!mode) return;
             setLoading(true);
             setError(null);
             Promise.all([getSteamModDetails(mode, idList), getInstalledModIds(uuid)])
-                .then(([details, installedIds]) => {
-                    setMods(details.map((m) => ({ ...m, downloaded: installedIds.has(m.id) })));
+                .then(async ([details, installedIds]) => {
+                    const withDl = details.map((m) => ({ ...m, downloaded: installedIds.has(m.id) }));
+                    setMods(withDl);
+                    const entries = await Promise.all(
+                        withDl
+                            .filter((m) => m.downloaded !== false)
+                            .map(async (m) => [m.id, await getModSchema(uuid, m.id)] as const)
+                    );
+                    setSchemas(Object.fromEntries(entries));
                 })
                 .catch((e) => {
                     console.error(e);
@@ -307,7 +395,7 @@ export default () => {
         }));
     };
 
-    // 移除 mod（同步 MODS_LIST；乐观更新，失败回滚）
+    // 移除 mod（同步 MODS_LIST；乐观更新，失败回滚；顺带清理 schema/pending 辅助文件）
     const removeMod = async (id: string) => {
         if (saving) return;
         const next = ids.filter((x) => x !== id);
@@ -318,6 +406,7 @@ export default () => {
             const updated = await saveModsList(uuid, variables, next);
             syncVariable(updated);
             setMods((prev) => prev.filter((m) => m.id !== id));
+            removeModData(uuid, id); // 后台清理，失败忽略
         } catch (e) {
             console.error(e);
             setIds(ids); // 回滚
@@ -336,6 +425,7 @@ export default () => {
             setIds([]);
             setMods([]);
             syncVariable(updated);
+            ids.forEach((id) => removeModData(uuid, id)); // 后台清理，失败忽略
         } catch (e) {
             console.error(e);
             clearAndAddHttpError(e as Error);
@@ -343,6 +433,51 @@ export default () => {
             setSaving(false);
         }
     };
+
+    // 打开设置抽屉：读 schema + pending（用户已保存值），初始值 = pending ?? default
+    const openManage = async (id: string) => {
+        const schema = schemas[id];
+        if (!schema || schema.items.length === 0) return;
+        setManageId(id);
+        setSavingConfig(false);
+        const pending = await getPendingConfig(uuid, id).catch(() => null);
+        const init: Record<string, string | number | boolean> = {};
+        for (const item of schema.items) {
+            const hasPending = pending && pending[item.name] !== undefined;
+            if (hasPending) {
+                init[item.name] = pending![item.name];
+            } else if (item.default !== undefined) {
+                init[item.name] = item.default;
+            } else if (item.type === 'toggle') {
+                init[item.name] = false;
+            } else if (item.type === 'enum' && item.options && item.options.length > 0) {
+                init[item.name] = item.options[0].data;
+            } else if (item.type === 'slider') {
+                init[item.name] = item.min ?? 0;
+            } else {
+                init[item.name] = '';
+            }
+        }
+        setDraft(init);
+    };
+
+    // 保存设置 → 写 pending JSON（下次开服脚本合并进 modoverrides.lua）
+    const saveConfig = async () => {
+        if (!manageId || savingConfig) return;
+        setSavingConfig(true);
+        clearFlashes();
+        try {
+            await savePendingConfig(uuid, manageId, draft);
+            setManageId(null);
+        } catch (e) {
+            console.error(e);
+            clearAndAddHttpError(e as Error);
+        } finally {
+            setSavingConfig(false);
+        }
+    };
+
+    const activeSchema = manageId ? schemas[manageId] : null;
 
     if (!mode) {
         return (
@@ -387,7 +522,10 @@ export default () => {
                     </RestartHint>
                 </ModsListHead>
                 <ModsListRow>
-                    <ModsListValue>{ids.length ? ids.join(',') : '（空）'}</ModsListValue>
+                    <ModsListValue>
+                        <ModsPrefix>当前内容：</ModsPrefix>
+                        {ids.length ? ids.join(',') : <ModsPrefix>（空）</ModsPrefix>}
+                    </ModsListValue>
                     <ClearBtn onClick={clearAll} disabled={saving || ids.length === 0}>
                         清空
                     </ClearBtn>
@@ -402,37 +540,54 @@ export default () => {
                 <Empty>{query ? '没有匹配的模组' : '暂无已安装模组，请先在模组安装页添加'}</Empty>
             ) : (
                 <Grid>
-                    {slice.map((m) => (
-                        <Card key={m.id}>
-                            <CardHead>
-                                {m.preview_url ? (
-                                    <Logo src={m.preview_url} alt="" loading="lazy" />
-                                ) : (
-                                    <LogoFallback style={{ background: logoColor(m.id) }}>{logoText(m.title)}</LogoFallback>
-                                )}
-                                <HeadMain>
-                                    <Name title={m.title}>{m.title || m.id}</Name>
-                                </HeadMain>
-                                <Corner>
-                                    {m.downloaded === false ? (
-                                        <BadgeUndownloaded>未下载</BadgeUndownloaded>
+                    {slice.map((m) => {
+                        const schema = schemas[m.id];
+                        const editable = m.downloaded !== false && !!schema && schema.items.length > 0;
+                        return (
+                            <Card key={m.id}>
+                                <CardHead>
+                                    {m.preview_url ? (
+                                        <Logo src={m.preview_url} alt="" loading="lazy" />
                                     ) : (
-                                        <BadgeSubs>⬇ {fmtSubs(m.subscriptions)}</BadgeSubs>
+                                        <LogoFallback style={{ background: logoColor(m.id) }}>{logoText(m.title)}</LogoFallback>
                                     )}
-                                </Corner>
-                            </CardHead>
-                            <Desc>{fmtDesc(m.short_description || '（无描述）')}</Desc>
-                            <Actions>
-                                <CardFoot>
-                                    <ModId>{m.id}</ModId>
-                                    <CardDate>{fmtDate(m.time_updated) ? `更新于 ${fmtDate(m.time_updated)}` : ''}</CardDate>
-                                </CardFoot>
-                                <RemoveBtn onClick={() => removeMod(m.id)} disabled={saving}>
-                                    移除
-                                </RemoveBtn>
-                            </Actions>
-                        </Card>
-                    ))}
+                                    <HeadMain>
+                                        <Name title={m.title}>{m.title || m.id}</Name>
+                                    </HeadMain>
+                                    <Corner>
+                                        {m.downloaded === false ? (
+                                            <BadgeUndownloaded>未下载</BadgeUndownloaded>
+                                        ) : schema ? (
+                                            schema.items.length === 0 ? (
+                                                <BadgeNoOptions>无设置项</BadgeNoOptions>
+                                            ) : (
+                                                <BadgeEditable>可编辑</BadgeEditable>
+                                            )
+                                        ) : (
+                                            <BadgePending>需重启</BadgePending>
+                                        )}
+                                    </Corner>
+                                </CardHead>
+                                <Desc>{fmtDesc(m.short_description || '（无描述）')}</Desc>
+                                <Actions>
+                                    <CardFoot>
+                                        <ModId>{m.id}</ModId>
+                                        <CardDate>{fmtDate(m.time_updated) ? `更新于 ${fmtDate(m.time_updated)}` : ''}</CardDate>
+                                    </CardFoot>
+                                    <ActionBtns>
+                                        {editable && (
+                                            <ManageBtn onClick={() => openManage(m.id)} disabled={saving}>
+                                                管理
+                                            </ManageBtn>
+                                        )}
+                                        <RemoveBtn onClick={() => removeMod(m.id)} disabled={saving}>
+                                            移除
+                                        </RemoveBtn>
+                                    </ActionBtns>
+                                </Actions>
+                            </Card>
+                        );
+                    })}
                 </Grid>
             )}
 
@@ -452,6 +607,69 @@ export default () => {
                 </Pager>
             )}
             </PageContainer>
+
+            {/* 设置抽屉：按 schema 渲染表单（中文 label 优先），保存写 pending JSON */}
+            {manageId && activeSchema && (
+                <Modal visible={!!manageId} onDismissed={() => setManageId(null)} dismissable={!savingConfig}>
+                    <DrawerTitle>设置 · {mods.find((m) => m.id === manageId)?.title || manageId}</DrawerTitle>
+                    {activeSchema.items.map((item) => (
+                        <ConfigField key={item.name}>
+                            <ConfigLabel htmlFor={`cfg-${item.name}`}>{item.label || item.name}</ConfigLabel>
+                            {item.type === 'toggle' && (
+                                <div css={tw`flex items-center`}>
+                                    <ConfigToggle
+                                        id={`cfg-${item.name}`}
+                                        type="checkbox"
+                                        checked={!!draft[item.name]}
+                                        onChange={(e) => setDraft((d) => ({ ...d, [item.name]: e.target.checked }))}
+                                    />
+                                </div>
+                            )}
+                            {item.type === 'enum' && (
+                                <ConfigSelect
+                                    id={`cfg-${item.name}`}
+                                    value={JSON.stringify(draft[item.name])}
+                                    onChange={(e) => setDraft((d) => ({ ...d, [item.name]: JSON.parse(e.target.value) }))}
+                                >
+                                    {(item.options || []).map((o) => (
+                                        <option key={JSON.stringify(o.data)} value={JSON.stringify(o.data)}>
+                                            {o.label || String(o.data)}
+                                        </option>
+                                    ))}
+                                </ConfigSelect>
+                            )}
+                            {item.type === 'slider' && (
+                                <ConfigInput
+                                    id={`cfg-${item.name}`}
+                                    type="number"
+                                    min={item.min}
+                                    max={item.max}
+                                    step={1}
+                                    value={String(draft[item.name] ?? '')}
+                                    onChange={(e) => setDraft((d) => ({ ...d, [item.name]: Number(e.target.value) }))}
+                                />
+                            )}
+                            {item.type === 'text' && (
+                                <ConfigInput
+                                    id={`cfg-${item.name}`}
+                                    type="text"
+                                    value={String(draft[item.name] ?? '')}
+                                    onChange={(e) => setDraft((d) => ({ ...d, [item.name]: e.target.value }))}
+                                />
+                            )}
+                            {item.hover && <ConfigHint>{item.hover}</ConfigHint>}
+                        </ConfigField>
+                    ))}
+                    <DrawerActions>
+                        <Button size={'small'} color={'grey'} isSecondary onClick={() => setManageId(null)} disabled={savingConfig}>
+                            取消
+                        </Button>
+                        <Button size={'small'} color={'primary'} onClick={saveConfig} disabled={savingConfig}>
+                            {savingConfig ? '保存中…' : '保存'}
+                        </Button>
+                    </DrawerActions>
+                </Modal>
+            )}
         </ServerContentBlock>
     );
 };
