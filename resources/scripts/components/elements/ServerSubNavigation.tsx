@@ -158,44 +158,77 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
     });
 
     // 底部区（共用一条分隔线，与上方导航组隔开）：
-    // 1. 游戏教程（egg 声明 manual-xxx 时对所有人显示，外链打开官方教程）
-    // 2. 跳转管理后台（仅管理员可见）：跳到当前服务器的管理界面（/admin/servers/view/{DB id}）
-    if (manualUrl || rootAdmin) {
-        const bottomItems: React.ReactNode[] = [];
+    // 1. 面板教程（固定显示） 2. 高级功能（固定显示） 3. 游戏教程（egg 声明 manual-xxx 时显示）
+    // 4. 跳转管理后台（仅管理员可见）
+    const bottomItems: React.ReactNode[] = [];
 
-        if (manualUrl) {
-            bottomItems.push(
-                <AdminLink
-                    key={'manual'}
-                    href={manualUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    collapsed={collapsed}
-                    title={collapsed ? '游戏教程' : undefined}
-                >
-                    <FontAwesomeIcon icon={faBook} fixedWidth />
-                    <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
-                        游戏教程
-                    </span>
-                </AdminLink>
-            );
-        }
+    // 面板教程：官方服务器基础教程
+    bottomItems.push(
+        <AdminLink
+            key={'manual-basics'}
+            href={'https://manual.mr-leaves.com/1-serverbasics/'}
+            target="_blank"
+            rel="noopener noreferrer"
+            collapsed={collapsed}
+            title={collapsed ? '面板教程' : undefined}
+        >
+            <FontAwesomeIcon icon={faBook} fixedWidth />
+            <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+                面板教程
+            </span>
+        </AdminLink>
+    );
 
-        if (rootAdmin) {
-            const adminHref = `/admin/servers/view/${server?.internalId ?? ''}`;
-            bottomItems.push(
-                <AdminLink key={'admin'} href={adminHref} collapsed={collapsed} title={collapsed ? '跳转管理' : undefined}>
-                    <FontAwesomeIcon icon={faExternalLinkAlt} fixedWidth />
-                    <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
-                        跳转管理
-                    </span>
-                </AdminLink>
-            );
-        }
+    // 高级功能：官方服务器进阶教程
+    bottomItems.push(
+        <AdminLink
+            key={'manual-advanced'}
+            href={'https://manual.mr-leaves.com/2-serveradvanced/'}
+            target="_blank"
+            rel="noopener noreferrer"
+            collapsed={collapsed}
+            title={collapsed ? '高级功能' : undefined}
+        >
+            <FontAwesomeIcon icon={faBook} fixedWidth />
+            <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+                高级功能
+            </span>
+        </AdminLink>
+    );
 
-        rendered.push(<Separator key={'sep-bottom'} collapsed={collapsed} />);
-        rendered.push(<Group key={'group-bottom'}>{bottomItems}</Group>);
+    // 游戏教程：egg 通过 EGG_CAPABILITIES 声明 manual-<suffix> 时显示
+    if (manualUrl) {
+        bottomItems.push(
+            <AdminLink
+                key={'manual'}
+                href={manualUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                collapsed={collapsed}
+                title={collapsed ? '游戏教程' : undefined}
+            >
+                <FontAwesomeIcon icon={faBook} fixedWidth />
+                <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+                    游戏教程
+                </span>
+            </AdminLink>
+        );
     }
+
+    if (rootAdmin) {
+        const adminHref = `/admin/servers/view/${server?.internalId ?? ''}`;
+        bottomItems.push(
+            <AdminLink key={'admin'} href={adminHref} collapsed={collapsed} title={collapsed ? '跳转管理' : undefined}>
+                <FontAwesomeIcon icon={faExternalLinkAlt} fixedWidth />
+                <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+                    跳转管理
+                </span>
+            </AdminLink>
+        );
+    }
+
+    rendered.push(<Separator key={'sep-bottom'} collapsed={collapsed} />);
+    rendered.push(<Group key={'group-bottom'}>{bottomItems}</Group>);
 
     return <Nav>{rendered}</Nav>;
 };
