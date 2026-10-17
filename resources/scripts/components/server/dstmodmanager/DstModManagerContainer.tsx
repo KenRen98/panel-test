@@ -317,7 +317,7 @@ const DrawerFoot = styled.div`
 `;
 
 const FootNote = styled.span`
-    ${tw`text-[11px] text-neutral-500 flex-1 leading-relaxed`};
+    ${tw`text-[11px] text-neutral-400 flex-1 leading-relaxed`};
 `;
 
 // 配置行（行式：label+key 左，控件右，照 demo .opt-row）
@@ -873,7 +873,7 @@ export default () => {
                         {loadingDraft && <DrawerProgress />}
                         <DrawerHead>
                             <DrawerTitleWrap>
-                                <DrawerTitle>设置 · {mods.find((m) => m.id === manageId)?.title || manageId}</DrawerTitle>
+                                <DrawerTitle>{mods.find((m) => m.id === manageId)?.title || manageId}</DrawerTitle>
                                 <DrawerId>{manageId}</DrawerId>
                             </DrawerTitleWrap>
                             <DrawerClose type="button" onClick={() => setManageId(null)} disabled={savingConfig} aria-label="关闭">
@@ -935,7 +935,7 @@ export default () => {
                             ))}
                         </DrawerBody>
                         <DrawerFoot>
-                            <FootNote>保存后下次开服写入 Master / Caves 两份 modoverrides.lua</FootNote>
+                            <FootNote>重启服务器后生效</FootNote>
                             <Button size={'small'} color={'grey'} isSecondary onClick={() => setManageId(null)} disabled={savingConfig}>
                                 取消
                             </Button>
