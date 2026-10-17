@@ -8,7 +8,6 @@ import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 import { ServerContext } from '@/state/server';
 import { useStoreState } from '@/state/hooks';
-import Tooltip from '@/components/elements/tooltip/Tooltip';
 import { hasCapability } from '@/api/server/eggCapabilities';
 import { hasSteamModCapability, hasDstModManagerCapability } from '@/api/server/steamMods';
 
@@ -38,6 +37,7 @@ const Separator = styled.div<{ collapsed?: boolean }>`
     height: 1px;
     margin: 8px 6px;
     background: ${theme`colors.neutral.600`.toString()};
+    transition: margin 180ms ease, width 180ms ease;
 
     ${(props) => props.collapsed && tw`lg:mx-3 lg:w-auto`};
 
@@ -123,27 +123,27 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
         rendered.push(
             <Group key={`group-${group}`}>
                 {items.map((route) => {
+                    // 统一渲染（折叠/展开同一 DOM 结构，无 Tooltip 包裹切换 → 不重挂载不抖动）
+                    // 折叠时用原生 title 提示（等价 Tooltip 功能，且不改变 DOM 树）
                     const link = (
-                        <Item key={route.path} to={to(route.path)} exact={route.exact} collapsed={collapsed}>
+                        <Item
+                            key={route.path}
+                            to={to(route.path)}
+                            exact={route.exact}
+                            collapsed={collapsed}
+                            title={collapsed ? route.name : undefined}
+                        >
                             {route.icon && <FontAwesomeIcon icon={route.icon} fixedWidth />}
                             <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms]`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>{route.name}</span>
                         </Item>
                     );
 
-                    const wrapped = collapsed ? (
-                        <Tooltip key={route.path} placement={'right'} content={route.name!}>
-                            {link}
-                        </Tooltip>
-                    ) : (
-                        link
-                    );
-
                     return route.permission ? (
                         <Can key={route.path} action={route.permission} matchAny>
-                            {wrapped}
+                            {link}
                         </Can>
                     ) : (
-                        wrapped
+                        link
                     );
                 })}
             </Group>
@@ -155,7 +155,7 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
     if (rootAdmin) {
         const adminHref = `/admin/servers/view/${server?.internalId ?? ''}`;
         const adminLink = (
-            <AdminLink href={adminHref} collapsed={collapsed}>
+            <AdminLink href={adminHref} collapsed={collapsed} title={collapsed ? '跳转管理' : undefined}>
                 <FontAwesomeIcon icon={faExternalLinkAlt} fixedWidth />
                 <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms]`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
                     跳转管理
@@ -166,13 +166,7 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
         rendered.push(<Separator key={'sep-admin'} collapsed={collapsed} />);
         rendered.push(
             <Group key={'group-admin'}>
-                {collapsed ? (
-                    <Tooltip placement={'right'} content={'跳转管理'}>
-                        {adminLink}
-                    </Tooltip>
-                ) : (
-                    adminLink
-                )}
+                {adminLink}
             </Group>
         );
     }
