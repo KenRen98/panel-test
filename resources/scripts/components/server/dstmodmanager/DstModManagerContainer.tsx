@@ -3,7 +3,6 @@ import styled from 'styled-components/macro';
 import tw, { theme } from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import Button from '@/components/elements/Button';
-import Modal from '@/components/elements/Modal';
 import { ServerContext } from '@/state/server';
 import {
     getSteamModDetails,
@@ -202,38 +201,161 @@ const ActionBtns = styled.div`
     ${tw`flex items-center gap-2 flex-shrink-0`};
 `;
 
-// ===== 设置抽屉 =====
+// ===== 设置抽屉（自定义居中抽屉，照 demo .drawer：head/body/foot 三段，body 内滚动） =====
+const DrawerMask = styled.div`
+    ${tw`fixed inset-0 z-50 flex items-center justify-center`};
+    background: rgba(10, 16, 28, 0.55);
+`;
+
+const DrawerPanel = styled.div`
+    ${tw`flex flex-col w-full overflow-hidden`};
+    width: 560px;
+    max-width: 92vw;
+    max-height: 84vh;
+    background: ${theme`colors.neutral.800`.toString()};
+    border: 1px solid ${theme`colors.neutral.600`.toString()};
+    border-radius: 12px;
+    @media (max-width: 700px) {
+        max-width: 94vw;
+        max-height: 88vh;
+    }
+`;
+
+const DrawerHead = styled.div`
+    ${tw`flex items-start gap-2.5 px-4 pt-4 pb-3 flex-shrink-0`};
+    border-bottom: 1px solid ${theme`colors.neutral.700`.toString()};
+`;
+
+const DrawerTitleWrap = styled.div`
+    ${tw`min-w-0`};
+`;
+
 const DrawerTitle = styled.h3`
-    ${tw`text-base font-semibold text-neutral-100 mb-4 pr-6`};
+    ${tw`text-base font-bold text-neutral-100 leading-snug`};
 `;
 
-const ConfigField = styled.div`
-    ${tw`mb-4 flex flex-col gap-1.5`};
+const DrawerId = styled.div`
+    ${tw`text-[11px] text-neutral-400 font-mono mt-1 leading-none`};
 `;
 
-const ConfigLabel = styled.label`
-    ${tw`text-sm text-neutral-200`};
+const DrawerClose = styled.button`
+    ${tw`ml-auto w-7 h-7 rounded-md border bg-transparent text-neutral-400 flex items-center justify-center flex-shrink-0 transition-colors duration-150`};
+    border-color: ${theme`colors.neutral.600`.toString()};
+    &:hover {
+        color: hsl(0, 80%, 72%);
+        border-color: rgba(248, 81, 73, 0.45);
+    }
 `;
 
-const ConfigInput = styled.input`
-    ${tw`w-full h-[36px] rounded-lg border border-neutral-700 bg-neutral-800 px-3 text-sm text-neutral-100 outline-none focus:border-primary-500 transition-colors duration-150`};
+const DrawerBody = styled.div`
+    ${tw`flex-1 min-h-0 overflow-y-auto px-4 py-3`};
 `;
 
-const ConfigSelect = styled.select`
-    ${tw`w-full h-[36px] rounded-lg border border-neutral-700 bg-neutral-800 px-3 text-sm text-neutral-100 outline-none focus:border-primary-500 transition-colors duration-150`};
+const DrawerFoot = styled.div`
+    ${tw`flex items-center gap-2.5 px-4 py-3 flex-shrink-0`};
+    border-top: 1px solid ${theme`colors.neutral.700`.toString()};
 `;
 
-const ConfigToggle = styled.input`
-    ${tw`w-4 h-4`};
-    accent-color: ${theme`colors.primary.500`.toString()};
+const FootNote = styled.span`
+    ${tw`text-[11px] text-neutral-500 flex-1 leading-relaxed`};
 `;
 
-const ConfigHint = styled.div`
-    ${tw`text-xs text-neutral-500 leading-relaxed`};
+// 配置行（行式：label+key 左，控件右，照 demo .opt-row）
+const OptRow = styled.div`
+    ${tw`flex items-center gap-2.5 py-2`};
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 `;
 
-const DrawerActions = styled.div`
-    ${tw`flex justify-end gap-2 mt-2 pt-3 border-t border-neutral-700`};
+const OptLabel = styled.div`
+    ${tw`flex-1 min-w-0`};
+`;
+
+const OptName = styled.div`
+    ${tw`text-[13px] text-neutral-100 leading-snug`};
+`;
+
+const OptKey = styled.div`
+    ${tw`text-[10px] text-neutral-500 font-mono mt-0.5 leading-none`};
+`;
+
+const OptControl = styled.div`
+    ${tw`flex-shrink-0 flex items-center gap-1.5`};
+`;
+
+// 滑动开关（照 demo .toggle）
+const ToggleWrap = styled.label`
+    ${tw`relative w-[38px] h-5 flex-shrink-0 cursor-pointer`};
+    & > input {
+        ${tw`opacity-0 w-0 h-0 absolute`};
+    }
+    & > span {
+        ${tw`absolute inset-0 rounded-full border transition-all duration-150`};
+        background: ${theme`colors.neutral.700`.toString()};
+        border-color: ${theme`colors.neutral.600`.toString()};
+        &::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            background: ${theme`colors.neutral.400`.toString()};
+            border-radius: 50%;
+            transition: all 0.15s;
+        }
+    }
+    & > input:checked + span {
+        background: ${theme`colors.primary.500`.toString()};
+        border-color: ${theme`colors.primary.500`.toString()};
+        &::after {
+            left: 20px;
+            background: #fff;
+        }
+    }
+`;
+
+const OptSelect = styled.select`
+    ${tw`rounded-md border text-xs px-2 py-1.5 outline-none cursor-pointer max-w-[220px]`};
+    background: ${theme`colors.neutral.700`.toString()};
+    border-color: ${theme`colors.neutral.600`.toString()};
+    color: ${theme`colors.neutral.100`.toString()};
+    &:focus {
+        border-color: ${theme`colors.primary.500`.toString()};
+    }
+`;
+
+const OptInput = styled.input`
+    ${tw`rounded-md border text-xs px-2 py-1.5 outline-none w-[130px]`};
+    background: ${theme`colors.neutral.700`.toString()};
+    border-color: ${theme`colors.neutral.600`.toString()};
+    color: ${theme`colors.neutral.100`.toString()};
+    &:focus {
+        border-color: ${theme`colors.primary.500`.toString()};
+    }
+`;
+
+// ===== 确认弹窗（照 demo .modal） =====
+const ConfirmMask = styled.div`
+    ${tw`fixed inset-0 z-[60] flex items-center justify-center p-5`};
+    background: rgba(10, 16, 28, 0.55);
+`;
+
+const ConfirmBox = styled.div`
+    ${tw`w-[380px] max-w-full p-4 rounded-xl border`};
+    background: ${theme`colors.neutral.800`.toString()};
+    border-color: ${theme`colors.neutral.600`.toString()};
+`;
+
+const ConfirmTitle = styled.div`
+    ${tw`text-[15px] font-bold text-neutral-100 mb-2`};
+`;
+
+const ConfirmText = styled.div`
+    ${tw`text-[13px] text-neutral-400 leading-relaxed mb-4 break-all whitespace-pre-line`};
+`;
+
+const ConfirmActions = styled.div`
+    ${tw`flex justify-end gap-2.5`};
 `;
 
 const Pager = styled.div`
@@ -337,6 +459,22 @@ export default () => {
     const [manageId, setManageId] = useState<string | null>(null);
     const [draft, setDraft] = useState<Record<string, string | number | boolean>>({});
     const [savingConfig, setSavingConfig] = useState(false);
+    // 确认弹窗（移除 / 清空）
+    const [confirm, setConfirm] = useState<{ title: string; text: string; onOk: () => void } | null>(null);
+
+    // Escape 关闭：确认弹窗优先，其次设置抽屉（保存中不可关）
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key !== 'Escape') return;
+            if (confirm) {
+                setConfirm(null);
+            } else if (manageId && !savingConfig) {
+                setManageId(null);
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [confirm, manageId, savingConfig]);
 
     // 加载已安装模组详情（GetDetails 一次取全部）+ 服务器本地已下载集合（读 acf）
     // + 已下载 mod 的设置 schema（读 dump_schema.lua 生成的 JSON）
@@ -395,7 +533,7 @@ export default () => {
         }));
     };
 
-    // 移除 mod（同步 MODS_LIST；乐观更新，失败回滚；顺带清理 schema/pending 辅助文件）
+    // 移除 mod（先确认；同步 MODS_LIST；乐观更新，失败回滚；顺带清理 schema/pending 辅助文件）
     const removeMod = async (id: string) => {
         if (saving) return;
         const next = ids.filter((x) => x !== id);
@@ -416,6 +554,17 @@ export default () => {
         }
     };
 
+    const confirmRemove = (id: string, title: string) => {
+        setConfirm({
+            title: '移除模组',
+            text: `确定移除「${title}」（${id}）？\n将同步从 MODS_LIST 中删除该 id，并清理其设置数据。`,
+            onOk: () => {
+                setConfirm(null);
+                removeMod(id);
+            },
+        });
+    };
+
     const clearAll = async () => {
         if (saving) return;
         setSaving(true);
@@ -432,6 +581,17 @@ export default () => {
         } finally {
             setSaving(false);
         }
+    };
+
+    const confirmClear = () => {
+        setConfirm({
+            title: '清空模组列表',
+            text: `确定清空全部 ${ids.length} 个模组？MODS_LIST 将同步清空，已安装模组与设置数据一并移除。`,
+            onOk: () => {
+                setConfirm(null);
+                clearAll();
+            },
+        });
     };
 
     // 打开设置抽屉：读 schema + pending（用户已保存值），初始值 = pending ?? default
@@ -526,7 +686,7 @@ export default () => {
                         <ModsPrefix>当前内容：</ModsPrefix>
                         {ids.length ? ids.join(',') : <ModsPrefix>（空）</ModsPrefix>}
                     </ModsListValue>
-                    <ClearBtn onClick={clearAll} disabled={saving || ids.length === 0}>
+                    <ClearBtn onClick={confirmClear} disabled={saving || ids.length === 0}>
                         清空
                     </ClearBtn>
                 </ModsListRow>
@@ -580,7 +740,7 @@ export default () => {
                                                 管理
                                             </ManageBtn>
                                         )}
-                                        <RemoveBtn onClick={() => removeMod(m.id)} disabled={saving}>
+                                        <RemoveBtn onClick={() => confirmRemove(m.id, m.title || m.id)} disabled={saving}>
                                             移除
                                         </RemoveBtn>
                                     </ActionBtns>
@@ -608,67 +768,110 @@ export default () => {
             )}
             </PageContainer>
 
-            {/* 设置抽屉：按 schema 渲染表单（中文 label 优先），保存写 pending JSON */}
+            {/* 设置抽屉：自定义居中抽屉（照 demo），body 内滚动，头尾固定；保存写 pending JSON */}
             {manageId && activeSchema && (
-                <Modal visible={!!manageId} onDismissed={() => setManageId(null)} dismissable={!savingConfig}>
-                    <DrawerTitle>设置 · {mods.find((m) => m.id === manageId)?.title || manageId}</DrawerTitle>
-                    {activeSchema.items.map((item) => (
-                        <ConfigField key={item.name}>
-                            <ConfigLabel htmlFor={`cfg-${item.name}`}>{item.label || item.name}</ConfigLabel>
-                            {item.type === 'toggle' && (
-                                <div css={tw`flex items-center`}>
-                                    <ConfigToggle
-                                        id={`cfg-${item.name}`}
-                                        type="checkbox"
-                                        checked={!!draft[item.name]}
-                                        onChange={(e) => setDraft((d) => ({ ...d, [item.name]: e.target.checked }))}
-                                    />
-                                </div>
-                            )}
-                            {item.type === 'enum' && (
-                                <ConfigSelect
-                                    id={`cfg-${item.name}`}
-                                    value={JSON.stringify(draft[item.name])}
-                                    onChange={(e) => setDraft((d) => ({ ...d, [item.name]: JSON.parse(e.target.value) }))}
-                                >
-                                    {(item.options || []).map((o) => (
-                                        <option key={JSON.stringify(o.data)} value={JSON.stringify(o.data)}>
-                                            {o.label || String(o.data)}
-                                        </option>
-                                    ))}
-                                </ConfigSelect>
-                            )}
-                            {item.type === 'slider' && (
-                                <ConfigInput
-                                    id={`cfg-${item.name}`}
-                                    type="number"
-                                    min={item.min}
-                                    max={item.max}
-                                    step={1}
-                                    value={String(draft[item.name] ?? '')}
-                                    onChange={(e) => setDraft((d) => ({ ...d, [item.name]: Number(e.target.value) }))}
-                                />
-                            )}
-                            {item.type === 'text' && (
-                                <ConfigInput
-                                    id={`cfg-${item.name}`}
-                                    type="text"
-                                    value={String(draft[item.name] ?? '')}
-                                    onChange={(e) => setDraft((d) => ({ ...d, [item.name]: e.target.value }))}
-                                />
-                            )}
-                            {item.hover && <ConfigHint>{item.hover}</ConfigHint>}
-                        </ConfigField>
-                    ))}
-                    <DrawerActions>
-                        <Button size={'small'} color={'grey'} isSecondary onClick={() => setManageId(null)} disabled={savingConfig}>
-                            取消
-                        </Button>
-                        <Button size={'small'} color={'primary'} onClick={saveConfig} disabled={savingConfig}>
-                            {savingConfig ? '保存中…' : '保存'}
-                        </Button>
-                    </DrawerActions>
-                </Modal>
+                <DrawerMask
+                    onMouseDown={(e) => {
+                        if (e.target === e.currentTarget && !savingConfig) setManageId(null);
+                    }}
+                >
+                    <DrawerPanel role="dialog" aria-modal="true">
+                        <DrawerHead>
+                            <DrawerTitleWrap>
+                                <DrawerTitle>设置 · {mods.find((m) => m.id === manageId)?.title || manageId}</DrawerTitle>
+                                <DrawerId>{manageId}</DrawerId>
+                            </DrawerTitleWrap>
+                            <DrawerClose type="button" onClick={() => setManageId(null)} disabled={savingConfig} aria-label="关闭">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </DrawerClose>
+                        </DrawerHead>
+                        <DrawerBody>
+                            {activeSchema.items.map((item) => (
+                                <OptRow key={item.name}>
+                                    <OptLabel>
+                                        <OptName title={item.hover || undefined}>{item.label || item.name}</OptName>
+                                        <OptKey>{item.name}</OptKey>
+                                    </OptLabel>
+                                    <OptControl>
+                                        {item.type === 'toggle' && (
+                                            <ToggleWrap>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!draft[item.name]}
+                                                    onChange={(e) => setDraft((d) => ({ ...d, [item.name]: e.target.checked }))}
+                                                />
+                                                <span />
+                                            </ToggleWrap>
+                                        )}
+                                        {item.type === 'enum' && (
+                                            <OptSelect
+                                                value={JSON.stringify(draft[item.name])}
+                                                onChange={(e) => setDraft((d) => ({ ...d, [item.name]: JSON.parse(e.target.value) }))}
+                                            >
+                                                {(item.options || []).map((o) => (
+                                                    <option key={JSON.stringify(o.data)} value={JSON.stringify(o.data)}>
+                                                        {o.label || String(o.data)}
+                                                    </option>
+                                                ))}
+                                            </OptSelect>
+                                        )}
+                                        {item.type === 'slider' && (
+                                            <OptInput
+                                                type="number"
+                                                min={item.min}
+                                                max={item.max}
+                                                step={1}
+                                                value={String(draft[item.name] ?? '')}
+                                                onChange={(e) => setDraft((d) => ({ ...d, [item.name]: Number(e.target.value) }))}
+                                            />
+                                        )}
+                                        {item.type === 'text' && (
+                                            <OptInput
+                                                type="text"
+                                                value={String(draft[item.name] ?? '')}
+                                                onChange={(e) => setDraft((d) => ({ ...d, [item.name]: e.target.value }))}
+                                            />
+                                        )}
+                                    </OptControl>
+                                </OptRow>
+                            ))}
+                        </DrawerBody>
+                        <DrawerFoot>
+                            <FootNote>保存后下次开服写入 Master / Caves 两份 modoverrides.lua</FootNote>
+                            <Button size={'small'} color={'grey'} isSecondary onClick={() => setManageId(null)} disabled={savingConfig}>
+                                取消
+                            </Button>
+                            <Button size={'small'} color={'primary'} onClick={saveConfig} disabled={savingConfig}>
+                                {savingConfig ? '保存中…' : '保存修改'}
+                            </Button>
+                        </DrawerFoot>
+                    </DrawerPanel>
+                </DrawerMask>
+            )}
+
+            {/* 确认弹窗（移除 / 清空） */}
+            {confirm && (
+                <ConfirmMask
+                    onMouseDown={(e) => {
+                        if (e.target === e.currentTarget) setConfirm(null);
+                    }}
+                >
+                    <ConfirmBox role="dialog" aria-modal="true">
+                        <ConfirmTitle>{confirm.title}</ConfirmTitle>
+                        <ConfirmText>{confirm.text}</ConfirmText>
+                        <ConfirmActions>
+                            <Button size={'small'} color={'grey'} isSecondary onClick={() => setConfirm(null)}>
+                                取消
+                            </Button>
+                            <Button size={'small'} color={'primary'} onClick={confirm.onOk}>
+                                确认
+                            </Button>
+                        </ConfirmActions>
+                    </ConfirmBox>
+                </ConfirmMask>
             )}
         </ServerContentBlock>
     );
