@@ -26,7 +26,7 @@ const Aside = styled.aside<{ collapsed?: boolean }>`
     }
 
     @media (min-width: 1024px) {
-        ${(props) => (props.collapsed ? tw`w-16` : tw`w-[140px]`)};
+        ${(props) => (props.collapsed ? tw`w-16` : tw`w-[210px]`)};
         height: 100vh;
         position: sticky;
         top: 0;
@@ -82,7 +82,7 @@ export default () => {
                     <span
                         css={[
                             tw`ml-2 truncate transition-all duration-[180ms] ease-out`,
-                            collapsed ? tw`lg:ml-0 lg:max-w-0 lg:opacity-0 overflow-hidden` : tw`max-w-[calc(140px-2rem-2rem-0.5rem)]`,
+                            collapsed ? tw`lg:ml-0 lg:max-w-0 lg:opacity-0 overflow-hidden` : tw`max-w-[calc(210px-2rem-2rem-0.5rem)]`,
                         ]}
                     >
                         {name}
