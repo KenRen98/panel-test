@@ -94,10 +94,12 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
     const hasSteamMod = hasSteamModCapability(variables);
     const hasDstModManager = hasDstModManagerCapability(variables);
 
-    // 游戏教程：egg 通过 EGG_CAPABILITIES 声明 manual-<suffix> 时显示，
-    // 跳转到官方教程 https://manual.mr-leaves.com/3-servergames/<suffix>
+    // 游戏教程：始终显示。egg 通过 EGG_CAPABILITIES 声明 manual-<suffix> 时跳对应后缀，
+    // 未声明时跳默认地址 https://manual.mr-leaves.com/3-servergames/
     const manualCap = getEggCapabilities(variables).find((c) => c.startsWith('manual-'));
-    const manualUrl = manualCap ? `https://manual.mr-leaves.com/3-servergames/${manualCap.slice('manual-'.length)}` : undefined;
+    const manualUrl = manualCap
+        ? `https://manual.mr-leaves.com/3-servergames/${manualCap.slice('manual-'.length)}`
+        : 'https://manual.mr-leaves.com/3-servergames/';
 
     const to = (path: string) => {
         if (path === '/') {
@@ -196,24 +198,22 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
         </AdminLink>
     );
 
-    // 游戏教程：egg 通过 EGG_CAPABILITIES 声明 manual-<suffix> 时显示
-    if (manualUrl) {
-        bottomItems.push(
-            <AdminLink
-                key={'manual'}
-                href={manualUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                collapsed={collapsed}
-                title={collapsed ? '游戏教程' : undefined}
-            >
-                <FontAwesomeIcon icon={faBook} fixedWidth />
-                <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
-                    游戏教程
-                </span>
-            </AdminLink>
-        );
-    }
+    // 游戏教程：始终显示，egg 声明 manual-<suffix> 时跳对应后缀，否则跳默认地址
+    bottomItems.push(
+        <AdminLink
+            key={'manual'}
+            href={manualUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            collapsed={collapsed}
+            title={collapsed ? '游戏教程' : undefined}
+        >
+            <FontAwesomeIcon icon={faBook} fixedWidth />
+            <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+                游戏教程
+            </span>
+        </AdminLink>
+    );
 
     if (rootAdmin) {
         const adminHref = `/admin/servers/view/${server?.internalId ?? ''}`;
