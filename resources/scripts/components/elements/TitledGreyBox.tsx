@@ -12,9 +12,7 @@ interface Props {
 }
 
 const TitledGreyBox = ({ icon, title, children, className }: Props) => (
-    // min-w-0：grid/flex 子项默认 min-width:auto，内容（长命令/长描述）会把列撑宽，
-    // 导致整页布局超宽（一二级菜单被推出视口）
-    <div css={tw`rounded shadow-md bg-neutral-700 min-w-0`} className={className}>
+    <div css={tw`rounded shadow-md bg-neutral-700`} className={className}>
         <div css={tw`bg-neutral-900 rounded-t p-3 border-b border-black`}>
             {typeof title === 'string' ? (
                 <p css={tw`text-sm uppercase`}>
