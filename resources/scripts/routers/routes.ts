@@ -11,6 +11,7 @@ import {
     faSlidersH,
     faTerminal,
     faUserPlus,
+    faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-common-types';
 import ServerConsole from '@/components/server/console/ServerConsoleContainer';
@@ -153,7 +154,7 @@ export default {
             name: '模组管理',
             component: DstModManagerContainer,
             group: 1,
-            icon: faSlidersH,
+            icon: faWrench,
         },
         // ===== 组2 =====
         {
