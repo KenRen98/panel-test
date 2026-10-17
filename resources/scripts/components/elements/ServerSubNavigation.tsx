@@ -15,9 +15,7 @@ const Nav = styled.nav`
     ${tw`flex flex-col px-2 py-3 gap-0.5`};
 
     @media (max-width: 1023px) {
-        // 锁死视口宽（100vw，非 max-w-full——后者相对已撑宽的 body 无效），
-        // 变量条内容在条内横滑，不再撑破布局/顶到页面边缘
-        ${tw`flex-row items-center px-2 py-2 gap-1 min-w-0 max-w-[100vw]`};
+        ${tw`flex-row items-center px-2 py-2 gap-1`};
         overflow-x: auto;
         scrollbar-width: none;
 
@@ -31,8 +29,7 @@ const Group = styled.div`
     ${tw`flex flex-col gap-0.5`};
 
     @media (max-width: 1023px) {
-        // flex-shrink-0：导航项保持完整宽度，由 Nav 的 overflow-x 滚动而不是被压缩
-        ${tw`flex-row items-center flex-shrink-0`};
+        ${tw`flex-row items-center`};
     }
 `;
 

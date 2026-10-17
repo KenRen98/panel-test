@@ -22,9 +22,7 @@ const Aside = styled.aside<{ collapsed?: boolean }>`
     transition: width 180ms cubic-bezier(0.4, 0, 0.2, 1);
 
     @media (max-width: 1023px) {
-        // max-w-[100vw]：body 可能被超宽内容撑开，w-full 会跟着超宽；
-        // 用 100vw 把侧边栏（手机=横向导航条）锁死在视口宽度内
-        ${tw`w-full max-w-[100vw] border-r-0 border-b`};
+        ${tw`w-full border-r-0 border-b`};
     }
 
     @media (min-width: 1024px) {
@@ -54,7 +52,7 @@ const BrandLogo = styled.img`
 `;
 
 const NavScroll = styled.div`
-    ${tw`flex-1 min-h-0 min-w-0`};
+    ${tw`flex-1 min-h-0`};
 
     @media (min-width: 1024px) {
         overflow-y: auto;
