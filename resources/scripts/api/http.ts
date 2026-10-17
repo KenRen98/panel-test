@@ -12,7 +12,10 @@ const http: AxiosInstance = axios.create({
 });
 
 http.interceptors.request.use((req) => {
-    if (!req.url?.endsWith('/resources')) {
+    // 带 X-Doubao-Skip-Progress 头的请求跳过全局顶部进度条
+    //（抽屉/弹窗内静默加载使用，默认行为不变）
+    const skipProgress = req.headers?.get?.('X-Doubao-Skip-Progress') === '1' || (req.headers as any)?.['X-Doubao-Skip-Progress'] === '1';
+    if (!req.url?.endsWith('/resources') && !skipProgress) {
         store.getActions().progress.startContinuous();
     }
 
@@ -21,14 +24,18 @@ http.interceptors.request.use((req) => {
 
 http.interceptors.response.use(
     (resp) => {
-        if (!resp.request?.url?.endsWith('/resources')) {
+        const skipProgress = resp.config?.headers?.get?.('X-Doubao-Skip-Progress') === '1' || (resp.config?.headers as any)?.['X-Doubao-Skip-Progress'] === '1';
+        if (!resp.request?.url?.endsWith('/resources') && !skipProgress) {
             store.getActions().progress.setComplete();
         }
 
         return resp;
     },
     (error) => {
-        store.getActions().progress.setComplete();
+        const skipProgress = error?.config?.headers?.get?.('X-Doubao-Skip-Progress') === '1' || (error?.config?.headers as any)?.['X-Doubao-Skip-Progress'] === '1';
+        if (!skipProgress) {
+            store.getActions().progress.setComplete();
+        }
 
         throw error;
     }

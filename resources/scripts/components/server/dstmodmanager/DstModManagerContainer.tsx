@@ -255,6 +255,32 @@ const DrawerPanel = styled.div`
     }
 `;
 
+// 抽屉顶部局部加载条：加载实际配置值期间显示。
+// 对应请求带 X-Doubao-Skip-Progress（跳过全局顶部进度条），加载态落在弹窗内。
+const DrawerProgress = styled.div`
+    ${tw`relative flex-shrink-0 overflow-hidden`};
+    height: 2px;
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -40%;
+        height: 100%;
+        width: 40%;
+        background: ${theme`colors.cyan.400`.toString()};
+        box-shadow: 0 -2px 10px 2px hsl(178, 78%, 57%);
+        animation: drawer-progress-slide 1.1s ease-in-out infinite;
+    }
+    @keyframes drawer-progress-slide {
+        0% {
+            left: -40%;
+        }
+        100% {
+            left: 100%;
+        }
+    }
+`;
+
 const DrawerHead = styled.div`
     ${tw`flex items-start gap-2.5 px-4 pt-4 pb-3 flex-shrink-0`};
     border-bottom: 1px solid ${theme`colors.neutral.700`.toString()};
@@ -493,6 +519,7 @@ export default () => {
     const [manageId, setManageId] = useState<string | null>(null);
     const [draft, setDraft] = useState<Record<string, string | number | boolean>>({});
     const [savingConfig, setSavingConfig] = useState(false);
+    const [loadingDraft, setLoadingDraft] = useState(false);
     // 确认弹窗（移除 / 清空）
     const [confirm, setConfirm] = useState<{ title: string; text: string; onOk: () => void } | null>(null);
 
@@ -635,6 +662,8 @@ export default () => {
         if (!schema || schema.items.length === 0) return;
         setManageId(id);
         setSavingConfig(false);
+        setDraft({});
+        setLoadingDraft(true); // 值加载期间：抽屉顶部显示局部加载条（该请求跳过全局进度条）
         const pending = await getPendingConfig(uuid, id).catch(() => null);
         const init: Record<string, string | number | boolean> = {};
         for (const item of schema.items) {
@@ -654,6 +683,7 @@ export default () => {
             }
         }
         setDraft(init);
+        setLoadingDraft(false); // 值就绪，隐藏加载条
     };
 
     // 保存设置 → 写 pending JSON（下次开服脚本合并进 modoverrides.lua）
@@ -840,6 +870,7 @@ export default () => {
                     }}
                 >
                     <DrawerPanel role="dialog" aria-modal="true">
+                        {loadingDraft && <DrawerProgress />}
                         <DrawerHead>
                             <DrawerTitleWrap>
                                 <DrawerTitle>设置 · {mods.find((m) => m.id === manageId)?.title || manageId}</DrawerTitle>

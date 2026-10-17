@@ -172,6 +172,22 @@ export const getInstalledModIds = async (uuid: string): Promise<Set<string>> => 
 };
 
 /**
+ * 静默读取文件内容（跳过全局顶部进度条）：与 getFileContents 参数完全一致，
+ * 仅多带 X-Doubao-Skip-Progress 头。
+ * 用于抽屉/弹窗内的静默加载（如模组管理弹窗读取 schema / pending），
+ * 避免打开弹窗时页面顶部冒出全局进度条——弹窗自己展示局部加载态。
+ */
+const getFileContentsQuiet = async (uuid: string, file: string): Promise<string> => {
+    const { data } = await http.get(`/api/client/servers/${uuid}/files/contents`, {
+        params: { file },
+        transformResponse: (res) => res,
+        responseType: 'text',
+        headers: { 'X-Doubao-Skip-Progress': '1' },
+    });
+    return data;
+};
+
+/**
  * 更新 MODS_LIST 变量（逗号分隔的 mod id）。
  * 仅当 MODS_LIST 变量存在于该服务器且 user_editable 时才调用，否则抛错。
  * 返回更新后的变量（供调用方同步 store，保证刷新/重挂载后显示一致）。
@@ -236,7 +252,7 @@ export const getModSchema = async (uuid: string, id: string): Promise<DstModSche
     const hit = cacheGet<DstModSchema>(key, 300_000);
     if (hit) return hit;
     try {
-        const content = await getFileContents(uuid, `${SCHEMA_DIR}/${id}.json`);
+        const content = await getFileContentsQuiet(uuid, `${SCHEMA_DIR}/${id}.json`);
         const parsed = JSON.parse(content) as DstModSchema;
         if (!parsed || !Array.isArray(parsed.items)) {
             return null;
@@ -255,7 +271,7 @@ export const getModSchema = async (uuid: string, id: string): Promise<DstModSche
  */
 export const getPendingConfig = async (uuid: string, id: string): Promise<Record<string, string | number | boolean> | null> => {
     try {
-        const content = await getFileContents(uuid, `${PENDING_DIR}/${id}.json`);
+        const content = await getFileContentsQuiet(uuid, `${PENDING_DIR}/${id}.json`);
         const parsed = JSON.parse(content) as { configuration_options?: Record<string, string | number | boolean> };
         return parsed?.configuration_options ?? null;
     } catch (e) {
