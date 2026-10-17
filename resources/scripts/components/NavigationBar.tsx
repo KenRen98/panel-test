@@ -53,18 +53,19 @@ export default () => {
         <div className={'w-full bg-neutral-900 shadow-md overflow-x-auto'}>
             <SpinnerOverlay visible={isLoggingOut} />
             <div className={'w-full flex items-center h-[3.5rem]'}>
-                <div id={'logo'} className={'flex flex-1'}>
+                <div id={'logo'} className={'flex flex-1 min-w-0'}>
                     {/* flex items-center：父级 #logo 是 flex，子 div 默认被 align-items:stretch
-                        拉满整行高，内部 logo 会顶部对齐导致整体偏上；加 items-center 垂直居中 */}
-                    <div className={(isServerPage ? 'lg:hidden ' : '') + 'flex items-center'}>
+                        拉满整行高，内部 logo 会顶部对齐导致整体偏上；加 items-center 垂直居中
+                        min-w-0/truncate：站点名过长时截断，防止与右侧搜索按钮重叠、图标被挤掉 */}
+                    <div className={(isServerPage ? 'lg:hidden ' : '') + 'flex items-center min-w-0'}>
                         <Link
                             to={'/'}
                             className={
-                                'text-2xl font-header font-medium px-4 no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150 inline-flex items-center'
+                                'text-2xl font-header font-medium px-4 no-underline text-neutral-200 hover:text-neutral-100 transition-colors duration-150 inline-flex items-center min-w-0 max-w-full'
                             }
                         >
-                            <img src={LOGO_URL} alt={'logo'} className={'h-8 w-8 object-contain rounded-md'} />
-                            <span className={'ml-2'}>{name}</span>
+                            <img src={LOGO_URL} alt={'logo'} className={'h-8 w-8 object-contain rounded-md flex-shrink-0'} />
+                            <span className={'ml-2 truncate'}>{name}</span>
                         </Link>
                     </div>
                 </div>
