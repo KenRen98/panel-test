@@ -3,12 +3,12 @@ import { NavLink, useRouteMatch } from 'react-router-dom';
 import styled from 'styled-components/macro';
 import tw, { theme } from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 import { ServerContext } from '@/state/server';
 import { useStoreState } from '@/state/hooks';
-import { hasCapability } from '@/api/server/eggCapabilities';
+import { hasCapability, getEggCapabilities } from '@/api/server/eggCapabilities';
 import { hasSteamModCapability, hasDstModManagerCapability } from '@/api/server/steamMods';
 
 const Nav = styled.nav`
@@ -94,6 +94,11 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
     const hasSteamMod = hasSteamModCapability(variables);
     const hasDstModManager = hasDstModManagerCapability(variables);
 
+    // 游戏教程：egg 通过 EGG_CAPABILITIES 声明 manual-<suffix> 时显示，
+    // 跳转到官方教程 https://manual.mr-leaves.com/3-servergames/<suffix>
+    const manualCap = getEggCapabilities(variables).find((c) => c.startsWith('manual-'));
+    const manualUrl = manualCap ? `https://manual.mr-leaves.com/3-servergames/${manualCap.slice('manual-'.length)}` : undefined;
+
     const to = (path: string) => {
         if (path === '/') {
             return match.url;
@@ -152,25 +157,44 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
         );
     });
 
-    // 跳转管理后台（仅管理员可见）：跳到当前服务器的管理界面（/admin/servers/view/{DB id}），
-    // 侧边模式与上方按钮组用分隔线隔开，顶部模式直接排最后
-    if (rootAdmin) {
-        const adminHref = `/admin/servers/view/${server?.internalId ?? ''}`;
-        const adminLink = (
-            <AdminLink href={adminHref} collapsed={collapsed} title={collapsed ? '跳转管理' : undefined}>
-                <FontAwesomeIcon icon={faExternalLinkAlt} fixedWidth />
-                <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
-                    跳转管理
-                </span>
-            </AdminLink>
-        );
+    // 底部区（共用一条分隔线，与上方导航组隔开）：
+    // 1. 游戏教程（egg 声明 manual-xxx 时对所有人显示，外链打开官方教程）
+    // 2. 跳转管理后台（仅管理员可见）：跳到当前服务器的管理界面（/admin/servers/view/{DB id}）
+    if (manualUrl || rootAdmin) {
+        const bottomItems: React.ReactNode[] = [];
 
-        rendered.push(<Separator key={'sep-admin'} collapsed={collapsed} />);
-        rendered.push(
-            <Group key={'group-admin'}>
-                {adminLink}
-            </Group>
-        );
+        if (manualUrl) {
+            bottomItems.push(
+                <AdminLink
+                    key={'manual'}
+                    href={manualUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    collapsed={collapsed}
+                    title={collapsed ? '游戏教程' : undefined}
+                >
+                    <FontAwesomeIcon icon={faBook} fixedWidth />
+                    <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+                        游戏教程
+                    </span>
+                </AdminLink>
+            );
+        }
+
+        if (rootAdmin) {
+            const adminHref = `/admin/servers/view/${server?.internalId ?? ''}`;
+            bottomItems.push(
+                <AdminLink key={'admin'} href={adminHref} collapsed={collapsed} title={collapsed ? '跳转管理' : undefined}>
+                    <FontAwesomeIcon icon={faExternalLinkAlt} fixedWidth />
+                    <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+                        跳转管理
+                    </span>
+                </AdminLink>
+            );
+        }
+
+        rendered.push(<Separator key={'sep-bottom'} collapsed={collapsed} />);
+        rendered.push(<Group key={'group-bottom'}>{bottomItems}</Group>);
     }
 
     return <Nav>{rendered}</Nav>;
