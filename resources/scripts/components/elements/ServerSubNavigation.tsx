@@ -15,7 +15,9 @@ const Nav = styled.nav`
     ${tw`flex flex-col px-2 py-3 gap-0.5`};
 
     @media (max-width: 1023px) {
-        ${tw`flex-row items-center px-2 py-2 gap-1`};
+        // min-w-0/max-w-full：防止 flex 内容把布局撑宽（手机端变量条超宽会把
+        // 顶部栏右侧按钮挤出视口），宽度锁死视口、内容在条内横滑
+        ${tw`flex-row items-center px-2 py-2 gap-1 min-w-0 max-w-full`};
         overflow-x: auto;
         scrollbar-width: none;
 
@@ -29,7 +31,8 @@ const Group = styled.div`
     ${tw`flex flex-col gap-0.5`};
 
     @media (max-width: 1023px) {
-        ${tw`flex-row items-center`};
+        // flex-shrink-0：导航项保持完整宽度，由 Nav 的 overflow-x 滚动而不是被压缩
+        ${tw`flex-row items-center flex-shrink-0`};
     }
 `;
 
