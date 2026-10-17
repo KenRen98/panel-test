@@ -14,8 +14,6 @@ import Tooltip from '@/components/elements/tooltip/Tooltip';
 import Avatar from '@/components/Avatar';
 
 const RightNavigation = styled.div`
-    flex-shrink: 0;
-
     & > a,
     & > button,
     & > .navigation-link {
@@ -67,7 +65,7 @@ export default () => {
                             }
                         >
                             <img src={LOGO_URL} alt={'logo'} className={'h-8 w-8 object-contain rounded-md flex-shrink-0'} />
-                            <span className={'ml-2 truncate min-w-0'}>{name}</span>
+                            <span className={'ml-2 truncate'}>{name}</span>
                         </Link>
                     </div>
                 </div>
