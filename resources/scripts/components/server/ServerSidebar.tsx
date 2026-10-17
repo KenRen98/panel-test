@@ -52,7 +52,7 @@ const BrandLogo = styled.img`
 `;
 
 const NavScroll = styled.div`
-    ${tw`flex-1 min-h-0 min-w-0`};
+    ${tw`flex-1 min-h-0`};
 
     @media (min-width: 1024px) {
         overflow-y: auto;
