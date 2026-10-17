@@ -20,7 +20,6 @@ const Aside = styled.aside<{ collapsed?: boolean }>`
     ${tw`flex flex-col bg-neutral-700 border-r border-neutral-600`};
     flex-shrink: 0;
     transition: width 180ms cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: width;
 
     @media (max-width: 1023px) {
         ${tw`w-full border-r-0 border-b`};
@@ -77,14 +76,17 @@ export default () => {
         <Aside collapsed={collapsed}>
             <Brand>
                 <BrandLink to={'/'}>
-                    {collapsed ? (
-                        <BrandLogo src={LOGO_URL} alt={'logo'} />
-                    ) : (
-                        <>
-                            <BrandLogo src={LOGO_URL} alt={'logo'} />
-                            <span css={tw`ml-2 truncate`}>{name}</span>
-                        </>
-                    )}
+                    {/* 恒定结构（logo + 站点名始终渲染），折叠时仅用 CSS 隐藏站点名——
+                        避免 React 条件渲染在宽度过渡期间引起重排抖动 */}
+                    <BrandLogo src={LOGO_URL} alt={'logo'} />
+                    <span
+                        css={[
+                            tw`ml-2 truncate transition-all duration-[180ms] ease-out`,
+                            collapsed ? tw`lg:ml-0 lg:max-w-0 lg:opacity-0 overflow-hidden` : tw`max-w-[calc(140px-2rem-2rem-0.5rem)]`,
+                        ]}
+                    >
+                        {name}
+                    </span>
                 </BrandLink>
             </Brand>
             <NavScroll>

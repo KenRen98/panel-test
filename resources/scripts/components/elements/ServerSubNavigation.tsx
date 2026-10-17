@@ -47,7 +47,8 @@ const Separator = styled.div<{ collapsed?: boolean }>`
 `;
 
 const Item = styled(NavLink)<{ collapsed?: boolean }>`
-    ${tw`flex items-center px-[14px] py-2 rounded text-sm text-neutral-300 no-underline whitespace-nowrap transition-all duration-150`};
+    ${tw`flex items-center px-[14px] py-2 rounded text-sm text-neutral-300 no-underline whitespace-nowrap`};
+    transition: color 150ms ease, background-color 150ms ease, height 150ms ease;
 
     &:hover {
         ${tw`text-neutral-100 bg-neutral-800`};
@@ -70,7 +71,8 @@ const Item = styled(NavLink)<{ collapsed?: boolean }>`
 
 // 跳转管理后台：整页跳转 /admin（与顶部导航栏一致），样式与 Item 保持一致
 const AdminLink = styled.a<{ collapsed?: boolean }>`
-    ${tw`flex items-center px-[14px] py-2 rounded text-sm text-neutral-300 no-underline whitespace-nowrap transition-all duration-150 cursor-pointer`};
+    ${tw`flex items-center px-[14px] py-2 rounded text-sm text-neutral-300 no-underline whitespace-nowrap cursor-pointer`};
+    transition: color 150ms ease, background-color 150ms ease, height 150ms ease;
 
     &:hover {
         ${tw`text-neutral-100 bg-neutral-800`};
@@ -134,7 +136,7 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
                             title={collapsed ? route.name : undefined}
                         >
                             {route.icon && <FontAwesomeIcon icon={route.icon} fixedWidth />}
-                            <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms]`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>{route.name}</span>
+                            <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>{route.name}</span>
                         </Item>
                     );
 
@@ -157,7 +159,7 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
         const adminLink = (
             <AdminLink href={adminHref} collapsed={collapsed} title={collapsed ? '跳转管理' : undefined}>
                 <FontAwesomeIcon icon={faExternalLinkAlt} fixedWidth />
-                <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms]`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+                <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
                     跳转管理
                 </span>
             </AdminLink>
