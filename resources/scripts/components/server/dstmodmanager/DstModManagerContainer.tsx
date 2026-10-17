@@ -752,12 +752,12 @@ export default () => {
             </GridTitle>
 
             {loading ? (
-                // 加载中：标准骨架卡（宽屏 4 列 / 窄屏 3 列，渲染 4 张占位）
+                // 加载中：标准骨架卡，数量 = min(ids, PAGE_SIZE=12) 与实际分页结果一致
+                //（12 可整除 3 列/4 列布局，加载前后数量完全吻合，杜绝"多出卡片"错觉）
                 <Grid>
-                    <SkeletonCardView />
-                    <SkeletonCardView />
-                    <SkeletonCardView />
-                    <SkeletonCardView />
+                    {Array.from({ length: Math.max(1, Math.min(ids.length, PAGE_SIZE)) }).map((_, i) => (
+                        <SkeletonCardView key={i} />
+                    ))}
                 </Grid>
             ) : error ? (
                 <div css={tw`text-sm text-red-400`}>加载失败：{error}</div>

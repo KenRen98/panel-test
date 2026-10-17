@@ -33,6 +33,36 @@ const SearchField = styled.div`
     }
 `;
 
+// 搜索框右侧波浪加载点：防抖/请求期间一个接一个高亮（仅作"处理中"指示，
+// 不占卡片区域、不影响结果数量感知；搜索结果用骨架/旧结果呈现）
+const LoadingDots = styled.div`
+    ${tw`absolute right-3 top-0 bottom-0 my-auto h-3.5 flex items-center gap-1 pointer-events-none`};
+    & > span {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #8f8f8f;
+        animation: steammod-wave 0.9s ease-in-out infinite;
+    }
+    & > span:nth-child(2) {
+        animation-delay: 0.15s;
+    }
+    & > span:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+    @keyframes steammod-wave {
+        0%,
+        100% {
+            opacity: 0.25;
+            transform: scale(1);
+        }
+        40% {
+            opacity: 1;
+            transform: scale(1.7);
+        }
+    }
+`;
+
 // ===== 标准加载骨架卡：加载期间替代真实卡片（与模组管理页同款设计） =====
 // 尺寸/结构与真实卡一致（h-240、logo 56、头部+描述+底部条），shimmer 流动动画
 const SkeletonCard = styled.div`
@@ -468,6 +498,13 @@ export default () => {
                         placeholder="搜索创意工坊模组（支持标题 / id）..."
                         autoComplete="off"
                     />
+                    {loading && (
+                        <LoadingDots>
+                            <span />
+                            <span />
+                            <span />
+                        </LoadingDots>
+                    )}
                 </SearchField>
             </SearchPanel>
 
@@ -505,12 +542,11 @@ export default () => {
             </GridTitle>
 
             {loading && items.length === 0 ? (
-                // 加载中：标准骨架卡（宽屏 4 列 / 窄屏 3 列，渲染 4 张占位）
+                // 加载中：标准骨架卡，数量 = 每页固定 9 条（3×3），与结果数量一致
                 <Grid>
-                    <SkeletonCardView />
-                    <SkeletonCardView />
-                    <SkeletonCardView />
-                    <SkeletonCardView />
+                    {Array.from({ length: 9 }).map((_, i) => (
+                        <SkeletonCardView key={i} />
+                    ))}
                 </Grid>
             ) : error && items.length === 0 ? (
                 <div css={tw`text-sm text-red-400`}>加载失败：{error}</div>
