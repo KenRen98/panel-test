@@ -27,7 +27,7 @@ const Aside = styled.aside<{ collapsed?: boolean }>`
     }
 
     @media (min-width: 1024px) {
-        ${(props) => (props.collapsed ? tw`w-16` : tw`w-52`)};
+        ${(props) => (props.collapsed ? tw`w-16` : tw`w-[140px]`)};
         height: 100vh;
         position: sticky;
         top: 0;

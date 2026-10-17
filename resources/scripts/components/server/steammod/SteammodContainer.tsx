@@ -77,21 +77,15 @@ const GridTitle = styled.div`
     }
 `;
 
-// 页面级容器查询：grid 列数断点基于内容区实际宽度（自动扣除侧边栏），
-// 而不是视口宽度——避免侧边栏展开时 1281~1455px 区间 4 列窄卡贴边。
-const PageContainer = styled.div`
-    container-type: inline-size;
-`;
-
-// 固定列数三档：手机一行 1 个、默认桌面一行 3 个、宽屏(内容区≥1280px)一行 4 个
+// 固定列数三档：手机一行 1 个、默认桌面一行 3 个、宽屏(视口≥1280px)一行 4 个
 const Grid = styled.div`
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
-    @container (max-width: 700px) {
+    @media (max-width: 700px) {
         grid-template-columns: 1fr;
     }
-    @container (min-width: 1280px) {
+    @media (min-width: 1280px) {
         grid-template-columns: repeat(4, 1fr);
     }
 `;
@@ -439,7 +433,6 @@ export default () => {
 
     return (
         <ServerContentBlock title={'模组安装'} showFlashKey={'steammod'}>
-            <PageContainer>
             <div css={tw`flex items-start mb-7`}>
                 <div css={tw`flex items-center gap-3`}>
                     <div css={tw`w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center text-primary-50 flex-shrink-0`}>
@@ -581,7 +574,6 @@ export default () => {
                     </PgBtn>
                 </Pager>
             )}
-            </PageContainer>
         </ServerContentBlock>
     );
 };

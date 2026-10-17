@@ -86,19 +86,15 @@ const GridTitle = styled.div`
     }
 `;
 
-// 页面级容器查询：grid 列数断点基于内容区实际宽度（自动扣除侧边栏）
-const PageContainer = styled.div`
-    container-type: inline-size;
-`;
-
+// 固定列数三档：手机一行 1 个、默认桌面一行 3 个、宽屏(视口≥1280px)一行 4 个
 const Grid = styled.div`
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
-    @container (max-width: 700px) {
+    @media (max-width: 700px) {
         grid-template-columns: 1fr;
     }
-    @container (min-width: 1280px) {
+    @media (min-width: 1280px) {
         grid-template-columns: repeat(4, 1fr);
     }
 `;
@@ -649,7 +645,6 @@ export default () => {
 
     return (
         <ServerContentBlock title={'模组管理'} showFlashKey={'dstmodmanager'}>
-            <PageContainer>
             <SearchRow>
                 <SearchField>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -766,7 +761,6 @@ export default () => {
                     </PgBtn>
                 </Pager>
             )}
-            </PageContainer>
 
             {/* 设置抽屉：自定义居中抽屉（照 demo），body 内滚动，头尾固定；保存写 pending JSON */}
             {manageId && activeSchema && (
