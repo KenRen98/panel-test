@@ -38,10 +38,6 @@ const SearchField = styled.div`
     }
 `;
 
-const Status = styled.div`
-    ${tw`text-xs text-neutral-400 mt-2`};
-`;
-
 // "修改后，需重启服务器。"提示（MODS_LIST 头部）：无未下载 → 常规（橙）；有未下载 → 红色模式（与移除按钮同色）
 const RestartHint = styled.div<{ red?: boolean }>`
     ${tw`ml-auto px-2.5 leading-[21px] rounded-lg border text-xs whitespace-nowrap flex items-center gap-1.5`};
@@ -103,6 +99,47 @@ const Grid = styled.div`
 const Card = styled.div`
     ${tw`flex flex-col bg-neutral-700 border border-neutral-600 rounded-xl p-3 h-[240px] overflow-hidden transition-colors duration-150 hover:border-primary-500`};
 `;
+
+// ===== 标准加载骨架卡：加载期间替代真实卡片（两页面通用同款设计） =====
+// 尺寸/结构与真实卡一致（h-240、logo 56、头部+描述+底部条），shimmer 流动动画
+const SkeletonCard = styled.div`
+    ${tw`flex flex-col bg-neutral-700/60 border border-neutral-700 rounded-xl p-3 h-[240px] overflow-hidden`};
+    gap: 12px;
+`;
+
+const Sk = styled.div`
+    border-radius: 6px;
+    background: linear-gradient(90deg, rgba(148, 163, 184, 0.08) 25%, rgba(148, 163, 184, 0.18) 50%, rgba(148, 163, 184, 0.08) 75%);
+    background-size: 200% 100%;
+    animation: sk-shimmer 1.2s ease-in-out infinite;
+    @keyframes sk-shimmer {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
+`;
+
+// 渲染一张骨架卡（内部固定结构）
+const SkeletonCardView = () => (
+    <SkeletonCard>
+        <div css={tw`flex items-center gap-3`}>
+            <Sk css={tw`w-14 h-14 rounded-lg flex-shrink-0`} />
+            <div css={tw`flex-1 flex flex-col gap-2`}>
+                <Sk css={tw`h-3.5 w-3/4`} />
+                <Sk css={tw`h-2.5 w-1/2`} />
+            </div>
+        </div>
+        <Sk css={tw`h-2.5 w-full`} />
+        <Sk css={tw`h-2.5 w-5/6`} />
+        <div css={tw`mt-auto flex items-center justify-between`}>
+            <Sk css={tw`h-3 w-16`} />
+            <Sk css={tw`h-6 w-14 rounded-md`} />
+        </div>
+    </SkeletonCard>
+);
 
 const CardHead = styled.div`
     ${tw`flex items-start gap-2.5 min-h-[56px]`};
@@ -475,6 +512,7 @@ export default () => {
 
     // 加载已安装模组详情（GetDetails 一次取全部）+ 服务器本地已下载集合（读 acf）
     // + 已下载 mod 的设置 schema（读 dump_schema.lua 生成的 JSON）
+    // 三段全部就绪后才一次性渲染（避免先出卡片再逐个补徽章/设置的两段式闪烁）
     const load = useCallback(
         (idList: string[]) => {
             if (!mode) return;
@@ -483,12 +521,12 @@ export default () => {
             Promise.all([getSteamModDetails(mode, idList), getInstalledModIds(uuid)])
                 .then(async ([details, installedIds]) => {
                     const withDl = details.map((m) => ({ ...m, downloaded: installedIds.has(m.id) }));
-                    setMods(withDl);
                     const entries = await Promise.all(
                         withDl
                             .filter((m) => m.downloaded !== false)
                             .map(async (m) => [m.id, await getModSchema(uuid, m.id)] as const)
                     );
+                    setMods(withDl);
                     setSchemas(Object.fromEntries(entries));
                 })
                 .catch((e) => {
@@ -685,7 +723,6 @@ export default () => {
                     />
                 </SearchField>
             </SearchRow>
-            <Status>{loading ? '正在获取模组信息…' : error ? error : null}</Status>
 
             {/* MODS_LIST 面板：搜索框与已安装列表之间 */}
             <ModsListPanel>
@@ -714,7 +751,17 @@ export default () => {
                 已安装模组 <span className="count">{filtered.length}</span>
             </GridTitle>
 
-            {slice.length === 0 ? (
+            {loading ? (
+                // 加载中：标准骨架卡（宽屏 4 列 / 窄屏 3 列，渲染 4 张占位）
+                <Grid>
+                    <SkeletonCardView />
+                    <SkeletonCardView />
+                    <SkeletonCardView />
+                    <SkeletonCardView />
+                </Grid>
+            ) : error ? (
+                <div css={tw`text-sm text-red-400`}>加载失败：{error}</div>
+            ) : slice.length === 0 ? (
                 <Empty>{query ? '没有匹配的模组' : '暂无已安装模组，请先在模组安装页添加'}</Empty>
             ) : (
                 <Grid>

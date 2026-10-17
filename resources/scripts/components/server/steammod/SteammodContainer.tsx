@@ -3,7 +3,6 @@ import { useRouteMatch } from 'react-router-dom';
 import styled from 'styled-components/macro';
 import tw from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
-import Spinner from '@/components/elements/Spinner';
 import Button from '@/components/elements/Button';
 import { ServerContext } from '@/state/server';
 import { searchSteamMods, saveModsList, resolveSteamModMode, optimizeSteamPreviewUrl, SteamMod } from '@/api/server/steamMods';
@@ -34,41 +33,46 @@ const SearchField = styled.div`
     }
 `;
 
-// 搜索框右侧波浪加载点：防抖/请求期间一个接一个高亮
-const LoadingDots = styled.div`
-    ${tw`absolute right-3 top-0 bottom-0 my-auto h-3.5 flex items-center gap-1 pointer-events-none`};
-    & > span {
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
-        background: #8f8f8f;
-        animation: steammod-wave 0.9s ease-in-out infinite;
-    }
-    & > span:nth-child(2) {
-        animation-delay: 0.15s;
-    }
-    & > span:nth-child(3) {
-        animation-delay: 0.3s;
-    }
-    @keyframes steammod-wave {
-        0%,
-        100% {
-            opacity: 0.25;
-            transform: scale(1);
+// ===== 标准加载骨架卡：加载期间替代真实卡片（与模组管理页同款设计） =====
+// 尺寸/结构与真实卡一致（h-240、logo 56、头部+描述+底部条），shimmer 流动动画
+const SkeletonCard = styled.div`
+    ${tw`flex flex-col bg-neutral-700/60 border border-neutral-700 rounded-xl p-3 h-[240px] overflow-hidden`};
+    gap: 12px;
+`;
+
+const Sk = styled.div`
+    border-radius: 6px;
+    background: linear-gradient(90deg, rgba(148, 163, 184, 0.08) 25%, rgba(148, 163, 184, 0.18) 50%, rgba(148, 163, 184, 0.08) 75%);
+    background-size: 200% 100%;
+    animation: sk-shimmer 1.2s ease-in-out infinite;
+    @keyframes sk-shimmer {
+        0% {
+            background-position: 200% 0;
         }
-        40% {
-            opacity: 1;
-            transform: scale(1.7);
+        100% {
+            background-position: -200% 0;
         }
     }
 `;
 
-const SearchStatus = styled.div`
-    ${tw`text-xs text-neutral-400`};
-    & > b {
-        ${tw`text-neutral-200 font-semibold`};
-    }
-`;
+// 渲染一张骨架卡（内部固定结构）
+const SkeletonCardView = () => (
+    <SkeletonCard>
+        <div css={tw`flex items-center gap-3`}>
+            <Sk css={tw`w-14 h-14 rounded-lg flex-shrink-0`} />
+            <div css={tw`flex-1 flex flex-col gap-2`}>
+                <Sk css={tw`h-3.5 w-3/4`} />
+                <Sk css={tw`h-2.5 w-1/2`} />
+            </div>
+        </div>
+        <Sk css={tw`h-2.5 w-full`} />
+        <Sk css={tw`h-2.5 w-5/6`} />
+        <div css={tw`mt-auto flex items-center justify-between`}>
+            <Sk css={tw`h-3 w-16`} />
+            <Sk css={tw`h-6 w-14 rounded-md`} />
+        </div>
+    </SkeletonCard>
+);
 
 const GridTitle = styled.div`
     ${tw`flex items-center gap-2 text-[15px] font-semibold text-neutral-100 mt-5 mb-3`};
@@ -464,15 +468,7 @@ export default () => {
                         placeholder="搜索创意工坊模组（支持标题 / id）..."
                         autoComplete="off"
                     />
-                    {loading && (
-                        <LoadingDots>
-                            <span />
-                            <span />
-                            <span />
-                        </LoadingDots>
-                    )}
                 </SearchField>
-                <SearchStatus>{loading ? '搜索中...' : null}</SearchStatus>
             </SearchPanel>
 
             {/* ===== 模组列表 + 提示（与 demo 定稿一致） ===== */}
@@ -509,7 +505,13 @@ export default () => {
             </GridTitle>
 
             {loading && items.length === 0 ? (
-                <Spinner centered size={Spinner.Size.LARGE} />
+                // 加载中：标准骨架卡（宽屏 4 列 / 窄屏 3 列，渲染 4 张占位）
+                <Grid>
+                    <SkeletonCardView />
+                    <SkeletonCardView />
+                    <SkeletonCardView />
+                    <SkeletonCardView />
+                </Grid>
             ) : error && items.length === 0 ? (
                 <div css={tw`text-sm text-red-400`}>加载失败：{error}</div>
             ) : items.length === 0 ? (
