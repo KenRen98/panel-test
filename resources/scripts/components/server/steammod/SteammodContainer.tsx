@@ -6,7 +6,7 @@ import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import Spinner from '@/components/elements/Spinner';
 import Button from '@/components/elements/Button';
 import { ServerContext } from '@/state/server';
-import { searchSteamMods, saveModsList, resolveSteamModMode, SteamMod } from '@/api/server/steamMods';
+import { searchSteamMods, saveModsList, resolveSteamModMode, optimizeSteamPreviewUrl, SteamMod } from '@/api/server/steamMods';
 import { ServerEggVariable } from '@/api/server/types';
 import { useFlashKey } from '@/plugins/useFlash';
 import { httpErrorToHuman } from '@/api/http';
@@ -522,7 +522,7 @@ export default () => {
                         return (
                             <Card key={m.id}>
                                 <CardHead>
-                                    <Logo src={m.preview_url} alt={m.title} loading="lazy" />
+                                    <Logo src={optimizeSteamPreviewUrl(m.preview_url)} alt={m.title} loading="lazy" />
                                     <HeadMain>
                                         <Name>{m.title}</Name>
                                     </HeadMain>

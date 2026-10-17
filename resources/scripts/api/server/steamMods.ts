@@ -20,6 +20,37 @@ import deleteFiles from '@/api/server/files/deleteFiles';
 /** 支持的游戏模式（与后端 SteamWorkshopController::APPID_MAP 对齐） */
 export type SteamModMode = 'pal' | 'dst';
 
+// ============================================================
+// 模块级内存缓存（跨页面挂载存活；React Router 切页不刷新页面，可命中）
+// 只缓存低频变化数据：详情 60s / acf 已下载集合 30s / schema 5min
+// ============================================================
+const _cache = new Map<string, { at: number; data: unknown }>();
+const cacheGet = <T>(key: string, ttlMs: number): T | null => {
+    const e = _cache.get(key);
+    if (!e) return null;
+    if (Date.now() - e.at > ttlMs) {
+        _cache.delete(key);
+        return null;
+    }
+    return e.data as T;
+};
+const cacheSet = (key: string, data: unknown): void => {
+    _cache.set(key, { at: Date.now(), data });
+};
+
+/**
+ * Steam 缩略图尺寸压缩：steamstatic 的 items 原图支持 ?imw/&imh 缩放参数，
+ * 卡片展示（56px）用原图（几十 KB）浪费流量，压到 256px 后每张 ~几 KB。
+ * 只处理无查询参数、且属于已知图床的 items 图 URL，其余原样放行（防呆）。
+ */
+export const optimizeSteamPreviewUrl = (url: string): string => {
+    if (!url || url.includes('?')) return url;
+    if (/^https?:\/\/(cdn\.akamai|cdn\.cloudflare|steamcdn-a)\.steamstatic\.com\/steamcommunity\/public\/images\/items\//i.test(url)) {
+        return `${url}?imw=256&imh=256`;
+    }
+    return url;
+};
+
 /** 从 EGG_CAPABILITIES 解析模组安装模式；不支持返回 null（只认连字符写法） */
 export const resolveSteamModMode = (variables?: ServerEggVariable[]): SteamModMode | null => {
     if (!variables) {
@@ -100,8 +131,13 @@ export const getSteamModDetails = async (mode: SteamModMode, ids: string[]): Pro
     if (pure.length === 0) {
         return [];
     }
+    const key = `details:${mode}:${pure.join(',')}`;
+    const hit = cacheGet<SteamMod[]>(key, 60_000);
+    if (hit) return hit;
     const { data } = await http.post<{ items: SteamMod[] }>('/api/client/mods/steam/details', { mode, ids: pure });
-    return data.items;
+    const items = data.items || [];
+    cacheSet(key, items);
+    return items;
 };
 
 /**
@@ -114,6 +150,9 @@ export const getSteamModDetails = async (mode: SteamModMode, ids: string[]): Pro
  * acf 不存在 → 一个 mod 都未下载过 → 返回空集合。
  */
 export const getInstalledModIds = async (uuid: string): Promise<Set<string>> => {
+    const key = `installed:${uuid}`;
+    const hit = cacheGet<Set<string>>(key, 30_000);
+    if (hit) return hit;
     let content: string;
     try {
         content = await getFileContents(uuid, 'ugc_mods/server/Master/appworkshop_322330.acf');
@@ -128,6 +167,7 @@ export const getInstalledModIds = async (uuid: string): Promise<Set<string>> => 
     while ((m = re.exec(content)) !== null) {
         ids.add(m[1]);
     }
+    cacheSet(key, ids);
     return ids;
 };
 
@@ -189,15 +229,21 @@ const PENDING_DIR = 'ugc_mods/pending_config';
  * 文件不存在 / 解析失败 → 返回 null（调用方按"需重启/不可编辑"处理）。
  */
 export const getModSchema = async (uuid: string, id: string): Promise<DstModSchema | null> => {
+    const key = `schema:${uuid}:${id}`;
+    const hit = cacheGet<DstModSchema | null>(key, 300_000);
+    if (hit !== undefined) return hit;
     try {
         const content = await getFileContents(uuid, `${SCHEMA_DIR}/${id}.json`);
         const parsed = JSON.parse(content) as DstModSchema;
         if (!parsed || !Array.isArray(parsed.items)) {
+            cacheSet(key, null);
             return null;
         }
+        cacheSet(key, parsed);
         return parsed;
     } catch (e) {
         console.warn(`[getModSchema] ${id} schema 读取失败`, e);
+        cacheSet(key, null);
         return null;
     }
 };

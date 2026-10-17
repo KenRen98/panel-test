@@ -27,9 +27,6 @@ import AccountApiContainer from '@/components/dashboard/AccountApiContainer';
 import AccountSSHContainer from '@/components/dashboard/ssh/AccountSSHContainer';
 import ActivityLogContainer from '@/components/dashboard/activity/ActivityLogContainer';
 import ServerActivityLogContainer from '@/components/server/ServerActivityLogContainer';
-import ModpackContainer from '@/components/server/modpack/ModpackContainer';
-import SteammodContainer from '@/components/server/steammod/SteammodContainer';
-import DstModManagerContainer from '@/components/server/dstmodmanager/DstModManagerContainer';
 
 // Each of the router files is already code split out appropriately — so
 // all of the items above will only be loaded in when that router is loaded.
@@ -38,6 +35,12 @@ import DstModManagerContainer from '@/components/server/dstmodmanager/DstModMana
 // for the server dashboard when they're only needed for specific instances.
 const FileEditContainer = lazy(() => import('@/components/server/files/FileEditContainer'));
 const ScheduleEditContainer = lazy(() => import('@/components/server/schedules/ScheduleEditContainer'));
+
+// 三个模组扩展页面（模组安装 / 模组管理 / 一键安装）独立分包：
+// 只在进入对应路由时下载，避免打进 ServerRouter 主 chunk 拖慢所有服务器页面首屏。
+const ModpackContainer = lazy(() => import('@/components/server/modpack/ModpackContainer'));
+const SteammodContainer = lazy(() => import('@/components/server/steammod/SteammodContainer'));
+const DstModManagerContainer = lazy(() => import('@/components/server/dstmodmanager/DstModManagerContainer'));
 
 interface RouteDefinition {
     path: string;
