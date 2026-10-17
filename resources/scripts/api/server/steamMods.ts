@@ -229,21 +229,22 @@ const PENDING_DIR = 'ugc_mods/pending_config';
  * 文件不存在 / 解析失败 → 返回 null（调用方按"需重启/不可编辑"处理）。
  */
 export const getModSchema = async (uuid: string, id: string): Promise<DstModSchema | null> => {
+    // 只缓存"读成功"的结果（schema 结构低频变化，5min 足够）；
+    // 读失败/文件不存在 → null 不缓存，下次进页真实重读——否则瞬时失败会
+    // 让模组管理页的管理按钮/可编辑徽章 5 分钟内一直消失。
     const key = `schema:${uuid}:${id}`;
-    const hit = cacheGet<DstModSchema | null>(key, 300_000);
-    if (hit !== undefined) return hit;
+    const hit = cacheGet<DstModSchema>(key, 300_000);
+    if (hit) return hit;
     try {
         const content = await getFileContents(uuid, `${SCHEMA_DIR}/${id}.json`);
         const parsed = JSON.parse(content) as DstModSchema;
         if (!parsed || !Array.isArray(parsed.items)) {
-            cacheSet(key, null);
             return null;
         }
         cacheSet(key, parsed);
         return parsed;
     } catch (e) {
         console.warn(`[getModSchema] ${id} schema 读取失败`, e);
-        cacheSet(key, null);
         return null;
     }
 };
