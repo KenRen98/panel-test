@@ -164,8 +164,8 @@ export const getInstalledModInfo = async (uuid: string): Promise<Map<string, num
     try {
         content = await getFileContents(uuid, 'ugc_mods/server/Master/appworkshop_322330.acf');
     } catch (e) {
-        // 文件不存在（尚未下载过任何 mod）或读取失败 → 视为未下载
-        console.warn('[getInstalledModInfo] 读取 acf 失败，视为未下载任何模组', e);
+        // 文件不存在（尚未下载过任何 mod）或读取失败 → 视为未下载，静默处理
+        // （面板 files/contents 对不存在文件返回 500，属正常状态，不打错误日志）
         return new Map();
     }
     const map = new Map<string, number>();
@@ -321,7 +321,7 @@ export const getModSchema = async (uuid: string, id: string): Promise<DstModSche
         cacheSet(key, parsed);
         return parsed;
     } catch (e) {
-        console.warn(`[getModSchema] ${id} schema 读取失败`, e);
+        // schema 文件不存在（模组无设置项）或读取失败 → null，静默处理
         return null;
     }
 };
@@ -368,7 +368,7 @@ export const getPendingConfig = async (uuid: string, id: string): Promise<Record
         const parsed = JSON.parse(content) as { configuration_options?: Record<string, string | number | boolean> };
         return parsed?.configuration_options ?? null;
     } catch (e) {
-        console.warn(`[getPendingConfig] ${id} pending 读取失败`, e);
+        // pending 配置文件不存在（未保存过配置）或读取失败 → null，静默处理
         return null;
     }
 };
