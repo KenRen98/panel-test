@@ -9,27 +9,18 @@ import getFileContents from '@/api/server/files/getFileContents';
 import { httpErrorToHuman } from '@/api/http';
 
 // ============================================================
-// ANSI 颜色渲染（轻量）：只处理前景色(30-37 / 90-97)与重置(0)
-// 先转义 HTML 特殊字符（防注入），再把 \x1b[..m 序列转成 span
+// 日志着色（逐行前缀匹配）：脚本写入日志时剥掉了 ANSI 颜色码，
+// 但颜色与行前缀绑定——按前缀反推颜色，前端逐行渲染
+// 顺序：先转义 HTML 特殊字符（防注入），再按前缀整行上色
 // ============================================================
-const ANSI_COLORS: Record<number, string> = {
-    30: '#4f4f4f',
-    31: '#e05252',
-    32: '#52e052',
-    33: '#e0c252',
-    34: '#5252e0',
-    35: '#e052e0',
-    36: '#52e0e0',
-    37: '#dcdcdc',
-    90: '#808080',
-    91: '#ff6e6e',
-    92: '#6eff6e',
-    93: '#ffff6e',
-    94: '#6e6eff',
-    95: '#ff6eff',
-    96: '#6effff',
-    97: '#ffffff',
-};
+const PREFIX_RULES: Array<{ test: RegExp; color: string }> = [
+    { test: /^\[ERROR\]/, color: '#ff6e6e' },
+    { test: /^\[WARN\]/, color: '#ffff6e' },
+    { test: /^\[INFO\]/, color: '#6eff6e' },
+    { test: /^=+/, color: '#6effff' },
+    { test: /^阶段 \d+\/\d+/, color: '#6effff' },
+    { test: /^✅/, color: '#6eff6e' },
+];
 
 const escapeHtml = (s: string): string =>
     s
@@ -39,40 +30,15 @@ const escapeHtml = (s: string): string =>
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
-const ansiToHtml = (input: string): string => {
-    const escaped = escapeHtml(input);
-    let html = '';
-    let i = 0;
-    let open = 0;
-    while (i < escaped.length) {
-        if (escaped.charCodeAt(i) === 27 && escaped[i + 1] === '[') {
-            const end = escaped.indexOf('m', i);
-            if (end === -1) {
-                break;
-            }
-            const codes = escaped
-                .slice(i + 2, end)
-                .split(';')
-                .map((c) => parseInt(c, 10));
-            for (const code of codes) {
-                if (code === 0) {
-                    html += '</span>'.repeat(open);
-                    open = 0;
-                } else if (code >= 30 && code <= 37) {
-                    html += `<span style="color:${ANSI_COLORS[code]}">`;
-                    open++;
-                } else if (code >= 90 && code <= 97) {
-                    html += `<span style="color:${ANSI_COLORS[code]};font-weight:600">`;
-                    open++;
-                }
-            }
-            i = end + 1;
-        } else {
-            html += escaped[i];
-            i++;
-        }
-    }
-    return html + '</span>'.repeat(open);
+const logToHtml = (input: string): string => {
+    const lines = input.split('\n');
+    return lines
+        .map((line) => {
+            const esc = escapeHtml(line);
+            const rule = PREFIX_RULES.find((r) => r.test(line));
+            return rule ? `<span style="color:${rule.color}">${esc}</span>` : esc;
+        })
+        .join('\n');
 };
 
 // ============================================================
@@ -127,7 +93,7 @@ export default () => {
             .finally(() => setLoading(false));
     }, [uuid]);
 
-    const activeHtml = useMemo(() => (active && contents[active] !== undefined ? ansiToHtml(contents[active]) : null), [active, contents]);
+    const activeHtml = useMemo(() => (active && contents[active] !== undefined ? logToHtml(contents[active]) : null), [active, contents]);
 
     return (
         <ServerContentBlock title={'安装日志'}>
