@@ -204,7 +204,6 @@ const Card = styled.div<{ dirty?: boolean }>`
 const CardIcon = styled.img`
     width: 46px;
     height: 46px;
-    border-radius: 9px;
     background: #2b3650;
     object-fit: contain;
     flex-shrink: 0;
