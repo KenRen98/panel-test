@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useRouteMatch } from 'react-router-dom';
 import styled from 'styled-components/macro';
 import tw, { theme } from 'twin.macro';
@@ -107,6 +107,63 @@ const PermissionGuard = ({
     return <>{matchAny ? can.some(Boolean) : can.every(Boolean) ? children : null}</>;
 };
 
+// 浮现插入动画（仅用于动态判断项：模组安装 / 一键安装 / 模组管理 / 跳转管理）：
+// 挂载后 0fr→1fr 高度展开（下方条目平滑让位）+ 淡入 + 轻微上滑 + 一次高亮提示。
+// 时长 450ms、错峰 120ms，与 demo 默认档一致。
+const FloatingItemStyle = styled.div`
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: grid-template-rows 450ms cubic-bezier(0.22, 0.61, 0.36, 1), opacity 450ms ease, transform 450ms ease;
+
+    &.show {
+        grid-template-rows: 1fr;
+        opacity: 1;
+        transform: translateY(0);
+
+        > div {
+            animation: floating-pop 450ms ease;
+        }
+    }
+
+    @keyframes floating-pop {
+        0% {
+            background: rgba(167, 139, 250, 0.4);
+            box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.35);
+        }
+        55% {
+            background: rgba(167, 139, 250, 0.15);
+            box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.15);
+        }
+        100% {
+            background: transparent;
+            box-shadow: none;
+        }
+    }
+`;
+
+const FloatingItem = ({ delay, children }: { delay: number; children: React.ReactNode }) => {
+    const [show, setShow] = useState(false);
+    useEffect(() => {
+        const t = window.setTimeout(() => setShow(true), delay);
+        return () => window.clearTimeout(t);
+    }, [delay]);
+
+    return (
+        <FloatingItemStyle className={show ? 'show' : ''}>
+            <div>{children}</div>
+        </FloatingItemStyle>
+    );
+};
+
+// 动态判断项的浮现错峰（ms）：一键安装 0 → 模组安装 120 → 模组管理 240
+const DYNAMIC_DELAYS: Record<string, number> = {
+    '/modpack': 0,
+    '/steammod': 120,
+    '/dstmodmanager': 240,
+};
+
 export default ({ collapsed = false }: { collapsed?: boolean }) => {
     const match = useRouteMatch<{ id: string }>();
     const rootAdmin = useStoreState((state) => state.user.data?.rootAdmin);
@@ -169,12 +226,21 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
                         </Item>
                     );
 
-                    return route.permission ? (
+                    const wrapped = route.permission ? (
                         <PermissionGuard key={route.path} action={route.permission} matchAny>
                             {link}
                         </PermissionGuard>
                     ) : (
                         link
+                    );
+
+                    const delay = DYNAMIC_DELAYS[route.path];
+                    return delay !== undefined ? (
+                        <FloatingItem key={route.path} delay={delay}>
+                            {wrapped}
+                        </FloatingItem>
+                    ) : (
+                        wrapped
                     );
                 })}
             </Group>
@@ -240,12 +306,14 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
     if (rootAdmin) {
         const adminHref = `/admin/servers/view/${server?.internalId ?? ''}`;
         bottomItems.push(
-            <AdminLink key={'admin'} href={adminHref} collapsed={collapsed} title={collapsed ? '跳转管理' : undefined}>
-                <FontAwesomeIcon icon={faExternalLinkAlt} fixedWidth />
-                <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
-                    跳转管理
-                </span>
-            </AdminLink>
+            <FloatingItem key={'admin'} delay={360}>
+                <AdminLink href={adminHref} collapsed={collapsed} title={collapsed ? '跳转管理' : undefined}>
+                    <FontAwesomeIcon icon={faExternalLinkAlt} fixedWidth />
+                    <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+                        跳转管理
+                    </span>
+                </AdminLink>
+            </FloatingItem>
         );
     }
 
