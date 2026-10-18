@@ -57,6 +57,15 @@ const LogPre = styled.pre`
     ${tw`m-0 p-3 text-xs leading-relaxed text-neutral-200 overflow-auto whitespace-pre-wrap break-all font-mono max-h-[70vh]`};
 `;
 
+// 日志文件名 → 友好显示名（tab 标题）。未在表中的文件原样显示文件名。
+const LOG_NAME_MAP: Record<string, string> = {
+    'install.log': '安装日志',
+    'pal_auto_mods.log': '帕鲁模组日志',
+    'dst_auto_mod.log': '饥荒模组日志',
+};
+
+const displayName = (name: string): string => LOG_NAME_MAP[name] ?? name;
+
 export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
     const [files, setFiles] = useState<string[]>([]);
@@ -111,8 +120,8 @@ export default () => {
                 <div>
                     <div css={tw`flex gap-1 overflow-x-auto pb-px`}>
                         {files.map((name) => (
-                            <LogTab key={name} active={name === active} onClick={() => setActive(name)}>
-                                {name}
+                            <LogTab key={name} active={name === active} onClick={() => setActive(name)} title={name}>
+                                {displayName(name)}
                             </LogTab>
                         ))}
                     </div>
