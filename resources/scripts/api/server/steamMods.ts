@@ -37,6 +37,9 @@ const cacheGet = <T>(key: string, ttlMs: number): T | null => {
 const cacheSet = (key: string, data: unknown): void => {
     _cache.set(key, { at: Date.now(), data });
 };
+const cacheDelete = (key: string): void => {
+    _cache.delete(key);
+};
 
 /**
  * Steam 缩略图尺寸压缩：steamstatic 的 items 原图支持 ?imw/&imh 缩放参数，
@@ -199,18 +202,33 @@ export const markPendingConfig = async (uuid: string, id: string): Promise<void>
         ids.push(id);
     }
     await saveFileContents(uuid, PENDING_MARKS_FILE, JSON.stringify(ids));
+    // 标记文件已变化 → 清掉读取侧缓存，下次进页读到最新状态
+    cacheDelete(`pendingMarks:${uuid}`);
 };
 
-/** 读取待生效标记集合（统一文件 pending_ids.json 中的 id 数组）。文件不存在 → 空集合。 */
+/**
+ * 读取待生效标记集合（统一文件 pending_ids.json 中的 id 数组）。
+ * 文件不存在 → 空集合。短缓存 15s：标记只在"保存配置/重启服务器"时变化，
+ * 且保存路径已主动清缓存，15s 足够吸收重复挂载/切页的重复读取。
+ */
 export const getPendingMarkedIds = async (uuid: string): Promise<Set<string>> => {
+    const key = `pendingMarks:${uuid}`;
+    const hit = cacheGet<Set<string>>(key, 15_000);
+    if (hit) return hit;
+    let ids: Set<string>;
     try {
         const raw = await getFileContentsQuiet(uuid, PENDING_MARKS_FILE);
         const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return new Set();
-        return new Set(parsed.filter((x): x is string => typeof x === 'string'));
+        if (!Array.isArray(parsed)) {
+            ids = new Set();
+        } else {
+            ids = new Set(parsed.filter((x): x is string => typeof x === 'string'));
+        }
     } catch (e) {
-        return new Set();
+        ids = new Set();
     }
+    cacheSet(key, ids);
+    return ids;
 };
 
 /**
