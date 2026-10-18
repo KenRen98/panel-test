@@ -116,14 +116,9 @@ export default () => {
         <ServerContentBlock title={'安装日志'}>
             {loading ? (
                 <Spinner centered size={Spinner.Size.LARGE} />
-            ) : error ? (
-                <p css={tw`text-sm text-neutral-400`}>
-                    无法读取 MLSG-LOG 目录：{error}
-                    <br />
-                    <span css={tw`text-neutral-500`}>安装脚本运行后会在服务器根目录生成 MLSG-LOG 日志文件夹。</span>
-                </p>
-            ) : files.length === 0 ? (
-                <p css={tw`text-sm text-neutral-400`}>MLSG-LOG 目录下暂无 .log 日志文件。</p>
+            ) : error || files.length === 0 ? (
+                // 目录为空与目录不存在统一显示为简洁空态
+                <p css={tw`text-sm text-neutral-400`}>没有日志文件。</p>
             ) : (
                 <div>
                     <div css={tw`flex gap-1 overflow-x-auto pb-px`}>
