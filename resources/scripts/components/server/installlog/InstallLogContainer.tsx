@@ -13,15 +13,6 @@ import { httpErrorToHuman } from '@/api/http';
 // 但颜色与行前缀绑定——按前缀反推颜色，前端逐行渲染
 // 顺序：先转义 HTML 特殊字符（防注入），再按前缀整行上色
 // ============================================================
-const PREFIX_RULES: Array<{ test: RegExp; color: string }> = [
-    { test: /^\[ERROR\]/, color: '#ff6e6e' },
-    { test: /^\[WARN\]/, color: '#ffff6e' },
-    { test: /^\[INFO\]/, color: '#6eff6e' },
-    { test: /^=+/, color: '#6effff' },
-    { test: /^阶段 \d+\/\d+/, color: '#6effff' },
-    { test: /^✅/, color: '#6eff6e' },
-];
-
 const escapeHtml = (s: string): string =>
     s
         .replace(/&/g, '&amp;')
@@ -30,13 +21,25 @@ const escapeHtml = (s: string): string =>
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
+// 逐行前缀 → 颜色。用内联判断而非 {test: regex} 数组，避免压缩产物中
+// 对象属性访问被改写导致运行时 t.test is not a function。
+const lineColor = (line: string): string | undefined => {
+    if (line.startsWith('[ERROR]')) return '#ff6e6e';
+    if (line.startsWith('[WARN]')) return '#ffff6e';
+    if (line.startsWith('[INFO]')) return '#6eff6e';
+    if (/^=+/.test(line)) return '#6effff';
+    if (/^阶段 \d+\/\d+/.test(line)) return '#6effff';
+    if (line.startsWith('✅')) return '#6eff6e';
+    return undefined;
+};
+
 const logToHtml = (input: string): string => {
     const lines = input.split('\n');
     return lines
         .map((line) => {
             const esc = escapeHtml(line);
-            const rule = PREFIX_RULES.find((r) => r.test(line));
-            return rule ? `<span style="color:${rule.color}">${esc}</span>` : esc;
+            const color = lineColor(line);
+            return color ? `<span style="color:${color}">${esc}</span>` : esc;
         })
         .join('\n');
 };
