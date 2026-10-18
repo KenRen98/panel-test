@@ -80,7 +80,15 @@ export default () => {
 
         loadDirectory(uuid, 'MLSG-LOG')
             .then((list) => {
-                const logs = list.filter((f) => f.isFile && f.name.toLowerCase().endsWith('.log')).map((f) => f.name);
+                // install.log（MC 安装日志）永远排在第一个，其余按文件名排序
+                const logs = list
+                    .filter((f) => f.isFile && f.name.toLowerCase().endsWith('.log'))
+                    .map((f) => f.name)
+                    .sort((a, b) => {
+                        if (a === 'install.log') return -1;
+                        if (b === 'install.log') return 1;
+                        return a.localeCompare(b);
+                    });
                 setFiles(logs);
                 setActive((prev) => prev && logs.includes(prev) ? prev : (logs[0] ?? null));
                 return Promise.all(
