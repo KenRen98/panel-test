@@ -4,10 +4,10 @@ import styled from 'styled-components/macro';
 import tw, { theme } from 'twin.macro';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBook, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
-import Can from '@/components/elements/Can';
 import routes from '@/routers/routes';
 import { ServerContext } from '@/state/server';
 import { useStoreState } from '@/state/hooks';
+import { usePermissions } from '@/plugins/usePermissions';
 import { hasCapability, getEggCapabilities } from '@/api/server/eggCapabilities';
 import { hasSteamModCapability, hasDstModManagerCapability } from '@/api/server/steamMods';
 
@@ -85,6 +85,28 @@ const AdminLink = styled.a<{ collapsed?: boolean }>`
     }
 `;
 
+// 权限守卫：服务器权限数据未加载（permissions 为空）时默认显示，加载后按实际权限过滤。
+// 解决进入服务器页时侧边栏固定功能按钮"先隐藏再出现"的跳变；动态判断项（模组安装等）
+// 由上方 visible 过滤控制，行为不受影响。
+const PermissionGuard = ({
+    action,
+    matchAny = false,
+    children,
+}: {
+    action: string | string[];
+    matchAny?: boolean;
+    children: React.ReactNode;
+}) => {
+    const permissions = ServerContext.useStoreState((state) => state.server.permissions);
+    const can = usePermissions(action);
+    const loaded = permissions.length > 0;
+
+    if (!loaded) {
+        return <>{children}</>;
+    }
+    return <>{matchAny ? can.some(Boolean) : can.every(Boolean) ? children : null}</>;
+};
+
 export default ({ collapsed = false }: { collapsed?: boolean }) => {
     const match = useRouteMatch<{ id: string }>();
     const rootAdmin = useStoreState((state) => state.user.data?.rootAdmin);
@@ -148,9 +170,9 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
                     );
 
                     return route.permission ? (
-                        <Can key={route.path} action={route.permission} matchAny>
+                        <PermissionGuard key={route.path} action={route.permission} matchAny>
                             {link}
-                        </Can>
+                        </PermissionGuard>
                     ) : (
                         link
                     );
