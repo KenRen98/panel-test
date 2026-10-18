@@ -200,20 +200,20 @@ export default {
             icon: faUserPlus,
         },
         {
-            path: '/install-log',
-            permission: 'file.read-content',
-            name: '安装日志',
-            component: InstallLogContainer,
-            group: 3,
-            icon: faScroll,
-        },
-        {
             path: '/activity',
             permission: 'activity.*',
-            name: '活动日志',
+            name: '操作记录',
             component: ServerActivityLogContainer,
             group: 3,
             icon: faHistory,
+        },
+        {
+            path: '/install-log',
+            permission: 'file.read-content',
+            name: '系统日志',
+            component: InstallLogContainer,
+            group: 3,
+            icon: faScroll,
         },
         // ===== 隐藏（路由保留可直达，导航不显示）=====
         {

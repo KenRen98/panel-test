@@ -21,27 +21,18 @@ const escapeHtml = (s: string): string =>
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
-// 逐行前缀 → 颜色。用内联判断而非 {test: regex} 数组，避免压缩产物中
-// 对象属性访问被改写导致运行时 t.test is not a function。
-const lineColor = (line: string): string | undefined => {
-    if (line.startsWith('[ERROR]')) return '#ff6e6e';
-    if (line.startsWith('[WARN]')) return '#ffff6e';
-    if (line.startsWith('[INFO]')) return '#6eff6e';
-    if (/^=+/.test(line)) return '#6effff';
-    if (/^阶段 \d+\/\d+/.test(line)) return '#6effff';
-    if (line.startsWith('✅')) return '#6eff6e';
-    return undefined;
-};
-
+// 逐行前缀 → 颜色。前缀在三个脚本间不完全一致：
+// INFO 统一 [INFO]；WARN 在 DST 为 [WARN]、MC/帕鲁为 [WARNING]；分隔线 DST 为 =====、MC/帕鲁为 -----。
+// 用内联判断 + 单次正则替换（比逐行 split/map 快，避免大日志渲染卡顿）。
 const logToHtml = (input: string): string => {
-    const lines = input.split('\n');
-    return lines
-        .map((line) => {
-            const esc = escapeHtml(line);
-            const color = lineColor(line);
-            return color ? `<span style="color:${color}">${esc}</span>` : esc;
-        })
-        .join('\n');
+    let html = escapeHtml(input);
+    html = html.replace(/^\[ERROR\].*$/gm, '<span style="color:#ff6e6e">$&</span>');
+    html = html.replace(/^\[WARN(?:ING)?\].*$/gm, '<span style="color:#ffff6e">$&</span>');
+    html = html.replace(/^\[INFO\].*$/gm, '<span style="color:#6eff6e">$&</span>');
+    html = html.replace(/^[-=]+.*$/gm, '<span style="color:#6effff">$&</span>');
+    html = html.replace(/^阶段 \d+\/\d+.*$/gm, '<span style="color:#6effff">$&</span>');
+    html = html.replace(/^✅.*$/gm, '<span style="color:#6eff6e">$&</span>');
+    return html;
 };
 
 // ============================================================
@@ -65,6 +56,7 @@ const LOG_NAME_MAP: Record<string, string> = {
     'install.log': '安装日志',
     'pal_auto_mods.log': '帕鲁模组日志',
     'dst_auto_mod.log': '饥荒模组日志',
+    'startup.log': '启动日志',
 };
 
 const displayName = (name: string): string => LOG_NAME_MAP[name] ?? name;
@@ -77,6 +69,7 @@ export default () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // 首次加载：只列目录取文件名（不读内容），避免并行读取所有日志拖慢首屏
     useEffect(() => {
         setLoading(true);
         setError(null);
@@ -93,25 +86,19 @@ export default () => {
                         return a.localeCompare(b);
                     });
                 setFiles(logs);
-                setActive((prev) => prev && logs.includes(prev) ? prev : (logs[0] ?? null));
-                return Promise.all(
-                    logs.map((name) =>
-                        getFileContents(uuid, `MLSG-LOG/${name}`)
-                            .then((content) => ({ name, content }))
-                            .catch(() => ({ name, content: `（读取失败：${name}）` }))
-                    )
-                );
-            })
-            .then((entries) => {
-                const map: Record<string, string> = {};
-                entries.forEach((e) => {
-                    map[e.name] = e.content;
-                });
-                setContents(map);
+                setActive((prev) => (prev && logs.includes(prev) ? prev : logs[0] ?? null));
             })
             .catch((e) => setError(httpErrorToHuman(e)))
             .finally(() => setLoading(false));
     }, [uuid]);
+
+    // 切换激活 tab 时按需读取内容（已读过的缓存跳过）
+    useEffect(() => {
+        if (!active || contents[active] !== undefined) return;
+        getFileContents(uuid, `MLSG-LOG/${active}`)
+            .then((content) => setContents((prev) => ({ ...prev, [active]: content })))
+            .catch(() => setContents((prev) => ({ ...prev, [active]: `（读取失败：${active}）` })));
+    }, [active, contents, uuid]);
 
     const activeHtml = useMemo(() => (active && contents[active] !== undefined ? logToHtml(contents[active]) : null), [active, contents]);
 
