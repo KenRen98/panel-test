@@ -216,16 +216,17 @@ const CardKey = styled.div`
     white-space: nowrap;
 `;
 
-// ===== 自定义下拉（选项水平居中；点击展开/再点收起） =====
+// ===== 自定义下拉（右侧独立，宽度随内容自适应；点击展开/再点收起） =====
 const SelectWrap = styled.div`
     position: relative;
     flex: 0 0 auto;
-    width: 82px;
+    min-width: 64px;
+    max-width: 110px;
 `;
 
 const SelectBtn = styled.button<{ open?: boolean }>`
     ${tw`w-full flex items-center justify-center rounded-lg border text-[13px] text-neutral-100 cursor-pointer px-1 transition-colors duration-150`};
-    height: 38px;
+    height: 40px;
     background: #1d243a;
     border-color: ${(props) => (props.open ? theme`colors.primary.500`.toString() : '#3d4a63')};
     text-align: center;
@@ -238,7 +239,7 @@ const SelectBtn = styled.button<{ open?: boolean }>`
 
 const OptMenu = styled.div`
     position: absolute;
-    top: 40px;
+    top: 42px;
     left: 0;
     right: 0;
     background: #1d243a;
@@ -321,21 +322,21 @@ const SettingCard = memo(({ it, cur, curZh, dirty, open, onToggle, onSelect }: S
         <CardMain>
             <CardName>{it.zh}</CardName>
             <CardKey>{it.key}</CardKey>
-            <SelectWrap>
-                <SelectBtn open={open} onClick={() => onToggle(it.key)}>
-                    <span>{curZh}</span>
-                </SelectBtn>
-                {open && (
-                    <OptMenu>
-                        {it.opts.map((o) => (
-                            <OptItem key={o.v} active={o.v === cur} onClick={() => onSelect(it.key, o.v)}>
-                                {o.zh}
-                            </OptItem>
-                        ))}
-                    </OptMenu>
-                )}
-            </SelectWrap>
         </CardMain>
+        <SelectWrap>
+            <SelectBtn open={open} onClick={() => onToggle(it.key)}>
+                <span>{curZh}</span>
+            </SelectBtn>
+            {open && (
+                <OptMenu>
+                    {it.opts.map((o) => (
+                        <OptItem key={o.v} active={o.v === cur} onClick={() => onSelect(it.key, o.v)}>
+                            {o.zh}
+                        </OptItem>
+                    ))}
+                </OptMenu>
+            )}
+        </SelectWrap>
     </Card>
 ));
 
