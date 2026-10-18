@@ -5,7 +5,6 @@ import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import Button from '@/components/elements/Button';
 import Spinner from '@/components/elements/Spinner';
 import { ServerContext } from '@/state/server';
-import { useFlashKey } from '@/plugins/useFlash';
 import { httpErrorToHuman } from '@/api/http';
 import {
     getWorldgenFiles,
@@ -366,7 +365,6 @@ export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data?.uuid);
     const variables = ServerContext.useStoreState((state) => state.server.data?.variables);
     const serverStatus = ServerContext.useStoreState((state) => state.status.value);
-    const { clearFlashes, clearAndAddHttpError } = useFlashKey('worldsettings');
     const capable = hasWorldSettingsCapability(variables);
 
     // 提示条状态：默认 info（更多设置需按教程在客户端生成），保存/重置成功切 success 变绿，数秒后自动恢复
@@ -463,7 +461,6 @@ export default () => {
     const save = async () => {
         if (saving || !uuid) return;
         setSaving(true);
-        clearFlashes();
         try {
             const masterOverrides: Record<string, string> = {};
             const cavesOverrides: Record<string, string> = {};
@@ -486,7 +483,7 @@ export default () => {
             flashHint('success', '保存成功，重启服务器后生效。');
         } catch (e) {
             console.error(e);
-            clearAndAddHttpError(e as Error);
+            flashHint('error', httpErrorToHuman(e));
         } finally {
             setSaving(false);
         }
@@ -505,18 +502,16 @@ export default () => {
     const doReset = async () => {
         if (!uuid) return;
         if (serverStatus !== 'offline') {
-            clearFlashes();
-            clearAndAddHttpError(new Error('无法重置：服务器运行中，请先关闭服务器。'));
+            flashHint('error', '无法重置：服务器运行中，请先关闭服务器。');
             return;
         }
         setSaving(true);
-        clearFlashes();
         try {
             await resetWorld(uuid);
             flashHint('success', '已重置世界，重启服务器后将重新生成世界。');
         } catch (e) {
             console.error(e);
-            clearAndAddHttpError(e as Error);
+            flashHint('error', httpErrorToHuman(e));
         } finally {
             setSaving(false);
         }
