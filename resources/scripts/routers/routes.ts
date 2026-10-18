@@ -8,6 +8,7 @@ import {
     faHistory,
     faNetworkWired,
     faPuzzlePiece,
+    faScroll,
     faSlidersH,
     faTerminal,
     faUserPlus,
@@ -42,6 +43,8 @@ const ScheduleEditContainer = lazy(() => import('@/components/server/schedules/S
 const ModpackContainer = lazy(() => import('@/components/server/modpack/ModpackContainer'));
 const SteammodContainer = lazy(() => import('@/components/server/steammod/SteammodContainer'));
 const DstModManagerContainer = lazy(() => import('@/components/server/dstmodmanager/DstModManagerContainer'));
+// 安装日志：读取服务器 MLSG-LOG 目录，独立分包避免打进主 chunk
+const InstallLogContainer = lazy(() => import('@/components/server/installlog/InstallLogContainer'));
 
 interface RouteDefinition {
     path: string;
@@ -195,6 +198,14 @@ export default {
             component: UsersContainer,
             group: 3,
             icon: faUserPlus,
+        },
+        {
+            path: '/install-log',
+            permission: 'file.read-content',
+            name: '安装日志',
+            component: InstallLogContainer,
+            group: 3,
+            icon: faScroll,
         },
         {
             path: '/activity',

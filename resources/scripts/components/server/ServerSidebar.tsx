@@ -57,6 +57,12 @@ const NavScroll = styled.div`
     @media (min-width: 1024px) {
         overflow-y: auto;
         overflow-x: hidden;
+        // 隐藏滚动条（内容仍可滚动，仅不显示 scrollbar）
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
     }
 `;
 
