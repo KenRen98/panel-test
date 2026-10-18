@@ -85,9 +85,9 @@ const AdminLink = styled.a<{ collapsed?: boolean }>`
     }
 `;
 
-// 权限守卫：服务器权限数据未加载（permissions 为空）时默认显示，加载后按实际权限过滤。
-// 解决进入服务器页时侧边栏固定功能按钮"先隐藏再出现"的跳变；动态判断项（模组安装等）
-// 由上方 visible 过滤控制，行为不受影响。
+// 权限守卫：
+// - 管理员（rootAdmin）对任意服务器拥有全部权限 → 直接显示，避免 permissions 非 '*' 时误隐藏
+// - 非管理员：权限数据未加载（permissions 为空）时默认显示（消除跳变），加载后按实际权限过滤
 const PermissionGuard = ({
     action,
     matchAny = false,
@@ -97,6 +97,12 @@ const PermissionGuard = ({
     matchAny?: boolean;
     children: React.ReactNode;
 }) => {
+    const rootAdmin = useStoreState((state) => state.user.data?.rootAdmin);
+
+    if (rootAdmin) {
+        return <>{children}</>;
+    }
+
     const permissions = ServerContext.useStoreState((state) => state.server.permissions);
     const can = usePermissions(action);
     const loaded = permissions.length > 0;
