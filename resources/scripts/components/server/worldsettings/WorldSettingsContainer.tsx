@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components/macro';
 import tw, { theme } from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
@@ -6,8 +6,6 @@ import Button from '@/components/elements/Button';
 import Spinner from '@/components/elements/Spinner';
 import { ServerContext } from '@/state/server';
 import { useFlashKey } from '@/plugins/useFlash';
-import { Actions, useStoreActions } from 'easy-peasy';
-import { ApplicationStore } from '@/state';
 import { httpErrorToHuman } from '@/api/http';
 import {
     getWorldgenFiles,
@@ -97,12 +95,27 @@ const StatsPill = styled.div`
     }
 `;
 
-// 提示条（对齐模组安装 RestartHint：橙黄半透明）
-const RestartHint = styled.div`
+// 提示条（对齐模组安装 RestartHint）：多模式——默认橙黄(info) / 保存成功绿(success) / 错误红(error)
+const RestartHint = styled.div<{ mode?: 'info' | 'success' | 'error' }>`
     ${tw`px-2.5 leading-[21px] rounded-lg border text-xs whitespace-nowrap flex items-center gap-1.5`};
-    background: rgba(255, 170, 0, 0.08);
-    border-color: rgba(255, 170, 0, 0.35);
-    color: hsl(40, 90%, 72%);
+    background: ${(props) =>
+        props.mode === 'success'
+            ? 'rgba(34, 197, 94, 0.08)'
+            : props.mode === 'error'
+            ? 'rgba(239, 68, 68, 0.08)'
+            : 'rgba(255, 170, 0, 0.08)'};
+    border-color: ${(props) =>
+        props.mode === 'success'
+            ? 'rgba(34, 197, 94, 0.35)'
+            : props.mode === 'error'
+            ? 'rgba(239, 68, 68, 0.35)'
+            : 'rgba(255, 170, 0, 0.35)'};
+    color: ${(props) =>
+        props.mode === 'success'
+            ? 'hsl(145, 70%, 68%)'
+            : props.mode === 'error'
+            ? 'hsl(0, 80%, 72%)'
+            : 'hsl(40, 90%, 72%)'};
 `;
 
 // ===== 控制行：切换（左）+ 动作按钮（右） =====
@@ -354,10 +367,21 @@ export default () => {
     const variables = ServerContext.useStoreState((state) => state.server.data?.variables);
     const serverStatus = ServerContext.useStoreState((state) => state.status.value);
     const { clearFlashes, clearAndAddHttpError } = useFlashKey('worldsettings');
-    const flashStore = useStoreActions((actions: Actions<ApplicationStore>) => actions.flashes);
-    const successFlash = (message: string) =>
-        flashStore.addFlash({ key: 'worldsettings', type: 'success', title: '成功', message });
     const capable = hasWorldSettingsCapability(variables);
+
+    // 提示条状态：默认 info（更多设置需按教程在客户端生成），保存/重置成功切 success 变绿，数秒后自动恢复
+    const [hint, setHint] = useState<{ mode: 'info' | 'success' | 'error'; text: string }>({
+        mode: 'info',
+        text: '更多设置需按教程在客户端生成',
+    });
+    const hintTimer = useRef<number | null>(null);
+    const flashHint = useCallback((mode: 'success' | 'error', text: string) => {
+        if (hintTimer.current) window.clearTimeout(hintTimer.current);
+        setHint({ mode, text });
+        hintTimer.current = window.setTimeout(() => {
+            setHint({ mode: 'info', text: '更多设置需按教程在客户端生成' });
+        }, 4000);
+    }, []);
 
     const [shard, setShard] = useState<Shard>('master');
     const [loading, setLoading] = useState(true);
@@ -459,7 +483,7 @@ export default () => {
                 master: parseKnown(nextMaster),
                 caves: parseKnown(nextCaves),
             });
-            successFlash('已保存，重启服务器后生效。');
+            flashHint('success', '保存成功，重启服务器后生效。');
         } catch (e) {
             console.error(e);
             clearAndAddHttpError(e as Error);
@@ -489,7 +513,7 @@ export default () => {
         clearFlashes();
         try {
             await resetWorld(uuid);
-            successFlash('已重置世界，重启服务器后将重新生成世界。');
+            flashHint('success', '已重置世界，重启服务器后将重新生成世界。');
         } catch (e) {
             console.error(e);
             clearAndAddHttpError(e as Error);
@@ -543,7 +567,7 @@ export default () => {
                     <StatsPill>
                         共 <b>{vis.length}</b> 项 · 已修改 <b>{dirtyCount}</b> 项
                     </StatsPill>
-                    <RestartHint>
+                    <RestartHint mode={hint.mode}>
                         <svg
                             width='12'
                             height='12'
@@ -556,7 +580,7 @@ export default () => {
                         >
                             <path d='M13 2L3 14h9l-1 8 10-12h-9l1-8z' />
                         </svg>
-                        <span>更多设置需按教程在客户端生成</span>
+                        <span>{hint.text}</span>
                     </RestartHint>
                 </HeaderR>
             </div>
