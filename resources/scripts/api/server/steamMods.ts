@@ -4,7 +4,6 @@ import http from '@/api/http';
 import getFileContents from '@/api/server/files/getFileContents';
 import saveFileContents from '@/api/server/files/saveFileContents';
 import deleteFiles from '@/api/server/files/deleteFiles';
-import loadDirectory from '@/api/server/files/loadDirectory';
 
 /**
  * Steam 创意工坊模组安装功能（模组安装）。
@@ -179,25 +178,36 @@ export const getInstalledModInfo = async (uuid: string): Promise<Map<string, num
 };
 
 /**
- * 面板保存配置时同时写入的"待生效"标记文件（<id>.pending，内容占位 "1"）。
- * 存在 = 该 mod 有已保存但尚未被开服脚本合并进 modoverrides.lua 的修改。
- * 开服脚本合并完成后删除所有 *.pending → 前端据此判断"待重启生效"状态。
+ * 待生效标记统一文件（记录所有已保存但尚未被开服脚本合并进 modoverrides.lua 的 mod id）。
+ * 内容为 JSON 数组；开服脚本合并完成后删除该文件 → 前端据此判断"待重启生效"状态。
  */
-const PENDING_MARK_SUFFIX = '.pending';
+const PENDING_MARKS_FILE = `${PENDING_DIR}/pending_ids.json`;
 
+/** 保存配置时把 mod id 记入统一待生效标记文件（不存在则新建，读改写追加） */
 export const markPendingConfig = async (uuid: string, id: string): Promise<void> => {
-    await saveFileContents(uuid, `${PENDING_DIR}/${id}${PENDING_MARK_SUFFIX}`, '1');
+    let ids: string[] = [];
+    try {
+        const raw = await getFileContentsQuiet(uuid, PENDING_MARKS_FILE);
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+            ids = parsed.filter((x): x is string => typeof x === 'string');
+        }
+    } catch (e) {
+        // 文件不存在或解析失败 → 从空列表开始
+    }
+    if (!ids.includes(id)) {
+        ids.push(id);
+    }
+    await saveFileContents(uuid, PENDING_MARKS_FILE, JSON.stringify(ids));
 };
 
-/** 读取"待生效"标记集合（pending_config 目录下 *.pending 文件的 id）。目录不存在 → 空集合。 */
+/** 读取待生效标记集合（统一文件 pending_ids.json 中的 id 数组）。文件不存在 → 空集合。 */
 export const getPendingMarkedIds = async (uuid: string): Promise<Set<string>> => {
     try {
-        const list = await loadDirectory(uuid, PENDING_DIR);
-        return new Set(
-            list
-                .filter((f) => f.isFile && f.name.endsWith(PENDING_MARK_SUFFIX))
-                .map((f) => f.name.slice(0, -PENDING_MARK_SUFFIX.length))
-        );
+        const raw = await getFileContentsQuiet(uuid, PENDING_MARKS_FILE);
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return new Set();
+        return new Set(parsed.filter((x): x is string => typeof x === 'string'));
     } catch (e) {
         return new Set();
     }
