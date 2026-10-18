@@ -23,67 +23,6 @@ export const CAT_ZH: Record<WorldgenCat, string> = {
     animals: '动物',
     monsters: '怪物',
 };
-import icon_angrybees from '@/assets/worldgen/angrybees.png';
-import icon_autumn from '@/assets/worldgen/autumn.png';
-import icon_banana from '@/assets/worldgen/banana.png';
-import icon_bats from '@/assets/worldgen/bats.png';
-import icon_beefalo from '@/assets/worldgen/beefalo.png';
-import icon_bees from '@/assets/worldgen/bees.png';
-import icon_berrybush from '@/assets/worldgen/berrybush.png';
-import icon_boons from '@/assets/worldgen/boons.png';
-import icon_branching from '@/assets/worldgen/branching.png';
-import icon_bunnymen from '@/assets/worldgen/bunnymen.png';
-import icon_buzzard from '@/assets/worldgen/buzzard.png';
-import icon_cactus from '@/assets/worldgen/cactus.png';
-import icon_carrot from '@/assets/worldgen/carrot.png';
-import icon_catcoon from '@/assets/worldgen/catcoon.png';
-import icon_cave_ponds from '@/assets/worldgen/cave_ponds.png';
-import icon_cave_spiders from '@/assets/worldgen/cave_spiders.png';
-import icon_cavelight from '@/assets/worldgen/cavelight.png';
-import icon_chess from '@/assets/worldgen/chess.png';
-import icon_dropeverythingondespawn from '@/assets/worldgen/dropeverythingondespawn.png';
-import icon_fern from '@/assets/worldgen/fern.png';
-import icon_fissure from '@/assets/worldgen/fissure.png';
-import icon_flint from '@/assets/worldgen/flint.png';
-import icon_flower_cave from '@/assets/worldgen/flower_cave.png';
-import icon_flowers from '@/assets/worldgen/flowers.png';
-import icon_grass from '@/assets/worldgen/grass.png';
-import icon_houndmound from '@/assets/worldgen/houndmound.png';
-import icon_lichen from '@/assets/worldgen/lichen.png';
-import icon_lightninggoat from '@/assets/worldgen/lightninggoat.png';
-import icon_loop from '@/assets/worldgen/loop.png';
-import icon_marshbush from '@/assets/worldgen/marshbush.png';
-import icon_merm from '@/assets/worldgen/merm.png';
-import icon_meteorspawner from '@/assets/worldgen/meteorspawner.png';
-import icon_moles from '@/assets/worldgen/moles.png';
-import icon_monkey from '@/assets/worldgen/monkey.png';
-import icon_mushroom from '@/assets/worldgen/mushroom.png';
-import icon_mushtree from '@/assets/worldgen/mushtree.png';
-import icon_pigs from '@/assets/worldgen/pigs.png';
-import icon_ponds from '@/assets/worldgen/ponds.png';
-import icon_prefabswaps_start from '@/assets/worldgen/prefabswaps_start.png';
-import icon_rabbits from '@/assets/worldgen/rabbits.png';
-import icon_reeds from '@/assets/worldgen/reeds.png';
-import icon_rock from '@/assets/worldgen/rock.png';
-import icon_rock_ice from '@/assets/worldgen/rock_ice.png';
-import icon_rocky from '@/assets/worldgen/rocky.png';
-import icon_sapling from '@/assets/worldgen/sapling.png';
-import icon_slurper from '@/assets/worldgen/slurper.png';
-import icon_slurtles from '@/assets/worldgen/slurtles.png';
-import icon_spiders from '@/assets/worldgen/spiders.png';
-import icon_spring from '@/assets/worldgen/spring.png';
-import icon_start_location from '@/assets/worldgen/start_location.png';
-import icon_summer from '@/assets/worldgen/summer.png';
-import icon_tallbirds from '@/assets/worldgen/tallbirds.png';
-import icon_tentacles from '@/assets/worldgen/tentacles.png';
-import icon_touchstone from '@/assets/worldgen/touchstone.png';
-import icon_trees from '@/assets/worldgen/trees.png';
-import icon_tumbleweed from '@/assets/worldgen/tumbleweed.png';
-import icon_walrus from '@/assets/worldgen/walrus.png';
-import icon_winter from '@/assets/worldgen/winter.png';
-import icon_world_size from '@/assets/worldgen/world_size.png';
-import icon_wormlights from '@/assets/worldgen/wormlights.png';
-import icon_worms from '@/assets/worldgen/worms.png';
 export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
     {
         key: 'autumn',
@@ -101,7 +40,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_autumn,
+        icon: '/worldgen/autumn.png',
     },
     {
         key: 'dropeverythingondespawn',
@@ -114,7 +53,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_dropeverythingondespawn,
+        icon: '/worldgen/dropeverythingondespawn.png',
     },
     {
         key: 'spring',
@@ -132,7 +71,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_spring,
+        icon: '/worldgen/spring.png',
     },
     {
         key: 'summer',
@@ -150,7 +89,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_summer,
+        icon: '/worldgen/summer.png',
     },
     {
         key: 'winter',
@@ -168,7 +107,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_winter,
+        icon: '/worldgen/winter.png',
     },
     {
         key: 'boons',
@@ -184,7 +123,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_boons,
+        icon: '/worldgen/boons.png',
     },
     {
         key: 'branching',
@@ -199,7 +138,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_branching,
+        icon: '/worldgen/branching.png',
     },
     {
         key: 'cavelight',
@@ -215,7 +154,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_cavelight,
+        icon: '/worldgen/cavelight.png',
     },
     {
         key: 'loop',
@@ -229,7 +168,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_loop,
+        icon: '/worldgen/loop.png',
     },
     {
         key: 'prefabswaps_start',
@@ -243,7 +182,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_prefabswaps_start,
+        icon: '/worldgen/prefabswaps_start.png',
     },
     {
         key: 'start_location',
@@ -257,7 +196,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_start_location,
+        icon: '/worldgen/start_location.png',
     },
     {
         key: 'touchstone',
@@ -273,7 +212,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_touchstone,
+        icon: '/worldgen/touchstone.png',
     },
     {
         key: 'world_size',
@@ -288,7 +227,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_world_size,
+        icon: '/worldgen/world_size.png',
     },
     {
         key: 'fern',
@@ -304,7 +243,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_fern,
+        icon: '/worldgen/fern.png',
     },
     {
         key: 'flint',
@@ -320,7 +259,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_flint,
+        icon: '/worldgen/flint.png',
     },
     {
         key: 'flower_cave',
@@ -336,7 +275,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_flower_cave,
+        icon: '/worldgen/flower_cave.png',
     },
     {
         key: 'flowers',
@@ -352,7 +291,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_flowers,
+        icon: '/worldgen/flowers.png',
     },
     {
         key: 'grass',
@@ -368,7 +307,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_grass,
+        icon: '/worldgen/grass.png',
     },
     {
         key: 'marshbush',
@@ -384,7 +323,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_marshbush,
+        icon: '/worldgen/marshbush.png',
     },
     {
         key: 'meteorspawner',
@@ -400,7 +339,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_meteorspawner,
+        icon: '/worldgen/meteorspawner.png',
     },
     {
         key: 'mushtree',
@@ -416,7 +355,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_mushtree,
+        icon: '/worldgen/mushtree.png',
     },
     {
         key: 'reeds',
@@ -432,7 +371,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_reeds,
+        icon: '/worldgen/reeds.png',
     },
     {
         key: 'rock',
@@ -448,7 +387,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_rock,
+        icon: '/worldgen/rock.png',
     },
     {
         key: 'rock_ice',
@@ -464,7 +403,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_rock_ice,
+        icon: '/worldgen/rock_ice.png',
     },
     {
         key: 'sapling',
@@ -480,7 +419,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_sapling,
+        icon: '/worldgen/sapling.png',
     },
     {
         key: 'trees',
@@ -496,7 +435,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_trees,
+        icon: '/worldgen/trees.png',
     },
     {
         key: 'tumbleweed',
@@ -512,7 +451,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_tumbleweed,
+        icon: '/worldgen/tumbleweed.png',
     },
     {
         key: 'wormlights',
@@ -528,7 +467,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_wormlights,
+        icon: '/worldgen/wormlights.png',
     },
     {
         key: 'banana',
@@ -544,7 +483,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_banana,
+        icon: '/worldgen/banana.png',
     },
     {
         key: 'berrybush',
@@ -560,7 +499,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_berrybush,
+        icon: '/worldgen/berrybush.png',
     },
     {
         key: 'cactus',
@@ -576,7 +515,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_cactus,
+        icon: '/worldgen/cactus.png',
     },
     {
         key: 'carrot',
@@ -592,7 +531,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_carrot,
+        icon: '/worldgen/carrot.png',
     },
     {
         key: 'lichen',
@@ -608,7 +547,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_lichen,
+        icon: '/worldgen/lichen.png',
     },
     {
         key: 'mushroom',
@@ -624,7 +563,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_mushroom,
+        icon: '/worldgen/mushroom.png',
     },
     {
         key: 'angrybees',
@@ -640,7 +579,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_angrybees,
+        icon: '/worldgen/angrybees.png',
     },
     {
         key: 'beefalo',
@@ -656,7 +595,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_beefalo,
+        icon: '/worldgen/beefalo.png',
     },
     {
         key: 'bees',
@@ -672,7 +611,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_bees,
+        icon: '/worldgen/bees.png',
     },
     {
         key: 'bunnymen',
@@ -688,7 +627,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_bunnymen,
+        icon: '/worldgen/bunnymen.png',
     },
     {
         key: 'buzzard',
@@ -704,7 +643,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_buzzard,
+        icon: '/worldgen/buzzard.png',
     },
     {
         key: 'catcoon',
@@ -720,7 +659,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_catcoon,
+        icon: '/worldgen/catcoon.png',
     },
     {
         key: 'cave_ponds',
@@ -736,7 +675,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_cave_ponds,
+        icon: '/worldgen/cave_ponds.png',
     },
     {
         key: 'lightninggoat',
@@ -752,7 +691,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_lightninggoat,
+        icon: '/worldgen/lightninggoat.png',
     },
     {
         key: 'moles',
@@ -768,7 +707,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_moles,
+        icon: '/worldgen/moles.png',
     },
     {
         key: 'monkey',
@@ -784,7 +723,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_monkey,
+        icon: '/worldgen/monkey.png',
     },
     {
         key: 'pigs',
@@ -800,7 +739,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_pigs,
+        icon: '/worldgen/pigs.png',
     },
     {
         key: 'ponds',
@@ -816,7 +755,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_ponds,
+        icon: '/worldgen/ponds.png',
     },
     {
         key: 'rabbits',
@@ -832,7 +771,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_rabbits,
+        icon: '/worldgen/rabbits.png',
     },
     {
         key: 'rocky',
@@ -848,7 +787,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_rocky,
+        icon: '/worldgen/rocky.png',
     },
     {
         key: 'slurper',
@@ -864,7 +803,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_slurper,
+        icon: '/worldgen/slurper.png',
     },
     {
         key: 'slurtles',
@@ -880,7 +819,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_slurtles,
+        icon: '/worldgen/slurtles.png',
     },
     {
         key: 'tallbirds',
@@ -896,7 +835,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_tallbirds,
+        icon: '/worldgen/tallbirds.png',
     },
     {
         key: 'bats',
@@ -912,7 +851,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_bats,
+        icon: '/worldgen/bats.png',
     },
     {
         key: 'cave_spiders',
@@ -928,7 +867,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_cave_spiders,
+        icon: '/worldgen/cave_spiders.png',
     },
     {
         key: 'chess',
@@ -944,7 +883,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_chess,
+        icon: '/worldgen/chess.png',
     },
     {
         key: 'fissure',
@@ -960,7 +899,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_fissure,
+        icon: '/worldgen/fissure.png',
     },
     {
         key: 'houndmound',
@@ -976,7 +915,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_houndmound,
+        icon: '/worldgen/houndmound.png',
     },
     {
         key: 'merm',
@@ -992,7 +931,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_merm,
+        icon: '/worldgen/merm.png',
     },
     {
         key: 'spiders',
@@ -1008,7 +947,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_spiders,
+        icon: '/worldgen/spiders.png',
     },
     {
         key: 'tentacles',
@@ -1024,7 +963,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'both',
-        icon: icon_tentacles,
+        icon: '/worldgen/tentacles.png',
     },
     {
         key: 'walrus',
@@ -1040,7 +979,7 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'master',
-        icon: icon_walrus,
+        icon: '/worldgen/walrus.png',
     },
     {
         key: 'worms',
@@ -1056,6 +995,6 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
         default_master: 'default',
         default_caves: 'default',
         scope: 'caves',
-        icon: icon_worms,
+        icon: '/worldgen/worms.png',
     },
 ];
