@@ -3,7 +3,6 @@ import styled from 'styled-components/macro';
 import tw, { theme } from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import Button from '@/components/elements/Button';
-import Spinner from '@/components/elements/Spinner';
 import { ServerContext } from '@/state/server';
 import { httpErrorToHuman } from '@/api/http';
 import {
@@ -363,6 +362,36 @@ const SettingCard = memo(({ it, cur, curZh, dirty, open, onToggle, onSelect }: S
     </Card>
 ));
 
+// ===== 加载骨架屏：按真实分类/项数渲染灰色块，加载完成无布局跳动 =====
+const LoadingSkeleton = ({ vis }: { vis: WorldgenSetting[] }) => (
+    <>
+        {CAT_ORDER.map((cat) => {
+            const items = vis.filter((it) => it.cat === cat);
+            if (items.length === 0) return null;
+            return (
+                <div key={cat}>
+                    <CatHead>
+                        <div css={tw`h-4 w-20 rounded-md bg-neutral-700 animate-pulse`} />
+                        <div css={tw`h-4 w-10 rounded-md bg-neutral-700 animate-pulse`} />
+                    </CatHead>
+                    <Grid>
+                        {items.map((it) => (
+                            <Card key={it.key} css={tw`pointer-events-none`}>
+                                <div css={tw`w-[46px] h-[46px] bg-neutral-600 animate-pulse flex-shrink-0`} />
+                                <CardMain>
+                                    <div css={tw`h-3.5 w-20 rounded bg-neutral-600 animate-pulse`} />
+                                    <div css={tw`h-2.5 w-14 rounded bg-neutral-600 animate-pulse`} />
+                                </CardMain>
+                                <div css={tw`h-10 w-16 rounded bg-neutral-600 animate-pulse`} />
+                            </Card>
+                        ))}
+                    </Grid>
+                </div>
+            );
+        })}
+    </>
+);
+
 export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data?.uuid);
     const variables = ServerContext.useStoreState((state) => state.server.data?.variables);
@@ -619,9 +648,7 @@ export default () => {
             </CtrlRow>
 
             {loading ? (
-                <div css={tw`mt-8 flex items-center justify-center py-16`}>
-                    <Spinner size={'large'} />
-                </div>
+                <LoadingSkeleton vis={vis} />
             ) : error ? (
                 <div css={tw`mt-8 text-sm text-red-400`}>加载失败：{error}</div>
             ) : (
