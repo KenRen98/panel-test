@@ -201,13 +201,14 @@ const Grid = styled.div`
     }
 `;
 
-// 卡片：左右布局（图标 + 名称/下拉），dirty 时蓝边框 + 背景微蓝
+// 卡片：左右布局（图标 + 名称/下拉），dirty 时蓝边框 + 背景微蓝；contain 隔离重排影响
 const Card = styled.div<{ dirty?: boolean }>`
     ${tw`flex items-center gap-2 rounded-xl border p-2.5 min-w-0 transition-colors duration-150`};
     background: ${theme`colors.neutral.700`.toString()};
     border-color: ${(props) =>
         props.dirty ? theme`colors.primary.500`.toString() : theme`colors.neutral.600`.toString()};
     background: ${(props) => (props.dirty ? '#3a476a' : theme`colors.neutral.700`.toString())};
+    contain: layout style;
     &:hover {
         border-color: ${(props) => (props.dirty ? theme`colors.primary.400`.toString() : '#4a5a7a')};
     }
@@ -219,6 +220,7 @@ const CardIcon = styled.img`
     background: #2b3650;
     object-fit: contain;
     flex-shrink: 0;
+    content-visibility: auto;
 `;
 
 const CardMain = styled.div`
@@ -339,7 +341,7 @@ interface SettingCardProps {
 
 const SettingCard = memo(({ it, cur, curZh, dirty, open, onToggle, onSelect }: SettingCardProps) => (
     <Card dirty={dirty}>
-        <CardIcon src={it.icon} alt='' loading='lazy' decoding='async' />
+        <CardIcon src={it.icon} alt='' width={46} height={46} loading='lazy' decoding='async' />
         <CardMain>
             <CardName>{it.zh}</CardName>
             <CardKey>{it.key}</CardKey>
@@ -443,6 +445,19 @@ export default () => {
         (it: WorldgenSetting): boolean => !!values[it.key] && values[it.key][shard] !== baseOf(it),
         [values, shard, baseOf]
     );
+
+    // 选项值 → 中文映射（一次性构建，卡片渲染 O(1) 查表，替代每卡 opts.find）
+    const zhMap = useMemo(() => {
+        const m: Record<string, Record<string, string>> = {};
+        for (const it of WORLDGEN_SETTINGS) {
+            const row: Record<string, string> = {};
+            for (const o of it.opts) {
+                row[o.v] = o.zh;
+            }
+            m[it.key] = row;
+        }
+        return m;
+    }, []);
 
     // ===== 编辑（稳定引用：memo 卡片只传 key，避免闭包导致全量重渲染） =====
     const toggleOpen = useCallback((key: string) => {
@@ -614,7 +629,7 @@ export default () => {
                     const items = vis.filter((it) => it.cat === cat);
                     if (items.length === 0) return null;
                     return (
-                        <div key={cat}>
+                        <div key={cat} style={{ contentVisibility: 'auto', containIntrinsicBlockSize: 600 }}>
                             <CatHead>
                                 <CatTitle>{CAT_ZH[cat]}</CatTitle>
                                 <CatCount>{items.length} 项</CatCount>
@@ -622,13 +637,13 @@ export default () => {
                             <Grid>
                                 {items.map((it) => {
                                     const cur = values[it.key] ? values[it.key][shard] : baseOf(it);
-                                    const curOpt = it.opts.find((o) => o.v === cur);
+                                    const curZh = (zhMap[it.key] && zhMap[it.key][cur]) || cur;
                                     return (
                                         <SettingCard
                                             key={it.key}
                                             it={it}
                                             cur={cur}
-                                            curZh={curOpt ? curOpt.zh : cur}
+                                            curZh={curZh}
                                             dirty={isDirty(it)}
                                             open={openKey === it.key}
                                             onToggle={toggleOpen}
