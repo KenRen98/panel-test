@@ -896,7 +896,10 @@ export default () => {
                                                 <input
                                                     type="checkbox"
                                                     checked={!!draft[item.name]}
-                                                    onChange={(e) => setDraft((d) => ({ ...d, [item.name]: e.target.checked }))}
+                                                    onChange={(e) => {
+                                                    const v = e.target.checked;
+                                                    setDraft((d) => ({ ...d, [item.name]: v }));
+                                                }}
                                                 />
                                                 <span />
                                             </ToggleWrap>
@@ -904,7 +907,10 @@ export default () => {
                                         {item.type === 'enum' && (
                                             <OptSelect
                                                 value={JSON.stringify(draft[item.name])}
-                                                onChange={(e) => setDraft((d) => ({ ...d, [item.name]: JSON.parse(e.target.value) }))}
+                                                onChange={(e) => {
+                                                    const v = JSON.parse(e.target.value);
+                                                    setDraft((d) => ({ ...d, [item.name]: v }));
+                                                }}
                                             >
                                                 {(item.options || []).map((o) => (
                                                     <option key={JSON.stringify(o.data)} value={JSON.stringify(o.data)}>
@@ -920,14 +926,20 @@ export default () => {
                                                 max={item.max}
                                                 step={1}
                                                 value={String(draft[item.name] ?? '')}
-                                                onChange={(e) => setDraft((d) => ({ ...d, [item.name]: Number(e.target.value) }))}
+                                                onChange={(e) => {
+                                                    const v = Number(e.target.value);
+                                                    setDraft((d) => ({ ...d, [item.name]: v }));
+                                                }}
                                             />
                                         )}
                                         {item.type === 'text' && (
                                             <OptInput
                                                 type="text"
                                                 value={String(draft[item.name] ?? '')}
-                                                onChange={(e) => setDraft((d) => ({ ...d, [item.name]: e.target.value }))}
+                                                onChange={(e) => {
+                                                    const v = e.target.value;
+                                                    setDraft((d) => ({ ...d, [item.name]: v }));
+                                                }}
                                             />
                                         )}
                                     </OptControl>
