@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components/macro';
 import tw, { theme } from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
@@ -304,6 +304,41 @@ interface ConfirmState {
 const visibleItems = (shard: Shard): WorldgenSetting[] =>
     WORLDGEN_SETTINGS.filter((it) => it.scope === 'both' || it.scope === shard);
 
+// ===== 单个设置卡片（memo：仅 cur/dirty/open 等变化时重渲染；图标懒加载） =====
+interface SettingCardProps {
+    it: WorldgenSetting;
+    cur: string;
+    curZh: string;
+    dirty: boolean;
+    open: boolean;
+    onToggle: (key: string) => void;
+    onSelect: (key: string, v: string) => void;
+}
+
+const SettingCard = memo(({ it, cur, curZh, dirty, open, onToggle, onSelect }: SettingCardProps) => (
+    <Card dirty={dirty}>
+        <CardIcon src={it.icon} alt='' loading='lazy' decoding='async' />
+        <CardMain>
+            <CardName>{it.zh}</CardName>
+            <CardKey>{it.key}</CardKey>
+            <SelectWrap>
+                <SelectBtn open={open} onClick={() => onToggle(it.key)}>
+                    <span>{curZh}</span>
+                </SelectBtn>
+                {open && (
+                    <OptMenu>
+                        {it.opts.map((o) => (
+                            <OptItem key={o.v} active={o.v === cur} onClick={() => onSelect(it.key, o.v)}>
+                                {o.zh}
+                            </OptItem>
+                        ))}
+                    </OptMenu>
+                )}
+            </SelectWrap>
+        </CardMain>
+    </Card>
+));
+
 export default () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data?.uuid);
     const variables = ServerContext.useStoreState((state) => state.server.data?.variables);
@@ -377,11 +412,18 @@ export default () => {
         [values, shard, baseOf]
     );
 
-    // ===== 编辑 =====
-    const select = (key: string, v: string) => {
-        setValues((prev) => ({ ...prev, [key]: { ...prev[key], [shard]: v } }));
-        setOpenKey(null);
-    };
+    // ===== 编辑（稳定引用：memo 卡片只传 key，避免闭包导致全量重渲染） =====
+    const toggleOpen = useCallback((key: string) => {
+        setOpenKey((cur) => (cur === key ? null : key));
+    }, []);
+
+    const selectValue = useCallback(
+        (key: string, v: string) => {
+            setValues((prev) => ({ ...prev, [key]: { ...prev[key], [shard]: v } }));
+            setOpenKey(null);
+        },
+        [shard]
+    );
 
     // ===== 保存：分别写回两个 shard（按归属过滤 key），整体覆盖 =====
     const save = async () => {
@@ -553,34 +595,16 @@ export default () => {
                                     const cur = values[it.key] ? values[it.key][shard] : baseOf(it);
                                     const curOpt = it.opts.find((o) => o.v === cur);
                                     return (
-                                        <Card key={it.key} dirty={isDirty(it)}>
-                                            <CardIcon src={it.icon} alt='' />
-                                            <CardMain>
-                                                <CardName>{it.zh}</CardName>
-                                                <CardKey>{it.key}</CardKey>
-                                                <SelectWrap>
-                                                    <SelectBtn
-                                                        open={openKey === it.key}
-                                                        onClick={() => setOpenKey(openKey === it.key ? null : it.key)}
-                                                    >
-                                                        <span>{curOpt ? curOpt.zh : cur}</span>
-                                                    </SelectBtn>
-                                                    {openKey === it.key && (
-                                                        <OptMenu>
-                                                            {it.opts.map((o) => (
-                                                                <OptItem
-                                                                    key={o.v}
-                                                                    active={o.v === cur}
-                                                                    onClick={() => select(it.key, o.v)}
-                                                                >
-                                                                    {o.zh}
-                                                                </OptItem>
-                                                            ))}
-                                                        </OptMenu>
-                                                    )}
-                                                </SelectWrap>
-                                            </CardMain>
-                                        </Card>
+                                        <SettingCard
+                                            key={it.key}
+                                            it={it}
+                                            cur={cur}
+                                            curZh={curOpt ? curOpt.zh : cur}
+                                            dirty={isDirty(it)}
+                                            open={openKey === it.key}
+                                            onToggle={toggleOpen}
+                                            onSelect={selectValue}
+                                        />
                                     );
                                 })}
                             </Grid>
