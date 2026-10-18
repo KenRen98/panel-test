@@ -5,6 +5,7 @@ import {
     faCogs,
     faDownload,
     faFolderOpen,
+    faGlobe,
     faHistory,
     faNetworkWired,
     faPuzzlePiece,
@@ -45,6 +46,8 @@ const SteammodContainer = lazy(() => import('@/components/server/steammod/Steamm
 const DstModManagerContainer = lazy(() => import('@/components/server/dstmodmanager/DstModManagerContainer'));
 // 安装日志：读取服务器 MLSG-LOG 目录，独立分包避免打进主 chunk
 const InstallLogContainer = lazy(() => import('@/components/server/installlog/InstallLogContainer'));
+// 世界设置：读写 worldgenoverride.lua，独立分包避免打进主 chunk
+const WorldSettingsContainer = lazy(() => import('@/components/server/worldsettings/WorldSettingsContainer'));
 
 interface RouteDefinition {
     path: string;
@@ -158,6 +161,14 @@ export default {
             component: DstModManagerContainer,
             group: 1,
             icon: faWrench,
+        },
+        {
+            path: '/worldsettings',
+            permission: 'startup.*',
+            name: '世界设置',
+            component: WorldSettingsContainer,
+            group: 1,
+            icon: faGlobe,
         },
         // ===== 组2 =====
         {
