@@ -4,6 +4,7 @@ import http from '@/api/http';
 import getFileContents from '@/api/server/files/getFileContents';
 import saveFileContents from '@/api/server/files/saveFileContents';
 import deleteFiles from '@/api/server/files/deleteFiles';
+import loadDirectory from '@/api/server/files/loadDirectory';
 
 /**
  * Steam 创意工坊模组安装功能（模组安装）。
@@ -100,6 +101,8 @@ export interface SteamMod {
     time_updated: number;
     /** 服务器本地是否已下载（GetDetails 不返回；由服务器端目录扫描提供，暂缺时恒为 undefined） */
     downloaded?: boolean;
+    /** 服务器本地 acf 记录的下载/更新时间（秒），用于与 time_updated 对比判断"有更新" */
+    localUpdated?: number;
 }
 
 export interface SteamSearchResult {
@@ -141,34 +144,63 @@ export const getSteamModDetails = async (mode: SteamModMode, ids: string[]): Pro
 };
 
 /**
- * 服务器本地已下载的 workshop id 集合。
+ * 服务器本地已下载的 workshop id → acf 记录的下载/更新时间（秒）。
  *
  * steamcmd 下载完成后会生成 appworkshop_*.acf（饥荒为 appworkshop_322330.acf），
- * 其 "WorkshopItemsInstalled" 段落里每个数字键就是一个已下载 mod 的 id；
- * dst_auto_mods.sh 已把该文件复制到 ugc_mods/server/Master/ 与 Caves/ 下。
- * 因此"是否已下载"= 读 acf 文件、提取其中的 id 集合，比扫 mods 目录快得多。
- * acf 不存在 → 一个 mod 都未下载过 → 返回空集合。
+ * 其 "WorkshopItemsInstalled" 段落里每个数字键就是一个已下载 mod 的 id，
+ * 每个块内带 timeupdated 字段；dst_auto_mods.sh 已把该文件复制到
+ * ugc_mods/server/Master/ 与 Caves/ 下。
+ * 因此"是否已下载"= 读 acf 文件、提取其中的 id 集合；timeupdated 可再与
+ * Steam API 的 time_updated 对比判断"模组是否有更新"。
+ * acf 不存在 → 一个 mod 都未下载过 → 返回空 Map。
  */
-export const getInstalledModIds = async (uuid: string): Promise<Set<string>> => {
+export const getInstalledModInfo = async (uuid: string): Promise<Map<string, number>> => {
     const key = `installed:${uuid}`;
-    const hit = cacheGet<Set<string>>(key, 30_000);
+    const hit = cacheGet<Map<string, number>>(key, 30_000);
     if (hit) return hit;
     let content: string;
     try {
         content = await getFileContents(uuid, 'ugc_mods/server/Master/appworkshop_322330.acf');
     } catch (e) {
         // 文件不存在（尚未下载过任何 mod）或读取失败 → 视为未下载
-        console.warn('[getInstalledModIds] 读取 acf 失败，视为未下载任何模组', e);
+        console.warn('[getInstalledModInfo] 读取 acf 失败，视为未下载任何模组', e);
+        return new Map();
+    }
+    const map = new Map<string, number>();
+    const blockRe = /^\s*"(\d{5,})"\s*\{([\s\S]*?)\}/gm;
+    const timeRe = /"timeupdated"\s*"(\d+)"/;
+    let m: RegExpExecArray | null;
+    while ((m = blockRe.exec(content)) !== null) {
+        const tm = timeRe.exec(m[2]);
+        map.set(m[1], tm ? Number(tm[1]) : 0);
+    }
+    cacheSet(key, map);
+    return map;
+};
+
+/**
+ * 面板保存配置时同时写入的"待生效"标记文件（<id>.pending，内容占位 "1"）。
+ * 存在 = 该 mod 有已保存但尚未被开服脚本合并进 modoverrides.lua 的修改。
+ * 开服脚本合并完成后删除所有 *.pending → 前端据此判断"待重启生效"状态。
+ */
+const PENDING_MARK_SUFFIX = '.pending';
+
+export const markPendingConfig = async (uuid: string, id: string): Promise<void> => {
+    await saveFileContents(uuid, `${PENDING_DIR}/${id}${PENDING_MARK_SUFFIX}`, '1');
+};
+
+/** 读取"待生效"标记集合（pending_config 目录下 *.pending 文件的 id）。目录不存在 → 空集合。 */
+export const getPendingMarkedIds = async (uuid: string): Promise<Set<string>> => {
+    try {
+        const list = await loadDirectory(uuid, PENDING_DIR);
+        return new Set(
+            list
+                .filter((f) => f.isFile && f.name.endsWith(PENDING_MARK_SUFFIX))
+                .map((f) => f.name.slice(0, -PENDING_MARK_SUFFIX.length))
+        );
+    } catch (e) {
         return new Set();
     }
-    const ids = new Set<string>();
-    const re = /^\s*"(\d{5,})"\s*$/gm;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(content)) !== null) {
-        ids.add(m[1]);
-    }
-    cacheSet(key, ids);
-    return ids;
 };
 
 /**

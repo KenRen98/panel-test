@@ -6,10 +6,12 @@ import Button from '@/components/elements/Button';
 import { ServerContext } from '@/state/server';
 import {
     getSteamModDetails,
-    getInstalledModIds,
+    getInstalledModInfo,
     getModSchema,
     getPendingConfig,
     savePendingConfig,
+    markPendingConfig,
+    getPendingMarkedIds,
     removeModData,
     saveModsList,
     resolveSteamModMode,
@@ -198,6 +200,22 @@ const BadgePending = styled.span`
     color: hsl(220, 10%, 62%);
     border: 1px solid rgba(156, 163, 175, 0.35);
     background: rgba(156, 163, 175, 0.08);
+`;
+
+// 待生效徽章（蓝色：有已保存的修改，但还没被开服脚本合并进 modoverrides.lua——需重启生效）
+const BadgePendingApply = styled.span`
+    ${tw`text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap`};
+    color: hsl(210, 90%, 75%);
+    border: 1px solid rgba(96, 165, 250, 0.4);
+    background: rgba(96, 165, 250, 0.1);
+`;
+
+// 有更新徽章（橙红：本地 acf 记录的下载时间早于 Steam API 的更新时间）
+const BadgeUpdated = styled.span`
+    ${tw`text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap`};
+    color: hsl(15, 85%, 72%);
+    border: 1px solid rgba(251, 113, 75, 0.4);
+    background: rgba(251, 113, 75, 0.1);
 `;
 
 const Desc = styled.div`
@@ -520,6 +538,8 @@ export default () => {
     const [draft, setDraft] = useState<Record<string, string | number | boolean>>({});
     const [savingConfig, setSavingConfig] = useState(false);
     const [loadingDraft, setLoadingDraft] = useState(false);
+    // 待生效标记集合（pending_config/*.pending）：有已保存但未重启生效的修改
+    const [pendingMarked, setPendingMarked] = useState<Set<string>>(new Set());
     // 确认弹窗（移除 / 清空）
     const [confirm, setConfirm] = useState<{ title: string; text: string; onOk: () => void } | null>(null);
 
@@ -537,17 +557,22 @@ export default () => {
         return () => window.removeEventListener('keydown', handler);
     }, [confirm, manageId, savingConfig]);
 
-    // 加载已安装模组详情（GetDetails 一次取全部）+ 服务器本地已下载集合（读 acf）
+    // 加载已安装模组详情（GetDetails 一次取全部）+ 服务器本地已下载集合（读 acf，
+    // 含每个 mod 的本地下载时间用于"有更新"判断）+ 待生效标记（pending_config/*.pending）
     // + 已下载 mod 的设置 schema（读 dump_schema.lua 生成的 JSON）
-    // 三段全部就绪后才一次性渲染（避免先出卡片再逐个补徽章/设置的两段式闪烁）
+    // 四段全部就绪后才一次性渲染（避免先出卡片再逐个补徽章/设置的两段式闪烁）
     const load = useCallback(
         (idList: string[]) => {
             if (!mode) return;
             setLoading(true);
             setError(null);
-            Promise.all([getSteamModDetails(mode, idList), getInstalledModIds(uuid)])
-                .then(async ([details, installedIds]) => {
-                    const withDl = details.map((m) => ({ ...m, downloaded: installedIds.has(m.id) }));
+            Promise.all([getSteamModDetails(mode, idList), getInstalledModInfo(uuid), getPendingMarkedIds(uuid)])
+                .then(async ([details, installedInfo, pendingMarked]) => {
+                    const withDl = details.map((m) => ({
+                        ...m,
+                        downloaded: installedInfo.has(m.id),
+                        localUpdated: installedInfo.get(m.id) ?? 0,
+                    }));
                     const entries = await Promise.all(
                         withDl
                             .filter((m) => m.downloaded !== false)
@@ -555,6 +580,7 @@ export default () => {
                     );
                     setMods(withDl);
                     setSchemas(Object.fromEntries(entries));
+                    setPendingMarked(pendingMarked);
                 })
                 .catch((e) => {
                     console.error(e);
@@ -686,13 +712,17 @@ export default () => {
         setLoadingDraft(false); // 值就绪，隐藏加载条
     };
 
-    // 保存设置 → 写 pending JSON（下次开服脚本合并进 modoverrides.lua）
+    // 保存设置 → 写 pending JSON（配置值）+ <id>.pending 标记（待生效），
+    // 下次开服脚本合并进 modoverrides.lua 后删除标记
     const saveConfig = async () => {
         if (!manageId || savingConfig) return;
         setSavingConfig(true);
         clearFlashes();
         try {
             await savePendingConfig(uuid, manageId, draft);
+            await markPendingConfig(uuid, manageId);
+            // 本地同步标记，卡片立即显示"待生效"（无需等刷新）
+            setPendingMarked((prev) => new Set(prev).add(manageId));
             setManageId(null);
         } catch (e) {
             console.error(e);
@@ -798,6 +828,8 @@ export default () => {
                     {slice.map((m) => {
                         const schema = schemas[m.id];
                         const editable = m.downloaded !== false && !!schema && schema.items.length > 0;
+                        const hasUpdate = m.downloaded !== false && m.localUpdated > 0 && m.time_updated > m.localUpdated;
+                        const pendingApply = m.downloaded !== false && pendingMarked.has(m.id);
                         return (
                             <Card key={m.id}>
                                 <CardHead>
@@ -812,9 +844,13 @@ export default () => {
                                     <Corner>
                                         {m.downloaded === false ? (
                                             <BadgeUndownloaded>未下载</BadgeUndownloaded>
+                                        ) : hasUpdate ? (
+                                            <BadgeUpdated>有更新</BadgeUpdated>
                                         ) : schema ? (
                                             schema.items.length === 0 ? (
                                                 <BadgeNoOptions>无设置项</BadgeNoOptions>
+                                            ) : pendingApply ? (
+                                                <BadgePendingApply>待生效</BadgePendingApply>
                                             ) : (
                                                 <BadgeEditable>可编辑</BadgeEditable>
                                             )
