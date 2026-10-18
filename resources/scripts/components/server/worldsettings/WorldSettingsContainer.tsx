@@ -140,17 +140,27 @@ const VDivider = styled.span`
 `;
 
 // 危险按钮（重置世界：透明底红边，对齐生产 ClearBtn/RemoveBtn 语汇）
+// Button 是 inline-block，文字走 baseline 会垂直偏移 → 改 inline-flex 居中
 const DangerBtn = styled(Button)`
     ${tw`text-[13px] px-4 bg-transparent border border-red-500 text-red-400 hover:bg-red-500/10`};
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     height: 34px;
 `;
 
 // 保存/还原按钮（与切换组等高 34px）
 const PrimaryBtn = styled(Button)`
     ${tw`text-[13px] px-4 h-[34px]`};
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 `;
 const GreyBtn = styled(Button)`
     ${tw`text-[13px] px-4 h-[34px]`};
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 `;
 
 // ===== 分类标题 =====
