@@ -7,7 +7,7 @@ import { ServerContext } from '@/state/server';
 import {
     getSteamModDetails,
     getInstalledModInfo,
-    getModSchema,
+    getModSchemas,
     getPendingConfig,
     savePendingConfig,
     markPendingConfig,
@@ -573,13 +573,14 @@ export default () => {
                         downloaded: installedInfo.has(m.id),
                         localUpdated: installedInfo.get(m.id) ?? 0,
                     }));
-                    const entries = await Promise.all(
-                        withDl
-                            .filter((m) => m.downloaded !== false)
-                            .map(async (m) => [m.id, await getModSchema(uuid, m.id)] as const)
+                    // 批量读 schema（一次请求替代逐 mod 读取；命中 5min 缓存自动跳过）
+                    const downloaded = withDl.filter((m) => m.downloaded !== false);
+                    const schemas = await getModSchemas(
+                        uuid,
+                        downloaded.map((m) => m.id)
                     );
                     setMods(withDl);
-                    setSchemas(Object.fromEntries(entries));
+                    setSchemas(schemas);
                     setPendingMarked(pendingMarked);
                 })
                 .catch((e) => {

@@ -308,6 +308,38 @@ export const getModSchema = async (uuid: string, id: string): Promise<DstModSche
 };
 
 /**
+ * 批量读取多个 mod 的设置 schema（模组管理页加载用）。
+ * 复用 getModSchema 的 5min 缓存：命中缓存的 id 跳过，只请求未缓存的；
+ * 读成功的写回缓存，失败（null）不写——与单读语义一致。
+ */
+export const getModSchemas = async (
+    uuid: string,
+    ids: string[]
+): Promise<Record<string, DstModSchema | null>> => {
+    const missing: string[] = [];
+    const result: Record<string, DstModSchema | null> = {};
+    for (const id of ids) {
+        const hit = cacheGet<DstModSchema>(`schema:${uuid}:${id}`, 300_000);
+        if (hit) {
+            result[id] = hit;
+        } else {
+            missing.push(id);
+        }
+    }
+    if (missing.length === 0) return result;
+    const { data } = await http.post(`/api/client/servers/${uuid}/mods/steam/schemas`, { ids: missing });
+    const schemas = (data?.schemas ?? {}) as Record<string, DstModSchema | null>;
+    for (const id of missing) {
+        const s = schemas[id] ?? null;
+        result[id] = s;
+        if (s) {
+            cacheSet(`schema:${uuid}:${id}`, s);
+        }
+    }
+    return result;
+};
+
+/**
  * 读取某 mod 已保存的 pending 设置（用户改过但未重启的值）。
  * 无 pending → null。返回 { name: value } 映射。
  */

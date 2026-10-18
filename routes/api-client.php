@@ -87,6 +87,11 @@ Route::group([
     Route::post('/command', [Client\Servers\CommandController::class, 'index']);
     Route::post('/power', [Client\Servers\PowerController::class, 'index']);
 
+    // 已安装模组批量 schema（模组管理页；合并 N 次逐文件读取为 1 次请求）
+    Route::post('/mods/steam/schemas', [Client\SteamWorkshopController::class, 'schemas'])
+        ->middleware('throttle:steam.search')
+        ->name('api:client:server.mods.steam.schemas');
+
     Route::group(['prefix' => '/databases'], function () {
         Route::get('/', [Client\Servers\DatabaseController::class, 'index']);
         Route::middleware([ResourceLimit::Database->middleware()])

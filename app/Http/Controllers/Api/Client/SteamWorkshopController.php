@@ -5,6 +5,8 @@ namespace Pterodactyl\Http\Controllers\Api\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Pterodactyl\Models\Server;
+use Pterodactyl\Repositories\Wings\DaemonFileRepository;
 
 /**
  * Steam 创意工坊模组代理接口（模组安装功能）。
@@ -36,6 +38,13 @@ class SteamWorkshopController extends ClientApiController
     private const MAX_Q_LEN = 100;
     private const MAX_PAGE = 1000;
     private const MAX_DETAIL_IDS = 100; // GetDetails 单次批量上限（保守值）
+    private const MAX_SCHEMA_IDS = 200; // 批量 schema 读取上限（已安装 mod 数量通常远小于此）
+
+    public function __construct(
+        private DaemonFileRepository $fileRepository,
+    ) {
+        parent::__construct();
+    }
 
     /**
      * 把 Steam publishedfiledetails 条目裁剪为前端卡片最小集。
@@ -184,6 +193,49 @@ class SteamWorkshopController extends ClientApiController
         } catch (\Throwable $e) {
             return new JsonResponse(['error' => 'steam api unreachable', 'detail' => $e->getMessage()], 502);
         }
+    }
+
+    /**
+     * 已安装模组批量 schema（模组管理页）。
+     *
+     * POST /api/client/servers/{server}/mods/steam/schemas   body: { ids: string[] }
+     *
+     * schema 是开服时由 dump_schema.lua 从各 mod 的 modinfo.lua 生成的 JSON
+     * （ugc_mods/schema/<id>.json）。此前前端逐 mod 各发一次文件读取请求，
+     * mod 一多就慢；这里循环读文件、一次返回全部，前端 N 次 HTTP 变 1 次。
+     * 单个文件读失败/不存在 → 该 id 为 null（前端按"需重启/不可编辑"处理）。
+     *
+     * @return JsonResponse
+     */
+    public function schemas(Request $request, Server $server): JsonResponse
+    {
+        $ids = $request->input('ids');
+        if (!is_array($ids)) {
+            return new JsonResponse(['error' => 'ids must be an array'], 422);
+        }
+        $ids = array_values(array_unique(array_filter(array_map('trim', $ids), fn ($v) => preg_match('/^\d{5,}$/', (string) $v))));
+        $ids = array_slice($ids, 0, self::MAX_SCHEMA_IDS);
+        if (count($ids) === 0) {
+            return new JsonResponse(['schemas' => []], 200);
+        }
+
+        $maxSize = config('pterodactyl.files.max_edit_size');
+        $schemas = [];
+        foreach ($ids as $id) {
+            try {
+                $raw = $this->fileRepository->setServer($server)->getContent("ugc_mods/schema/{$id}.json", $maxSize);
+                $parsed = json_decode($raw, true);
+                if (is_array($parsed) && isset($parsed['items']) && is_array($parsed['items'])) {
+                    $schemas[$id] = $parsed;
+                    continue;
+                }
+            } catch (\Throwable $e) {
+                // 文件不存在 / Daemon 读取失败 → 该 id 为 null
+            }
+            $schemas[$id] = null;
+        }
+
+        return new JsonResponse(['schemas' => $schemas], 200);
     }
 
     /**
