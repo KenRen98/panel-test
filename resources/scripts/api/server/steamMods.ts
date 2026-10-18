@@ -183,14 +183,15 @@ export const getInstalledModInfo = async (uuid: string): Promise<Map<string, num
 /**
  * 待生效标记统一文件（记录所有已保存但尚未被开服脚本合并进 modoverrides.lua 的 mod id）。
  * 内容为 JSON 数组；开服脚本合并完成后删除该文件 → 前端据此判断"待重启生效"状态。
+ * 注意：文件路径不能做成顶层常量——PENDING_DIR 在文件下方才声明，
+ * 顶层立即求值会触发 TDZ（Cannot access before initialization）。
  */
-const PENDING_MARKS_FILE = `${PENDING_DIR}/pending_ids.json`;
 
 /** 保存配置时把 mod id 记入统一待生效标记文件（不存在则新建，读改写追加） */
 export const markPendingConfig = async (uuid: string, id: string): Promise<void> => {
     let ids: string[] = [];
     try {
-        const raw = await getFileContentsQuiet(uuid, PENDING_MARKS_FILE);
+        const raw = await getFileContentsQuiet(uuid, `${PENDING_DIR}/pending_ids.json`);
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
             ids = parsed.filter((x): x is string => typeof x === 'string');
@@ -201,7 +202,7 @@ export const markPendingConfig = async (uuid: string, id: string): Promise<void>
     if (!ids.includes(id)) {
         ids.push(id);
     }
-    await saveFileContents(uuid, PENDING_MARKS_FILE, JSON.stringify(ids));
+    await saveFileContents(uuid, `${PENDING_DIR}/pending_ids.json`, JSON.stringify(ids));
     // 标记文件已变化 → 清掉读取侧缓存，下次进页读到最新状态
     cacheDelete(`pendingMarks:${uuid}`);
 };
@@ -217,7 +218,7 @@ export const getPendingMarkedIds = async (uuid: string): Promise<Set<string>> =>
     if (hit) return hit;
     let ids: Set<string>;
     try {
-        const raw = await getFileContentsQuiet(uuid, PENDING_MARKS_FILE);
+        const raw = await getFileContentsQuiet(uuid, `${PENDING_DIR}/pending_ids.json`);
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed)) {
             ids = new Set();
