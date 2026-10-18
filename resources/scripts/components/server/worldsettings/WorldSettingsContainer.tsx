@@ -189,10 +189,10 @@ const CatCount = styled.span`
     ${tw`text-[11px] text-neutral-400 bg-neutral-700 border border-neutral-600 rounded-md px-2 py-0.5 leading-none`};
 `;
 
-// ===== 卡片网格：桌面 5 列 / 中屏 4 列 / 手机 1 列 =====
+// ===== 卡片网格：桌面 5 列 / 中屏 3 列 / 手机 1 列 =====
 const Grid = styled.div`
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 14px;
     @media (max-width: 700px) {
         grid-template-columns: 1fr;
