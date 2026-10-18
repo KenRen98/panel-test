@@ -43,8 +43,11 @@ const LogPane = styled.div`
 `;
 
 const LogTab = styled.button<{ active?: boolean }>`
-    ${tw`px-3 py-2 text-sm rounded-t border border-b-0 text-neutral-300 hover:text-neutral-100 bg-neutral-800 cursor-pointer whitespace-nowrap`};
-    ${(props) => props.active && tw`text-neutral-100 bg-neutral-700 border-neutral-600`};
+    ${tw`px-3 py-2 text-sm rounded-t border border-b-0 cursor-pointer whitespace-nowrap transition-colors duration-100`};
+    ${(props) =>
+        props.active
+            ? tw`text-neutral-100 bg-neutral-600 border-neutral-600`
+            : tw`text-neutral-400 bg-neutral-800 border-neutral-700 hover:text-neutral-200 hover:bg-neutral-700`};
 `;
 
 const LogPre = styled.pre`
