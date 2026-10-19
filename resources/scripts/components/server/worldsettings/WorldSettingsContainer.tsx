@@ -210,13 +210,15 @@ const Grid = styled.div`
 `;
 
 // 卡片：左右布局（图标 + 名称/下拉），dirty 时蓝边框 + 背景微蓝；contain 隔离重排影响
-const Card = styled.div<{ dirty?: boolean }>`
+const Card = styled.div<{ dirty?: boolean; open?: boolean }>`
     ${tw`flex items-center gap-2 rounded-xl border p-2.5 min-w-0 transition-colors duration-150`};
     background: ${theme`colors.neutral.700`.toString()};
     border-color: ${(props) =>
         props.dirty ? theme`colors.primary.500`.toString() : theme`colors.neutral.600`.toString()};
     background: ${(props) => (props.dirty ? '#3a476a' : theme`colors.neutral.700`.toString())};
     contain: layout style;
+    position: relative;
+    z-index: ${(props) => (props.open ? 10 : 1)};
     &:hover {
         border-color: ${(props) => (props.dirty ? theme`colors.primary.400`.toString() : '#4a5a7a')};
     }
@@ -348,7 +350,7 @@ interface SettingCardProps {
 }
 
 const SettingCard = memo(({ it, cur, curZh, dirty, open, onToggle, onSelect }: SettingCardProps) => (
-    <Card dirty={dirty}>
+    <Card dirty={dirty} open={open}>
         <CardIcon src={it.icon} alt='' width={46} height={46} loading='lazy' decoding='async' />
         <CardMain>
             <CardName>{it.zh}</CardName>
