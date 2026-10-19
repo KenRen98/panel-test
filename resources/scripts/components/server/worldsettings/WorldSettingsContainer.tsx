@@ -175,10 +175,12 @@ const GreyBtn = styled(Button)`
 `;
 
 // ===== 分类容器：content-visibility 跳过屏外分类渲染（滚动性能） =====
-// 注意：content-visibility 不能走 twin 任意值写法（twin.macro 不识别，构建报错），用 styled 原生 CSS
-const CatSection = styled.div`
-    content-visibility: auto;
-    contain-intrinsic-block-size: 600px;
+// 注意：
+// 1. content-visibility 不能走 twin 任意值写法（twin.macro 不识别，构建报错），用 styled 原生 CSS
+// 2. content-visibility 含 paint containment，会把下拉菜单溢出卡片的部分裁剪掉——
+//    因此当前分类有下拉打开时（skipRender=false）移除该属性，菜单正常溢出显示
+const CatSection = styled.div<{ skipRender?: boolean }>`
+    ${(props) => props.skipRender && `content-visibility: auto; contain-intrinsic-block-size: 600px;`}
 `;
 
 // ===== 分类标题 =====
@@ -662,8 +664,10 @@ export default () => {
                 CAT_ORDER.map((cat) => {
                     const items = vis.filter((it) => it.cat === cat);
                     if (items.length === 0) return null;
+                    // 当前分类有下拉打开时移除 content-visibility（避免 paint containment 裁剪菜单）
+                    const catOpen = items.some((it) => it.key === openKey);
                     return (
-                        <CatSection key={cat}>
+                        <CatSection key={cat} skipRender={!catOpen}>
                             <CatHead>
                                 <CatTitle>{CAT_ZH[cat]}</CatTitle>
                                 <CatCount>{items.length} 项</CatCount>
