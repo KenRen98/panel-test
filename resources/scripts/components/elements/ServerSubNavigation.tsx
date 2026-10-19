@@ -7,7 +7,6 @@ import { faBook, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import routes from '@/routers/routes';
 import { ServerContext } from '@/state/server';
 import { useStoreState } from '@/state/hooks';
-import { usePermissions } from '@/plugins/usePermissions';
 import { hasCapability, getEggCapabilities } from '@/api/server/eggCapabilities';
 import { hasSteamModCapability, hasDstModManagerCapability } from '@/api/server/steamMods';
 import { hasWorldSettingsCapability } from '@/api/server/worldSettings';
@@ -86,37 +85,9 @@ const AdminLink = styled.a<{ collapsed?: boolean }>`
     }
 `;
 
-// 权限守卫：
-// - 管理员（rootAdmin）对任意服务器拥有全部权限 → 直接显示，避免 permissions 非 '*' 时误隐藏
-// - 非管理员：权限数据未加载（permissions 为空）时默认显示（消除跳变），加载后按实际权限过滤
-const PermissionGuard = ({
-    action,
-    matchAny = false,
-    children,
-}: {
-    action: string | string[];
-    matchAny?: boolean;
-    children: React.ReactNode;
-}) => {
-    const rootAdmin = useStoreState((state) => state.user.data?.rootAdmin);
-
-    if (rootAdmin) {
-        return <>{children}</>;
-    }
-
-    const permissions = ServerContext.useStoreState((state) => state.server.permissions);
-    const can = usePermissions(action);
-    const loaded = permissions.length > 0;
-
-    if (!loaded) {
-        return <>{children}</>;
-    }
-    return <>{matchAny ? can.some(Boolean) : can.every(Boolean) ? children : null}</>;
-};
-
-// 浮现插入动画（仅用于动态判断项：模组安装 / 一键安装 / 模组管理 / 跳转管理）：
-// 挂载后 0fr→1fr 高度展开（下方条目平滑让位）+ 淡入 + 轻微上滑 + 一次高亮提示。
-// 时长 450ms、错峰 120ms，与 demo 默认档一致。
+// 导航显示策略：
+// - 入口仅按 egg capability 门控（模组安装/模组管理/世界设置等），不做权限过滤
+// - 普通用户与管理员的区别只在底部"跳转管理"（仅 rootAdmin 可见）
 const FloatingItemStyle = styled.div`
     display: grid;
     grid-template-rows: 0fr;
@@ -223,6 +194,7 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
                 {items.map((route) => {
                     // 统一渲染（折叠/展开同一 DOM 结构，无 Tooltip 包裹切换 → 不重挂载不抖动）
                     // 折叠时用原生 title 提示（等价 Tooltip 功能，且不改变 DOM 树）
+                    // 无权限过滤：egg capability 已在 visible 中过滤，这里直接渲染
                     const link = (
                         <Item
                             key={route.path}
@@ -232,25 +204,24 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
                             title={collapsed ? route.name : undefined}
                         >
                             {route.icon && <FontAwesomeIcon icon={route.icon} fixedWidth />}
-                            <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>{route.name}</span>
+                            <span
+                                css={[
+                                    tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`,
+                                    collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`,
+                                ]}
+                            >
+                                {route.name}
+                            </span>
                         </Item>
-                    );
-
-                    const wrapped = route.permission ? (
-                        <PermissionGuard key={route.path} action={route.permission} matchAny>
-                            {link}
-                        </PermissionGuard>
-                    ) : (
-                        link
                     );
 
                     const delay = DYNAMIC_DELAYS[route.path];
                     return delay !== undefined ? (
                         <FloatingItem key={route.path} delay={delay}>
-                            {wrapped}
+                            {link}
                         </FloatingItem>
                     ) : (
-                        wrapped
+                        link
                     );
                 })}
             </Group>
@@ -267,13 +238,18 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
         <AdminLink
             key={'manual-basics'}
             href={'https://manual.mr-leaves.com/1-serverbasics/'}
-            target="_blank"
-            rel="noopener noreferrer"
+            target='_blank'
+            rel='noopener noreferrer'
             collapsed={collapsed}
             title={collapsed ? '面板教程' : undefined}
         >
             <FontAwesomeIcon icon={faBook} fixedWidth />
-            <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+            <span
+                css={[
+                    tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`,
+                    collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`,
+                ]}
+            >
                 面板教程
             </span>
         </AdminLink>
@@ -284,13 +260,18 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
         <AdminLink
             key={'manual-advanced'}
             href={'https://manual.mr-leaves.com/2-serveradvanced/'}
-            target="_blank"
-            rel="noopener noreferrer"
+            target='_blank'
+            rel='noopener noreferrer'
             collapsed={collapsed}
             title={collapsed ? '高级功能' : undefined}
         >
             <FontAwesomeIcon icon={faBook} fixedWidth />
-            <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+            <span
+                css={[
+                    tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`,
+                    collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`,
+                ]}
+            >
                 高级功能
             </span>
         </AdminLink>
@@ -301,13 +282,18 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
         <AdminLink
             key={'manual'}
             href={manualUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+            target='_blank'
+            rel='noopener noreferrer'
             collapsed={collapsed}
             title={collapsed ? '游戏教程' : undefined}
         >
             <FontAwesomeIcon icon={faBook} fixedWidth />
-            <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+            <span
+                css={[
+                    tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`,
+                    collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`,
+                ]}
+            >
                 游戏教程
             </span>
         </AdminLink>
@@ -319,7 +305,12 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
             <FloatingItem key={'admin'} delay={360}>
                 <AdminLink href={adminHref} collapsed={collapsed} title={collapsed ? '跳转管理' : undefined}>
                     <FontAwesomeIcon icon={faExternalLinkAlt} fixedWidth />
-                    <span css={[tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`, collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`]}>
+                    <span
+                        css={[
+                            tw`inline-block ml-3 max-w-[12rem] overflow-hidden transition-all duration-[180ms] ease-out`,
+                            collapsed && tw`lg:ml-0 lg:max-w-0 lg:opacity-0`,
+                        ]}
+                    >
                         跳转管理
                     </span>
                 </AdminLink>

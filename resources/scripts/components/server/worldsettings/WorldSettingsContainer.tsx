@@ -656,7 +656,7 @@ export default () => {
                     const items = vis.filter((it) => it.cat === cat);
                     if (items.length === 0) return null;
                     return (
-                        <div key={cat} style={{ contentVisibility: 'auto', containIntrinsicBlockSize: 600 }}>
+                        <div key={cat} css={tw`[content-visibility:auto] [contain-intrinsic-block-size:600px]`}>
                             <CatHead>
                                 <CatTitle>{CAT_ZH[cat]}</CatTitle>
                                 <CatCount>{items.length} 项</CatCount>
