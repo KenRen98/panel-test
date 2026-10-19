@@ -26,6 +26,9 @@ const statusMap: Record<NonNullable<ServerStatus>, string> = {
     running: '运行中',
 };
 
+// WHMCS 客户端登录地址（付费用户点击到期卡片跳转续费/看账单）
+const WHMCS_CLIENT_URL = 'https://mlsg.mr-leaves.com/store/clientarea.php';
+
 type Stats = Record<'memory' | 'cpu' | 'disk' | 'uptime' | 'rx' | 'tx', number>;
 
 const getBackgroundColor = (value: number, max: number | null): string | undefined => {
@@ -186,18 +189,30 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
             <StatBlock icon={faCloudUploadAlt} title={'网络(出站)'}>
                 {status === 'offline' ? <span className={'text-gray-400'}>离线</span> : bytesToString(stats.tx)}
             </StatBlock>
-            <StatBlock icon={faCalendarAlt} title={'到期时间'} color={dueColor}>
-                {dueLoading ? (
-                    '--'
-                ) : due?.next_due ? (
-                    <>
-                        {dueLabel(due.next_due)}
-                        <span className={'ml-1 text-gray-300 text-[70%] select-none'}>/ {due.next_due}</span>
-                    </>
-                ) : (
-                    '非付费用户'
-                )}
-            </StatBlock>
+            {dueLoading ? (
+                <StatBlock icon={faCalendarAlt} title={'到期时间'}>
+                    {'--'}
+                </StatBlock>
+            ) : due?.next_due ? (
+                <a
+                    href={WHMCS_CLIENT_URL}
+                    target={'_blank'}
+                    rel={'noopener noreferrer'}
+                    title={'前往 WHMCS 查看/续费'}
+                    className={'flex cursor-pointer'}
+                >
+                    <StatBlock icon={faCalendarAlt} title={'到期时间'} color={dueColor} className={'flex-1'}>
+                        <>
+                            {dueLabel(due.next_due)}
+                            <span className={'ml-1 text-gray-300 text-[70%] select-none'}>/ {due.next_due}</span>
+                        </>
+                    </StatBlock>
+                </a>
+            ) : (
+                <StatBlock icon={faCalendarAlt} title={'到期时间'}>
+                    {'非付费用户'}
+                </StatBlock>
+            )}
         </div>
     );
 };
