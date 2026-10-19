@@ -1,5 +1,5 @@
 // 本文件由 worldgen_ts_gen.py 从 worldgen_settings.json 生成，勿手改。
-export type WorldgenCat = 'rule' | 'misc' | 'resources' | 'unprepared' | 'animals' | 'monsters';
+export type WorldgenCat = 'rule' | 'misc' | 'resources' | 'unprepared' | 'animals' | 'monsters' | 'boss';
 export interface WorldgenOpt { v: string; zh: string; }
 export interface WorldgenSetting {
   key: string;
@@ -11,7 +11,7 @@ export interface WorldgenSetting {
   scope: 'master' | 'caves' | 'both';
   icon: string;
 }
-export const CAT_ORDER: WorldgenCat[] = ['rule', 'misc', 'resources', 'unprepared', 'animals', 'monsters'];
+export const CAT_ORDER: WorldgenCat[] = ['rule', 'misc', 'resources', 'unprepared', 'animals', 'monsters', 'boss'];
 export const CAT_ZH: Record<WorldgenCat, string> = {
   rule: '规则',
   misc: '杂项',
@@ -19,6 +19,7 @@ export const CAT_ZH: Record<WorldgenCat, string> = {
   unprepared: '植物',
   animals: '动物',
   monsters: '怪物',
+  boss: 'BOSS',
 };
 export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
   { key: 'autumn', zh: '秋季', cat: 'rule', opts: [{ v: 'noseason', zh: '无季节' }, { v: 'veryshortseason', zh: '很短' }, { v: 'shortseason', zh: '短' }, { v: 'default', zh: '默认' }, { v: 'longseason', zh: '长' }, { v: 'verylongseason', zh: '很长' }, { v: 'random', zh: '随机' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/autumn.png' },
@@ -28,11 +29,24 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
   { key: 'wildfires', zh: '野火', cat: 'rule', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/wildfires.png' },
   { key: 'regrowth', zh: '资源再生', cat: 'rule', opts: [{ v: 'veryslow', zh: '很慢' }, { v: 'slow', zh: '慢' }, { v: 'default', zh: '默认' }, { v: 'fast', zh: '快' }, { v: 'veryfast', zh: '很快' }], default_master: 'default', default_caves: 'default', scope: 'both', icon: '/worldgen/regrowth.png' },
   { key: 'grassgekkos', zh: '草壁虎转化', cat: 'rule', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/grassgekkos.png' },
+  { key: 'ghostsanitydrain', zh: '幽灵理智流失', cat: 'rule', opts: [{ v: 'none', zh: '禁用' }, { v: 'default', zh: '默认' }, { v: 'always', zh: '启用' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/ghostsanitydrain.png' },
+  { key: 'portalresurection', zh: '传送门复活', cat: 'rule', opts: [{ v: 'none', zh: '禁用' }, { v: 'default', zh: '默认' }, { v: 'always', zh: '启用' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/portalresurection.png' },
+  { key: 'resettime', zh: '重置时间', cat: 'rule', opts: [{ v: 'none', zh: '禁用' }, { v: 'slow', zh: '缓慢' }, { v: 'default', zh: '默认' }, { v: 'fast', zh: '快速' }, { v: 'instant', zh: '立即' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/resettime.png' },
+  { key: 'hunger', zh: '饥饿伤害', cat: 'rule', opts: [{ v: 'default', zh: '致命' }, { v: 'nonlethal', zh: '非致命' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/hunger.png' },
+  { key: 'temperaturedamage', zh: '温度伤害', cat: 'rule', opts: [{ v: 'default', zh: '致命' }, { v: 'nonlethal', zh: '非致命' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/temperaturedamage.png' },
+  { key: 'darkness', zh: '黑暗伤害', cat: 'rule', opts: [{ v: 'default', zh: '致命' }, { v: 'nonlethal', zh: '非致命' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/darkness.png' },
+  { key: 'lessdamagetaken', zh: '受到伤害', cat: 'rule', opts: [{ v: 'default', zh: '正常' }, { v: 'always', zh: '减少35%' }, { v: 'more', zh: '增加35%' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/lessdamagetaken.png' },
+  { key: 'healthpenalty', zh: '复活血量惩罚', cat: 'rule', opts: [{ v: 'default', zh: '启用' }, { v: 'none', zh: '禁用' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/healthpenalty.png' },
+  { key: 'reeds_regrowth', zh: '芦苇再生', cat: 'rule', opts: [{ v: 'never', zh: '从不' }, { v: 'veryslow', zh: '很慢' }, { v: 'slow', zh: '慢' }, { v: 'default', zh: '默认' }, { v: 'fast', zh: '快' }, { v: 'veryfast', zh: '很快' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/reeds_regrowth.png' },
   { key: 'dropeverythingondespawn', zh: '离开物品掉落', cat: 'rule', opts: [{ v: 'default', zh: '默认' }, { v: 'everything', zh: '全部掉落' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/dropeverythingondespawn.png' },
   { key: 'start_location', zh: '出生点', cat: 'misc', opts: [{ v: 'default', zh: '默认' }, { v: 'plus', zh: '额外物品' }, { v: 'darkness', zh: '黑暗' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/start_location.png' },
   { key: 'world_size', zh: '世界大小', cat: 'misc', opts: [{ v: 'small', zh: '小' }, { v: 'medium', zh: '中' }, { v: 'default', zh: '默认' }, { v: 'huge', zh: '巨大' }], default_master: 'default', default_caves: 'default', scope: 'both', icon: '/worldgen/world_size.png' },
   { key: 'branching', zh: '分支', cat: 'misc', opts: [{ v: 'never', zh: '从不' }, { v: 'least', zh: '最少' }, { v: 'default', zh: '默认' }, { v: 'most', zh: '最多' }], default_master: 'default', default_caves: 'default', scope: 'both', icon: '/worldgen/branching.png' },
   { key: 'loop', zh: '环路', cat: 'misc', opts: [{ v: 'never', zh: '从不' }, { v: 'default', zh: '默认' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'both', icon: '/worldgen/loop.png' },
+  { key: 'specialevent', zh: '特殊事件', cat: 'misc', opts: [{ v: 'none', zh: '无' }, { v: 'default', zh: '默认' }, { v: 'hallowed_nights', zh: '万圣夜' }, { v: 'winters_feast', zh: '冬日盛宴' }, { v: 'year_of_the_gobbler', zh: '火鸡之年' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/specialevent.png' },
+  { key: 'season_start', zh: '初始季节', cat: 'misc', opts: [{ v: 'default', zh: '默认' }, { v: 'winter', zh: '冬季' }, { v: 'spring', zh: '春季' }, { v: 'summer', zh: '夏季' }, { v: 'autumnorspring', zh: '秋或春' }, { v: 'winterorsummer', zh: '冬或夏' }, { v: 'random', zh: '随机' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/season_start.png' },
+  { key: 'day', zh: '昼夜循环', cat: 'misc', opts: [{ v: 'default', zh: '默认' }, { v: 'longday', zh: '长白天' }, { v: 'longdusk', zh: '长黄昏' }, { v: 'longnight', zh: '长夜晚' }, { v: 'noday', zh: '无白天' }, { v: 'nodusk', zh: '无黄昏' }, { v: 'nonight', zh: '无夜晚' }, { v: 'onlyday', zh: '只有白天' }, { v: 'onlydusk', zh: '只有黄昏' }, { v: 'onlynight', zh: '只有夜晚' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/day.png' },
+  { key: 'frograin', zh: '青蛙雨', cat: 'misc', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/frograin.png' },
   { key: 'touchstone', zh: '复活石', cat: 'misc', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'both', icon: '/worldgen/touchstone.png' },
   { key: 'boons', zh: '遗物', cat: 'misc', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'both', icon: '/worldgen/boons.png' },
   { key: 'cavelight', zh: '洞穴光线', cat: 'misc', opts: [{ v: 'veryslow', zh: '很慢' }, { v: 'slow', zh: '慢' }, { v: 'default', zh: '默认' }, { v: 'fast', zh: '快' }, { v: 'veryfast', zh: '很快' }], default_master: 'default', default_caves: 'default', scope: 'caves', icon: '/worldgen/cavelight.png' },
@@ -77,12 +91,19 @@ export const WORLDGEN_SETTINGS: WorldgenSetting[] = [
   { key: 'monkey', zh: '猴子', cat: 'animals', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'caves', icon: '/worldgen/monkey.png' },
   { key: 'spiders', zh: '蜘蛛', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'both', icon: '/worldgen/spiders.png' },
   { key: 'cave_spiders', zh: '洞穴蜘蛛', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'caves', icon: '/worldgen/cave_spiders.png' },
+  { key: 'hounds', zh: '猎犬', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/hounds.png' },
   { key: 'houndmound', zh: '猎犬丘', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/houndmound.png' },
   { key: 'merm', zh: '鱼人', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/merm.png' },
   { key: 'tentacles', zh: '触手', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'both', icon: '/worldgen/tentacles.png' },
   { key: 'chess', zh: '发条生物', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'both', icon: '/worldgen/chess.png' },
   { key: 'walrus', zh: '海象', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/walrus.png' },
+  { key: 'liefs', zh: '树人', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/liefs.png' },
+  { key: 'krampus', zh: '坎普斯', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/krampus.png' },
   { key: 'bats', zh: '蝙蝠', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'caves', icon: '/worldgen/bats.png' },
   { key: 'fissure', zh: '裂隙', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'caves', icon: '/worldgen/fissure.png' },
   { key: 'worms', zh: '洞穴蠕虫', cat: 'monsters', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'caves', icon: '/worldgen/worms.png' },
+  { key: 'bearger', zh: '熊獾', cat: 'boss', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/bearger.png' },
+  { key: 'deerclops', zh: '独眼巨鹿', cat: 'boss', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/deerclops.png' },
+  { key: 'goosemoose', zh: '麋鹿鹅', cat: 'boss', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/goosemoose.png' },
+  { key: 'dragonfly', zh: '蜻蜓', cat: 'boss', opts: [{ v: 'never', zh: '从不' }, { v: 'rare', zh: '稀少' }, { v: 'default', zh: '默认' }, { v: 'often', zh: '频繁' }, { v: 'always', zh: '总是' }], default_master: 'default', default_caves: 'default', scope: 'master', icon: '/worldgen/dragonfly.png' },
 ];
