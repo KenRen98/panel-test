@@ -198,7 +198,7 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
                     href={WHMCS_CLIENT_URL}
                     target={'_blank'}
                     rel={'noopener noreferrer'}
-                    title={'前往 WHMCS 查看/续费'}
+                    title={'前往账户 查看/续费'}
                     className={'flex cursor-pointer'}
                 >
                     <StatBlock icon={faCalendarAlt} title={'到期时间'} color={dueColor} className={'flex-1'}>
