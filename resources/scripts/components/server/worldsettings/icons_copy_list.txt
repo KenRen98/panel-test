@@ -55,7 +55,6 @@ portalresurection.png
 prefabswaps_start.png
 rabbits.png
 reeds.png
-reeds_regrowth.png
 regrowth.png
 resettime.png
 rock.png
