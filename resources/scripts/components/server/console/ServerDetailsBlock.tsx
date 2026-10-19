@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+    faCalendarAlt,
     faClock,
     faCloudDownloadAlt,
     faCloudUploadAlt,
@@ -16,6 +17,7 @@ import StatBlock from '@/components/server/console/StatBlock';
 import useWebsocketEvent from '@/plugins/useWebsocketEvent';
 import classNames from 'classnames';
 import { ServerStatus } from '@/state/server';
+import getServerDueDate, { ServerDueDate } from '@/api/server/getServerDueDate';
 
 const statusMap: Record<NonNullable<ServerStatus>, string> = {
     offline: '离线',
@@ -39,6 +41,22 @@ const getBackgroundColor = (value: number, max: number | null): string | undefin
     return undefined;
 };
 
+// 以 UTC 日历日计算剩余天数，避免用户时区造成 ±1 天偏差
+const daysUntil = (due: string): number => {
+    const dueMs = Date.parse(due + 'T00:00:00Z');
+    if (Number.isNaN(dueMs)) return 0;
+    const now = new Date();
+    const todayMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    return Math.round((dueMs - todayMs) / 86400000);
+};
+
+const dueLabel = (due: string): string => {
+    const d = daysUntil(due);
+    if (d < 0) return '已过期';
+    if (d === 0) return '今天到期';
+    return `剩 ${d} 天`;
+};
+
 const Limit = ({ limit, children }: { limit: string | null; children: React.ReactNode }) => (
     <>
         {children}
@@ -48,11 +66,14 @@ const Limit = ({ limit, children }: { limit: string | null; children: React.Reac
 
 const ServerDetailsBlock = ({ className }: { className?: string }) => {
     const [stats, setStats] = useState<Stats>({ memory: 0, cpu: 0, disk: 0, uptime: 0, tx: 0, rx: 0 });
+    const [due, setDue] = useState<ServerDueDate | null>(null);
+    const [dueLoading, setDueLoading] = useState(true);
 
     const status = ServerContext.useStoreState((state) => state.status.value);
     const connected = ServerContext.useStoreState((state) => state.socket.connected);
     const instance = ServerContext.useStoreState((state) => state.socket.instance);
     const limits = ServerContext.useStoreState((state) => state.server.data!.limits);
+    const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
 
     const textLimits = useMemo(
         () => ({
@@ -94,6 +115,27 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
             uptime: stats.uptime || 0,
         });
     });
+
+    // 到期时间：挂载时拉取一次（数据低频变化）；无 external_id 或 API 不可用时静默降级为 —
+    useEffect(() => {
+        if (!uuid) {
+            setDueLoading(false);
+            return;
+        }
+
+        getServerDueDate(uuid)
+            .then((data) => setDue(data))
+            .catch(() => setDue(null))
+            .finally(() => setDueLoading(false));
+    }, [uuid]);
+
+    const dueColor = useMemo(() => {
+        if (!due?.next_due) return undefined;
+        const d = daysUntil(due.next_due);
+        if (d < 0) return 'bg-red-500';
+        if (d <= 7) return 'bg-yellow-500';
+        return undefined;
+    }, [due]);
 
     return (
         <div className={classNames('grid grid-cols-6 gap-2 md:gap-4', className)}>
@@ -143,6 +185,9 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
             </StatBlock>
             <StatBlock icon={faCloudUploadAlt} title={'网络(出站)'}>
                 {status === 'offline' ? <span className={'text-gray-400'}>离线</span> : bytesToString(stats.tx)}
+            </StatBlock>
+            <StatBlock icon={faCalendarAlt} title={'到期时间'} color={dueColor}>
+                {dueLoading ? '--' : due?.next_due ? dueLabel(due.next_due) : '—'}
             </StatBlock>
         </div>
     );

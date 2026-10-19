@@ -78,6 +78,7 @@ Route::group([
     ],
 ], function () {
     Route::get('/', [Client\Servers\ServerController::class, 'index'])->name('api:client:server.view');
+    Route::get('/due', [Client\Servers\DueDateController::class, 'index'])->name('api:client:server.due');
     Route::middleware([ResourceLimit::Websocket->middleware()])
         ->get('/websocket', Client\Servers\WebsocketController::class)
         ->name('api:client:server.ws');
