@@ -356,7 +356,7 @@ const SettingCard = memo(({ it, cur, curZh, dirty, open, onToggle, onSelect }: S
             <CardName>{it.zh}</CardName>
             <CardKey>{it.key}</CardKey>
         </CardMain>
-        <SelectWrap>
+        <SelectWrap className='wg-select'>
             <SelectBtn open={open} onClick={() => onToggle(it.key)}>
                 <span>{curZh}</span>
             </SelectBtn>
@@ -500,6 +500,17 @@ export default () => {
     }, []);
 
     // ===== 编辑（稳定引用：memo 卡片只传 key，避免闭包导致全量重渲染） =====
+    // 下拉展开时点击页面其他区域自动收起（点击目标不在任何 .wg-select 内则关闭）
+    useEffect(() => {
+        if (!openKey) return;
+        const handler = (e: MouseEvent) => {
+            const t = e.target as Element | null;
+            if (!t || !t.closest('.wg-select')) setOpenKey(null);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [openKey]);
+
     const toggleOpen = useCallback((key: string) => {
         setOpenKey((cur) => (cur === key ? null : key));
     }, []);
