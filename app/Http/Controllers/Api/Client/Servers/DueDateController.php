@@ -23,8 +23,8 @@ class DueDateController extends ClientApiController
             return ['data' => null];
         }
 
-        // 内部服务，固定 hardcode（panel 与 due API 同机，不暴露给用户）
-        $baseUrl = 'http://127.0.0.1:9999';
+        // 内部服务，固定 hardcode（面板跑在 Docker 内，用 host.docker.internal 访问宿主机上的 due API）
+        $baseUrl = 'http://host.docker.internal:9999';
         $apiKey = 'gtZCxEVozWHqS7xascNi0zRjFsRtParo';
 
         try {
