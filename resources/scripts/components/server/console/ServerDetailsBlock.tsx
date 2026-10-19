@@ -203,7 +203,7 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
                     target={'_blank'}
                     rel={'noopener noreferrer'}
                     title={'前往账户 查看/续费'}
-                    className={'flex cursor-pointer'}
+                    className={'flex cursor-pointer col-span-3 md:col-span-2 lg:col-span-6'}
                 >
                     <StatBlock icon={faCalendarAlt} title={'到期时间'} color={dueColor} className={'flex-1'}>
                         <>
