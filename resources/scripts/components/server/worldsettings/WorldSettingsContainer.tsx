@@ -174,6 +174,13 @@ const GreyBtn = styled(Button)`
     justify-content: center;
 `;
 
+// ===== 分类容器：content-visibility 跳过屏外分类渲染（滚动性能） =====
+// 注意：content-visibility 不能走 twin 任意值写法（twin.macro 不识别，构建报错），用 styled 原生 CSS
+const CatSection = styled.div`
+    content-visibility: auto;
+    contain-intrinsic-block-size: 600px;
+`;
+
 // ===== 分类标题 =====
 const CatHead = styled.div`
     ${tw`flex items-center gap-2 mt-6 mb-3`};
@@ -656,7 +663,7 @@ export default () => {
                     const items = vis.filter((it) => it.cat === cat);
                     if (items.length === 0) return null;
                     return (
-                        <div key={cat} css={tw`[content-visibility:auto] [contain-intrinsic-block-size:600px]`}>
+                        <CatSection key={cat}>
                             <CatHead>
                                 <CatTitle>{CAT_ZH[cat]}</CatTitle>
                                 <CatCount>{items.length} 项</CatCount>
@@ -679,7 +686,7 @@ export default () => {
                                     );
                                 })}
                             </Grid>
-                        </div>
+                        </CatSection>
                     );
                 })
             )}
