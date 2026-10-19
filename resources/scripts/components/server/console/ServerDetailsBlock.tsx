@@ -187,7 +187,16 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
                 {status === 'offline' ? <span className={'text-gray-400'}>离线</span> : bytesToString(stats.tx)}
             </StatBlock>
             <StatBlock icon={faCalendarAlt} title={'到期时间'} color={dueColor}>
-                {dueLoading ? '--' : due?.next_due ? dueLabel(due.next_due) : '—'}
+                {dueLoading ? (
+                    '--'
+                ) : due?.next_due ? (
+                    <>
+                        {dueLabel(due.next_due)}
+                        <span className={'ml-1 text-gray-300 text-[70%] select-none'}>/ {due.next_due}</span>
+                    </>
+                ) : (
+                    '非付费用户'
+                )}
             </StatBlock>
         </div>
     );

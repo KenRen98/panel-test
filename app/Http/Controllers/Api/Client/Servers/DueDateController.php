@@ -23,8 +23,9 @@ class DueDateController extends ClientApiController
             return ['data' => null];
         }
 
-        $baseUrl = rtrim((string) env('DUE_API_URL', 'http://127.0.0.1:9999'), '/');
-        $apiKey = (string) env('DUE_API_KEY', '');
+        // 内部服务，固定 hardcode（panel 与 due API 同机，不暴露给用户）
+        $baseUrl = 'http://127.0.0.1:9999';
+        $apiKey = 'gtZCxEVozWHqS7xascNi0zRjFsRtParo';
 
         try {
             $response = Http::withHeaders(['X-API-Key' => $apiKey])
