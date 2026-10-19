@@ -23,6 +23,7 @@ flint.png
 flower_cave.png
 flowers.png
 grass.png
+grassgekkos.png
 houndmound.png
 lichen.png
 lightninggoat.png
@@ -39,6 +40,7 @@ ponds.png
 prefabswaps_start.png
 rabbits.png
 reeds.png
+regrowth.png
 rock.png
 rock_ice.png
 rocky.png
@@ -55,6 +57,7 @@ touchstone.png
 trees.png
 tumbleweed.png
 walrus.png
+wildfires.png
 winter.png
 world_size.png
 wormlights.png
