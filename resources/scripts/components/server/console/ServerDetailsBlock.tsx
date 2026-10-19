@@ -44,14 +44,18 @@ const getBackgroundColor = (value: number, max: number | null): string | undefin
     return undefined;
 };
 
+// 兼容纯日期（"2026-11-18"）与 ISO 时间戳（"2026-11-18T23:00:00.000Z"）两种返回；
 // 以 UTC 日历日计算剩余天数，避免用户时区造成 ±1 天偏差
 const daysUntil = (due: string): number => {
-    const dueMs = Date.parse(due + 'T00:00:00Z');
+    const dueMs = due.includes('T') ? Date.parse(due) : Date.parse(due + 'T00:00:00Z');
     if (Number.isNaN(dueMs)) return 0;
     const now = new Date();
     const todayMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
     return Math.round((dueMs - todayMs) / 86400000);
 };
+
+// 只取日期部分（YYYY-MM-DD），丢弃时间戳尾巴
+const dueDateOnly = (due: string): string => due.slice(0, 10);
 
 const dueLabel = (due: string): string => {
     const d = daysUntil(due);
@@ -204,7 +208,7 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
                     <StatBlock icon={faCalendarAlt} title={'到期时间'} color={dueColor} className={'flex-1'}>
                         <>
                             {dueLabel(due.next_due)}
-                            <span className={'ml-1 text-gray-300 text-[70%] select-none'}>/ {due.next_due}</span>
+                            <span className={'ml-1 text-gray-300 text-[70%] select-none'}>/ {dueDateOnly(due.next_due)}</span>
                         </>
                     </StatBlock>
                 </a>
