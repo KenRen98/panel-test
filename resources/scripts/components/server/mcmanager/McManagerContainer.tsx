@@ -93,9 +93,9 @@ const SectionTitle = styled.h2`
 `;
 
 // 卡片网格：桌面一行 3 个 / 手机一行 1 个（与 demo 对齐）
-const Grid = styled.div`
+const Grid = styled.div<{ cols?: number }>`
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: ${({ cols }) => (cols === 2 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)')};
     gap: 14px;
     margin-top: 14px; /* 卡片后紧跟网格时加间距，避免贴在一起 */
     @media (max-width: 700px) {
@@ -720,39 +720,35 @@ export default () => {
                         {listLoading ? '刷新中…' : '刷新'}
                     </ActionBtn>
                 </PlayerGroup>
-                <PlayerGroup delay={120}>
-                    <GroupLabel dot='off'>
-                        <i />黑名单
-                    </GroupLabel>
-                    {banned.length > 0 ? (
-                        banned.map((p) => (
+                {banned.length > 0 && (
+                    <PlayerGroup delay={120}>
+                        <GroupLabel dot='off'>
+                            <i />黑名单
+                        </GroupLabel>
+                        {banned.map((p) => (
                             <PlayerChip key={p}>
                                 {p}
                                 <Tag kind='ban'>黑名单</Tag>
                             </PlayerChip>
-                        ))
-                    ) : (
-                        <span css={tw`text-xs text-neutral-500`}>{isRunning ? '无封禁' : '—'}</span>
-                    )}
-                </PlayerGroup>
-                <PlayerGroup delay={240}>
-                    <GroupLabel dot='wl'>
-                        <i />白名单
-                    </GroupLabel>
-                    {whitelist.length > 0 ? (
-                        whitelist.map((p) => (
+                        ))}
+                    </PlayerGroup>
+                )}
+                {whitelist.length > 0 && (
+                    <PlayerGroup delay={240}>
+                        <GroupLabel dot='wl'>
+                            <i />白名单
+                        </GroupLabel>
+                        {whitelist.map((p) => (
                             <PlayerChip key={p}>
                                 {p}
                                 <Tag kind='wl'>白名单</Tag>
                             </PlayerChip>
-                        ))
-                    ) : (
-                        <span css={tw`text-xs text-neutral-500`}>{isRunning ? '白名单为空' : '—'}</span>
-                    )}
-                </PlayerGroup>
+                        ))}
+                    </PlayerGroup>
+                )}
             </Card>
 
-            <Grid>
+
                 <Card>
                     <CardTitle>管理权限</CardTitle>
                     <CardDesc>当前 OP：{ops.length > 0 ? ops.join('、') : '—'}</CardDesc>
@@ -772,6 +768,64 @@ export default () => {
                         </ActionBtn>
                         <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doOp(true)} disabled={disabled}>
                             解除OP
+                        </ActionBtn>
+                    </CardBody>
+                </Card>
+                <Card>
+                    <CardTitle>游戏模式</CardTitle>
+                    <CardDesc>/gamemode</CardDesc>
+                    <CardBody>
+                        <PlayerSelect
+                            options={players}
+                            value={gmPlayer}
+                            open={openSel === 'gmPlayer'}
+                            placeholder={'选择玩家'}
+                            disabled={disabled}
+                            onToggle={() => toggleSel('gmPlayer')}
+                            onSelect={(v) => pick('gmPlayer', v)}
+                            renderTag={renderTag}
+                        />
+                        <PlayerSelect
+                            options={GAMEMODES.map((m) => m.v)}
+                            value={gmMode}
+                            open={openSel === 'gmMode'}
+                            placeholder={'模式'}
+                            disabled={disabled}
+                            onToggle={() => toggleSel('gmMode')}
+                            onSelect={(v) => pick('gmMode', v)}
+                        />
+                        <ActionBtn color={'primary'} size={'small'} onClick={doGamemode} disabled={disabled}>
+                            应用
+                        </ActionBtn>
+                    </CardBody>
+                </Card>
+
+                <Card>
+                    <CardTitle>传送玩家</CardTitle>
+                    <CardDesc>/tp 玩家A 玩家B</CardDesc>
+                    <CardBody>
+                        <PlayerSelect
+                            options={players}
+                            value={tpFrom}
+                            open={openSel === 'tpFrom'}
+                            placeholder={'玩家A'}
+                            disabled={disabled}
+                            onToggle={() => toggleSel('tpFrom')}
+                            onSelect={(v) => pick('tpFrom', v)}
+                            renderTag={renderTag}
+                        />
+                        <PlayerSelect
+                            options={players}
+                            value={tpTo}
+                            open={openSel === 'tpTo'}
+                            placeholder={'玩家B'}
+                            disabled={disabled}
+                            onToggle={() => toggleSel('tpTo')}
+                            onSelect={(v) => pick('tpTo', v)}
+                            renderTag={renderTag}
+                        />
+                        <ActionBtn color={'primary'} size={'small'} onClick={doTp} disabled={disabled}>
+                            传送
                         </ActionBtn>
                     </CardBody>
                 </Card>
@@ -818,65 +872,7 @@ export default () => {
                             移除
                         </ActionBtn>
                     </CardBody>
-                </Card>
-                <Card>
-                    <CardTitle>传送玩家</CardTitle>
-                    <CardDesc>/tp 玩家A 玩家B</CardDesc>
-                    <CardBody>
-                        <PlayerSelect
-                            options={players}
-                            value={tpFrom}
-                            open={openSel === 'tpFrom'}
-                            placeholder={'玩家A'}
-                            disabled={disabled}
-                            onToggle={() => toggleSel('tpFrom')}
-                            onSelect={(v) => pick('tpFrom', v)}
-                            renderTag={renderTag}
-                        />
-                        <PlayerSelect
-                            options={players}
-                            value={tpTo}
-                            open={openSel === 'tpTo'}
-                            placeholder={'玩家B'}
-                            disabled={disabled}
-                            onToggle={() => toggleSel('tpTo')}
-                            onSelect={(v) => pick('tpTo', v)}
-                            renderTag={renderTag}
-                        />
-                        <ActionBtn color={'primary'} size={'small'} onClick={doTp} disabled={disabled}>
-                            传送
-                        </ActionBtn>
-                    </CardBody>
-                </Card>
-                <Card>
-                    <CardTitle>游戏模式</CardTitle>
-                    <CardDesc>/gamemode</CardDesc>
-                    <CardBody>
-                        <PlayerSelect
-                            options={players}
-                            value={gmPlayer}
-                            open={openSel === 'gmPlayer'}
-                            placeholder={'选择玩家'}
-                            disabled={disabled}
-                            onToggle={() => toggleSel('gmPlayer')}
-                            onSelect={(v) => pick('gmPlayer', v)}
-                            renderTag={renderTag}
-                        />
-                        <PlayerSelect
-                            options={GAMEMODES.map((m) => m.v)}
-                            value={gmMode}
-                            open={openSel === 'gmMode'}
-                            placeholder={'模式'}
-                            disabled={disabled}
-                            onToggle={() => toggleSel('gmMode')}
-                            onSelect={(v) => pick('gmMode', v)}
-                        />
-                        <ActionBtn color={'primary'} size={'small'} onClick={doGamemode} disabled={disabled}>
-                            应用
-                        </ActionBtn>
-                    </CardBody>
-                </Card>
-            </Grid>
+                </Card>            </Grid>
 
             {/* 世界操作（广播长条 + 设置卡） */}
             <SectionHead>
@@ -900,7 +896,7 @@ export default () => {
                     </ActionBtn>
                 </CardBody>
             </Card>
-            <Grid>
+            <Grid cols={2}>
                 <Card>
                     <CardTitle>世界时间</CardTitle>
                     <CardDesc>/time set</CardDesc>
