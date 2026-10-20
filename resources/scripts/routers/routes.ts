@@ -112,6 +112,14 @@ export default {
             icon: faTerminal,
         },
         {
+            path: '/mcmanager',
+            permission: 'startup.*',
+            name: '快捷指令',
+            component: McManagerContainer,
+            group: 1,
+            icon: faGamepad,
+        },
+        {
             path: '/startup',
             permission: 'startup.*',
             name: '游戏参数',
@@ -172,14 +180,6 @@ export default {
             component: WorldSettingsContainer,
             group: 1,
             icon: faGlobe,
-        },
-        {
-            path: '/mcmanager',
-            permission: 'startup.*',
-            name: '快捷指令',
-            component: McManagerContainer,
-            group: 1,
-            icon: faGamepad,
         },
         // ===== 组2 =====
         {
