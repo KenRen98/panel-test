@@ -203,9 +203,9 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
                     target={'_blank'}
                     rel={'noopener noreferrer'}
                     title={'前往账户 查看/续费'}
-                    className={'flex cursor-pointer col-span-3 md:col-span-2 lg:col-span-6'}
+                    className={'flex cursor-pointer col-span-3 md:col-span-2 lg:col-span-6 overflow-hidden'}
                 >
-                    <StatBlock icon={faCalendarAlt} title={'到期时间'} color={dueColor} className={'flex-1'}>
+                    <StatBlock icon={faCalendarAlt} title={'到期时间'} color={dueColor} className={'flex-1 min-w-0'}>
                         <>
                             {dueLabel(due.next_due)}
                             <span className={'ml-1 text-gray-300 text-[70%] select-none'}>/ {dueDateOnly(due.next_due)}</span>
