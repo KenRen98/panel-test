@@ -316,15 +316,15 @@ const OpTitle = styled.div`
 const OpDesc = styled.div`
     ${tw`text-[10px] text-neutral-500 mt-0.5`};
 `;
-const OpActions = styled.div`
-    ${tw`flex-1 flex flex-col items-stretch gap-1.5 min-w-0`};
-    & > .mc-select { width: 100%; }
+const OpInfoRow = styled.div`
+    ${tw`flex items-center justify-between gap-2 min-w-0`};
 `;
-const BtnRow = styled.div`
-    ${tw`flex justify-end gap-2 flex-wrap min-w-0`};
+const OpActions = styled.div`
+    ${tw`flex-1 flex items-center gap-2 min-w-0`};
+    & > * { flex: 1 1 0; min-width: 0; }
     @media (max-width: 700px) {
-        justify-content: stretch;
-        & > * { flex: 1 1 calc(50% - 4px); }
+        flex-wrap: wrap;
+        & > * { flex: 1 1 calc(50% - 4px); width: auto; }
     }
 `;
 const SelectedChip = styled.span<{ active?: boolean }>`
@@ -807,52 +807,54 @@ export default () => {
 
             <OpList>
                 <OpCard>
-                    <OpInfo>
-                        <OpTitle>管理权限</OpTitle>
-                        <OpDesc>OP 权限，俗称作弊</OpDesc>
-                    </OpInfo>
-                    <OpActions>
+                    <OpInfoRow>
+                        <OpInfo>
+                            <OpTitle>管理权限</OpTitle>
+                            <OpDesc>OP 权限，俗称作弊</OpDesc>
+                        </OpInfo>
                         {selectedPlayer ? <SelectedChip active>{selectedPlayer}</SelectedChip> : null}
-                        <BtnRow>
-                            <ActionBtn color={'primary'} size={'small'} onClick={() => doOp(false)} disabled={disabled || !selectedPlayer}>
-                                授予OP
-                            </ActionBtn>
-                            <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doOp(true)} disabled={disabled || !selectedPlayer}>
-                                解除OP
-                            </ActionBtn>
-                        </BtnRow>
+                    </OpInfoRow>
+                    <OpActions>
+                        <ActionBtn color={'primary'} size={'small'} onClick={() => doOp(false)} disabled={disabled || !selectedPlayer}>
+                            授予OP
+                        </ActionBtn>
+                        <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doOp(true)} disabled={disabled || !selectedPlayer}>
+                            解除OP
+                        </ActionBtn>
                     </OpActions>
                 </OpCard>
                 <OpCard>
-                    <OpInfo>
-                        <OpTitle>游戏模式</OpTitle>
-                        <OpDesc>切换创造、生存、冒险、观察者模式</OpDesc>
-                    </OpInfo>
-                    <OpActions>
+                    <OpInfoRow>
+                        <OpInfo>
+                            <OpTitle>游戏模式</OpTitle>
+                            <OpDesc>切换创造、生存、冒险、观察者模式</OpDesc>
+                        </OpInfo>
                         {selectedPlayer ? <SelectedChip active>{selectedPlayer}</SelectedChip> : null}
+                    </OpInfoRow>
+                    <OpActions>
                         <PlayerSelect
                             options={GAMEMODES.map((m) => m.v)}
                             value={gmMode}
                             open={openSel === 'gmMode'}
-                            placeholder={'模式'}
+                            placeholder={'选择模式'}
                             disabled={disabled || !selectedPlayer}
                             onToggle={() => toggleSel('gmMode')}
                             onSelect={(v) => pick('gmMode', v)}
                         />
-                        <BtnRow>
-                            <ActionBtn color={'primary'} size={'small'} onClick={doGamemode} disabled={disabled || !selectedPlayer}>
-                                应用
-                            </ActionBtn>
-                        </BtnRow>
+                        <ActionBtn color={'primary'} size={'small'} onClick={doGamemode} disabled={disabled || !selectedPlayer}>
+                            应用
+                        </ActionBtn>
                     </OpActions>
                 </OpCard>
                 <OpCard>
-                    <OpInfo>
-                        <OpTitle>传送玩家</OpTitle>
-                        <OpDesc>传送选中玩家到指定玩家身边</OpDesc>
-                    </OpInfo>
-                    <OpActions>
+                    <OpInfoRow>
+                        <OpInfo>
+                            <OpTitle>传送玩家</OpTitle>
+                            <OpDesc>传送选中玩家到指定玩家身边</OpDesc>
+                        </OpInfo>
                         {selectedPlayer ? <SelectedChip active>{selectedPlayer}</SelectedChip> : null}
+                    </OpInfoRow>
+                    <OpActions>
                         <PlayerSelect
                             options={players}
                             value={tpTo}
@@ -863,45 +865,43 @@ export default () => {
                             onSelect={(v) => pick('tpTo', v)}
                             renderTag={renderTag}
                         />
-                        <BtnRow>
-                            <ActionBtn color={'primary'} size={'small'} onClick={doTp} disabled={disabled || !selectedPlayer}>
-                                传送
-                            </ActionBtn>
-                        </BtnRow>
+                        <ActionBtn color={'primary'} size={'small'} onClick={doTp} disabled={disabled || !selectedPlayer}>
+                            传送
+                        </ActionBtn>
                     </OpActions>
                 </OpCard>
                 <OpCard>
-                    <OpInfo>
-                        <OpTitle>封禁</OpTitle>
-                        <OpDesc>禁止 / 恢复玩家进入服务器</OpDesc>
-                    </OpInfo>
-                    <OpActions>
+                    <OpInfoRow>
+                        <OpInfo>
+                            <OpTitle>封禁</OpTitle>
+                            <OpDesc>禁止 / 恢复玩家进入服务器</OpDesc>
+                        </OpInfo>
                         {selectedPlayer ? <SelectedChip active>{selectedPlayer}</SelectedChip> : null}
-                        <BtnRow>
-                            <ActionBtn color={'primary'} size={'small'} onClick={() => doBan(false)} disabled={disabled || !selectedPlayer}>
-                                封禁
-                            </ActionBtn>
-                            <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doBan(true)} disabled={disabled || !selectedPlayer}>
-                                解封
-                            </ActionBtn>
-                        </BtnRow>
+                    </OpInfoRow>
+                    <OpActions>
+                        <ActionBtn color={'primary'} size={'small'} onClick={() => doBan(false)} disabled={disabled || !selectedPlayer}>
+                            封禁
+                        </ActionBtn>
+                        <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doBan(true)} disabled={disabled || !selectedPlayer}>
+                            解封
+                        </ActionBtn>
                     </OpActions>
                 </OpCard>
                 <OpCard>
-                    <OpInfo>
-                        <OpTitle>白名单</OpTitle>
-                        <OpDesc>仅允许名单内玩家进入</OpDesc>
-                    </OpInfo>
-                    <OpActions>
+                    <OpInfoRow>
+                        <OpInfo>
+                            <OpTitle>白名单</OpTitle>
+                            <OpDesc>仅允许名单内玩家进入</OpDesc>
+                        </OpInfo>
                         {selectedPlayer ? <SelectedChip active>{selectedPlayer}</SelectedChip> : null}
-                        <BtnRow>
-                            <ActionBtn color={'primary'} size={'small'} onClick={() => doWhitelist(false)} disabled={disabled || !selectedPlayer}>
-                                添加
-                            </ActionBtn>
-                            <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doWhitelist(true)} disabled={disabled || !selectedPlayer}>
-                                移除
-                            </ActionBtn>
-                        </BtnRow>
+                    </OpInfoRow>
+                    <OpActions>
+                        <ActionBtn color={'primary'} size={'small'} onClick={() => doWhitelist(false)} disabled={disabled || !selectedPlayer}>
+                            添加
+                        </ActionBtn>
+                        <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doWhitelist(true)} disabled={disabled || !selectedPlayer}>
+                            移除
+                        </ActionBtn>
                     </OpActions>
                 </OpCard>
             </OpList>
