@@ -325,6 +325,7 @@ const OpActions = styled.div`
     @media (max-width: 700px) {
         flex-wrap: wrap;
         & > * { flex: 1 1 calc(50% - 4px); width: auto; }
+        & > .mc-select { flex: 1 1 calc(50% - 4px); width: auto; }
     }
 `;
 const SelectedChip = styled.span<{ active?: boolean }>`
