@@ -97,6 +97,7 @@ const Grid = styled.div`
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 14px;
+    margin-top: 14px; /* 卡片后紧跟网格时加间距，避免贴在一起 */
     @media (max-width: 700px) {
         grid-template-columns: 1fr;
     }
@@ -877,29 +878,29 @@ export default () => {
                 </Card>
             </Grid>
 
-            {/* 世界操作（广播第一格） */}
+            {/* 世界操作（广播长条 + 设置卡） */}
             <SectionHead>
                 <SectionTitle>世界操作</SectionTitle>
             </SectionHead>
+            <Card>
+                <CardTitle>发送广播</CardTitle>
+                <CardDesc>/say — 全服公告（兼容 Fabric/Forge/NeoForge/Paper）</CardDesc>
+                <CardBody>
+                    <TextInput
+                        value={broadcast}
+                        placeholder={'输入广播内容…'}
+                        disabled={disabled}
+                        onChange={(e) => setBroadcast(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') doBroadcast();
+                        }}
+                    />
+                    <ActionBtn color={'primary'} size={'small'} onClick={doBroadcast} disabled={disabled}>
+                        发送广播
+                    </ActionBtn>
+                </CardBody>
+            </Card>
             <Grid>
-                <Card>
-                    <CardTitle>发送广播</CardTitle>
-                    <CardDesc>/say — 全服公告（兼容 Fabric/Forge/NeoForge/Paper）</CardDesc>
-                    <CardBody>
-                        <TextInput
-                            value={broadcast}
-                            placeholder={'输入广播内容…'}
-                            disabled={disabled}
-                            onChange={(e) => setBroadcast(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') doBroadcast();
-                            }}
-                        />
-                        <ActionBtn color={'primary'} size={'small'} onClick={doBroadcast} disabled={disabled}>
-                            发送广播
-                        </ActionBtn>
-                    </CardBody>
-                </Card>
                 <Card>
                     <CardTitle>世界时间</CardTitle>
                     <CardDesc>/time set</CardDesc>
