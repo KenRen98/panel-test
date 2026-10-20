@@ -513,7 +513,8 @@ export default () => {
         if (!isRunning) return;
         sendCommand('whitelist list');
         sendCommand('banlist players');
-        sendCommand('gamerule keep_inventory'); // 仅新版规则名查询；未回显时保持未知，不发旧版名
+        sendCommand('gamerule keep_inventory');
+        sendCommand('gamerule keepInventory'); // 查询无副作用，双规则兼容
         loadOps();
     }, [isRunning, sendCommand, loadOps]);
 
@@ -634,10 +635,13 @@ export default () => {
         sendCommand(`weather ${v}`, `天气已设为${WEATHER_OPTS.find((o) => o.v === v)?.zh}`);
     };
     const setKeepInvCb = (on: boolean) => {
-        // 设置双发兼容旧版；回查仅新版名，未回显保持未知
+        // 设置与回查均双发兼容旧版
         sendCommand(`gamerule keep_inventory ${on ? 'true' : 'false'}`, on ? '死亡掉落已关闭' : '死亡掉落已开启');
         sendCommand(`gamerule keepInventory ${on ? 'true' : 'false'}`);
-        window.setTimeout(() => sendCommand('gamerule keep_inventory'), 1200); // 操作后回查当前值
+        window.setTimeout(() => {
+            sendCommand('gamerule keep_inventory');
+            sendCommand('gamerule keepInventory');
+        }, 1200); // 操作后回查当前值
     };
 
     const doOp = (deop: boolean) => {
