@@ -28,7 +28,7 @@ const HeaderPills = styled.div`
 
 // 在线人数胶囊
 const StatsPill = styled.div`
-    ${tw`inline-flex items-center gap-1.5 rounded-full border border-neutral-600 px-3.5 text-xs text-neutral-400`};
+    ${tw`inline-flex items-center gap-1.5 rounded-full px-3.5 text-xs text-neutral-400`};
     background: ${theme`colors.neutral.700`.toString()};
     line-height: 26px;
     & > b {
@@ -38,7 +38,7 @@ const StatsPill = styled.div`
 
 // 服务器状态胶囊（dot + 文字）
 const StatusPill = styled.div<{ mode: 'running' | 'offline' | 'transition' }>`
-    ${tw`inline-flex items-center gap-1.5 rounded-full border border-neutral-600 px-3.5 text-xs text-neutral-400`};
+    ${tw`inline-flex items-center gap-1.5 rounded-full px-3.5 text-xs text-neutral-400`};
     background: ${theme`colors.neutral.700`.toString()};
     line-height: 26px;
     & > i {
