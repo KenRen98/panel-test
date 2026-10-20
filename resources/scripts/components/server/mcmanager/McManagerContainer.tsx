@@ -123,13 +123,20 @@ const CardBody = styled.div`
     ${tw`mt-auto flex items-center gap-2 flex-wrap`};
 `;
 
-// 状态行（封禁 / 白名单现状）
-const CardState = styled.div`
-    ${tw`flex items-center gap-1.5 flex-wrap min-h-[20px]`};
+// 玩家列表分区（在线 / 黑名单 / 白名单）
+const PlayerGroup = styled.div`
+    ${tw`flex items-center gap-2 flex-wrap`};
 `;
 
-const StateLabel = styled.span`
-    ${tw`text-[10px] text-neutral-500 whitespace-nowrap`};
+const GroupLabel = styled.span<{ dot: 'on' | 'off' | 'wl' }>`
+    ${tw`inline-flex items-center gap-1.5 text-[11px] text-neutral-400 whitespace-nowrap`};
+    & > i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: ${(props) =>
+            props.dot === 'on' ? '#34d399' : props.dot === 'wl' ? '#7db4ff' : '#5a6b8a'};
+    }
 `;
 
 // 分段按钮组：按钮平分容器宽度，任意宽度不溢出（与 demo 对齐）
@@ -253,11 +260,7 @@ const TextInput = styled.input`
     }
 `;
 
-// 在线玩家 chip
-const PlayerChips = styled.div`
-    ${tw`flex items-center gap-1.5 flex-wrap`};
-`;
-
+// 玩家 chip
 const PlayerChip = styled.span`
     ${tw`inline-flex items-center gap-1 rounded-full border border-neutral-600 bg-[#1d243a] px-2.5 text-xs text-neutral-100`};
     line-height: 24px;
@@ -679,31 +682,62 @@ export default () => {
                 </HeaderR>
             </div>
 
-            {/* 在线玩家（最顶；服务器未运行时禁用刷新且不发 /list） */}
+            {/* 玩家列表（最顶：在线 / 黑名单 / 白名单 三区；服务器未运行时禁用刷新且不发 /list） */}
             <Card>
-                <CardTitle>在线玩家</CardTitle>
-                <CardDesc>来自 /list 命令，点击刷新获取最新（金色 OP 标记）</CardDesc>
-                <CardBody>
-                    <PlayerChips>
-                        {online && players.length > 0 ? (
-                            players.map((p) => (
-                                <PlayerChip key={p}>
-                                    {p}
-                                    {ops.includes(p) && <Tag kind='op'>OP</Tag>}
-                                </PlayerChip>
-                            ))
-                        ) : listLoading ? (
-                            <span css={tw`text-xs text-neutral-500`}>获取中…</span>
-                        ) : (
-                            <span css={tw`text-xs text-neutral-500`}>
-                                {isRunning ? '暂无玩家在线' : '服务器未启动，暂无在线玩家'}
-                            </span>
-                        )}
-                    </PlayerChips>
+                <CardTitle>玩家列表</CardTitle>
+                <CardDesc>在线 /list · 黑名单 /banlist players · 白名单 /whitelist list（金色 OP 标记）</CardDesc>
+                <PlayerGroup>
+                    <GroupLabel dot='on'>
+                        <i />在线
+                    </GroupLabel>
+                    {online && players.length > 0 ? (
+                        players.map((p) => (
+                            <PlayerChip key={p}>
+                                {p}
+                                {ops.includes(p) && <Tag kind='op'>OP</Tag>}
+                            </PlayerChip>
+                        ))
+                    ) : listLoading ? (
+                        <span css={tw`text-xs text-neutral-500`}>获取中…</span>
+                    ) : (
+                        <span css={tw`text-xs text-neutral-500`}>
+                            {isRunning ? '暂无玩家在线' : '服务器未启动，暂无在线玩家'}
+                        </span>
+                    )}
                     <ActionBtn color={'grey'} isSecondary size={'small'} onClick={refreshList} disabled={disabled || listLoading}>
                         {listLoading ? '刷新中…' : '刷新'}
                     </ActionBtn>
-                </CardBody>
+                </PlayerGroup>
+                <PlayerGroup>
+                    <GroupLabel dot='off'>
+                        <i />黑名单
+                    </GroupLabel>
+                    {banned.length > 0 ? (
+                        banned.map((p) => (
+                            <PlayerChip key={p}>
+                                {p}
+                                <Tag kind='ban'>黑名单</Tag>
+                            </PlayerChip>
+                        ))
+                    ) : (
+                        <span css={tw`text-xs text-neutral-500`}>{isRunning ? '无封禁' : '—'}</span>
+                    )}
+                </PlayerGroup>
+                <PlayerGroup>
+                    <GroupLabel dot='wl'>
+                        <i />白名单
+                    </GroupLabel>
+                    {whitelist.length > 0 ? (
+                        whitelist.map((p) => (
+                            <PlayerChip key={p}>
+                                {p}
+                                <Tag kind='wl'>白名单</Tag>
+                            </PlayerChip>
+                        ))
+                    ) : (
+                        <span css={tw`text-xs text-neutral-500`}>{isRunning ? '白名单为空' : '—'}</span>
+                    )}
+                </PlayerGroup>
             </Card>
 
             {/* 广播（紧随在线玩家） */}
@@ -814,20 +848,7 @@ export default () => {
                 </Card>
                 <Card>
                     <CardTitle>封禁</CardTitle>
-                    <CardDesc>/ban /pardon（黑名单：/banlist players）</CardDesc>
-                    <CardState>
-                        <StateLabel>已封禁</StateLabel>
-                        {banned.length > 0 ? (
-                            banned.map((p) => (
-                                <PlayerChip key={p}>
-                                    {p}
-                                    <Tag kind='ban'>黑名单</Tag>
-                                </PlayerChip>
-                            ))
-                        ) : (
-                            <span css={tw`text-xs text-neutral-500`}>—</span>
-                        )}
-                    </CardState>
+                    <CardDesc>/ban /pardon</CardDesc>
                     <CardBody>
                         <PlayerSelect
                             options={players}
@@ -849,20 +870,7 @@ export default () => {
                 </Card>
                 <Card>
                     <CardTitle>白名单</CardTitle>
-                    <CardDesc>/whitelist add / remove（现状：/whitelist list）</CardDesc>
-                    <CardState>
-                        <StateLabel>白名单</StateLabel>
-                        {whitelist.length > 0 ? (
-                            whitelist.map((p) => (
-                                <PlayerChip key={p}>
-                                    {p}
-                                    <Tag kind='wl'>白名单</Tag>
-                                </PlayerChip>
-                            ))
-                        ) : (
-                            <span css={tw`text-xs text-neutral-500`}>—</span>
-                        )}
-                    </CardState>
+                    <CardDesc>/whitelist add / remove</CardDesc>
                     <CardBody>
                         <PlayerSelect
                             options={players}
