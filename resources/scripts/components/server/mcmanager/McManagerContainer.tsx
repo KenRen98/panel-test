@@ -690,7 +690,10 @@ export default () => {
                 </HeaderR>
             </div>
 
-            {/* 玩家列表（最顶：在线 / 黑名单 / 白名单 三区；服务器未运行时禁用刷新且不发 /list） */}
+            {/* 玩家管理（玩家列表 + 操作，一个区域） */}
+            <SectionHead>
+                <SectionTitle>玩家管理</SectionTitle>
+            </SectionHead>
             <Card>
                 <CardTitle>玩家列表</CardTitle>
                 <CardDesc>在线 /list · 黑名单 /banlist players · 白名单 /whitelist list（金色 OP 标记）</CardDesc>
@@ -748,89 +751,6 @@ export default () => {
                 </PlayerGroup>
             </Card>
 
-            {/* 广播（紧随在线玩家） */}
-            <SectionHead>
-                <SectionTitle>广播通知</SectionTitle>
-            </SectionHead>
-            <Card>
-                <CardTitle>发送广播</CardTitle>
-                <CardDesc>/say — 全服公告，所有玩家可见（兼容 Fabric/Forge/NeoForge/Paper）</CardDesc>
-                <CardBody>
-                    <TextInput
-                        value={broadcast}
-                        placeholder={'输入广播内容…'}
-                        disabled={disabled}
-                        onChange={(e) => setBroadcast(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') doBroadcast();
-                        }}
-                    />
-                    <ActionBtn color={'primary'} size={'small'} onClick={doBroadcast} disabled={disabled}>
-                        发送广播
-                    </ActionBtn>
-                </CardBody>
-            </Card>
-
-            {/* 世界操作 */}
-            <SectionHead>
-                <SectionTitle>世界操作</SectionTitle>
-            </SectionHead>
-            <Grid>
-                <Card>
-                    <CardTitle>世界时间</CardTitle>
-                    <CardDesc>/time set</CardDesc>
-                    <CardBody>
-                        <ModeBar>
-                            {TIME_OPTS.map((o) => (
-                                <ModeBtn key={o.v} onClick={() => setTime(o.v)} disabled={disabled}>
-                                    {o.zh}
-                                </ModeBtn>
-                            ))}
-                        </ModeBar>
-                    </CardBody>
-                </Card>
-                <Card>
-                    <CardTitle>天气</CardTitle>
-                    <CardDesc>/weather</CardDesc>
-                    <CardBody>
-                        <ModeBar>
-                            {WEATHER_OPTS.map((o) => (
-                                <ModeBtn key={o.v} onClick={() => setWeather(o.v)} disabled={disabled}>
-                                    {o.zh}
-                                </ModeBtn>
-                            ))}
-                        </ModeBar>
-                    </CardBody>
-                </Card>
-                <Card>
-                    <CardTitle>死亡掉落</CardTitle>
-                    <CardDesc>/gamerule keepInventory（查询当前值）</CardDesc>
-                    <CardBody>
-                        <ModeBar>
-                            <ModeBtn active={keepInv === false} onClick={() => setKeepInvCb(false)} disabled={disabled}>
-                                掉落
-                            </ModeBtn>
-                            <ModeBtn active={keepInv === true} onClick={() => setKeepInvCb(true)} disabled={disabled}>
-                                不掉落
-                            </ModeBtn>
-                        </ModeBar>
-                    </CardBody>
-                </Card>
-                <Card>
-                    <CardTitle>重新生成世界</CardTitle>
-                    <CardDesc>删除存档，重启后生成全新世界</CardDesc>
-                    <CardBody>
-                        <DangerBtn size={'small'} onClick={confirmReset}>
-                            重置世界
-                        </DangerBtn>
-                    </CardBody>
-                </Card>
-            </Grid>
-
-            {/* 玩家管理 */}
-            <SectionHead>
-                <SectionTitle>玩家管理</SectionTitle>
-            </SectionHead>
             <Grid>
                 <Card>
                     <CardTitle>管理权限</CardTitle>
@@ -956,6 +876,81 @@ export default () => {
                     </CardBody>
                 </Card>
             </Grid>
+
+            {/* 世界操作（广播第一格） */}
+            <SectionHead>
+                <SectionTitle>世界操作</SectionTitle>
+            </SectionHead>
+            <Grid>
+                <Card>
+                    <CardTitle>发送广播</CardTitle>
+                    <CardDesc>/say — 全服公告（兼容 Fabric/Forge/NeoForge/Paper）</CardDesc>
+                    <CardBody>
+                        <TextInput
+                            value={broadcast}
+                            placeholder={'输入广播内容…'}
+                            disabled={disabled}
+                            onChange={(e) => setBroadcast(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') doBroadcast();
+                            }}
+                        />
+                        <ActionBtn color={'primary'} size={'small'} onClick={doBroadcast} disabled={disabled}>
+                            发送广播
+                        </ActionBtn>
+                    </CardBody>
+                </Card>
+                <Card>
+                    <CardTitle>世界时间</CardTitle>
+                    <CardDesc>/time set</CardDesc>
+                    <CardBody>
+                        <ModeBar>
+                            {TIME_OPTS.map((o) => (
+                                <ModeBtn key={o.v} onClick={() => setTime(o.v)} disabled={disabled}>
+                                    {o.zh}
+                                </ModeBtn>
+                            ))}
+                        </ModeBar>
+                    </CardBody>
+                </Card>
+                <Card>
+                    <CardTitle>天气</CardTitle>
+                    <CardDesc>/weather</CardDesc>
+                    <CardBody>
+                        <ModeBar>
+                            {WEATHER_OPTS.map((o) => (
+                                <ModeBtn key={o.v} onClick={() => setWeather(o.v)} disabled={disabled}>
+                                    {o.zh}
+                                </ModeBtn>
+                            ))}
+                        </ModeBar>
+                    </CardBody>
+                </Card>
+                <Card>
+                    <CardTitle>死亡掉落</CardTitle>
+                    <CardDesc>/gamerule keepInventory（查询当前值）</CardDesc>
+                    <CardBody>
+                        <ModeBar>
+                            <ModeBtn active={keepInv === false} onClick={() => setKeepInvCb(false)} disabled={disabled}>
+                                掉落
+                            </ModeBtn>
+                            <ModeBtn active={keepInv === true} onClick={() => setKeepInvCb(true)} disabled={disabled}>
+                                不掉落
+                            </ModeBtn>
+                        </ModeBar>
+                    </CardBody>
+                </Card>
+                <Card>
+                    <CardTitle>重新生成世界</CardTitle>
+                    <CardDesc>删除存档，重启后生成全新世界</CardDesc>
+                    <CardBody>
+                        <DangerBtn size={'small'} onClick={confirmReset}>
+                            重置世界
+                        </DangerBtn>
+                    </CardBody>
+                </Card>
+            </Grid>
+
 
             {/* 确认弹窗（重置世界） */}
             {confirm && (
