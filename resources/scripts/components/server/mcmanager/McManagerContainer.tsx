@@ -321,6 +321,7 @@ const OpActions = styled.div`
     ${tw`flex-1 flex items-center gap-2 flex-wrap justify-end min-w-0`};
     @media (min-width: 701px) {
         justify-content: flex-start;
+        & > span { flex: 1 1 100%; } /* 选中玩家独占一行，按钮独立一行 */
     }
     @media (max-width: 700px) {
         justify-content: flex-start;
@@ -743,7 +744,14 @@ export default () => {
             <Card>
                 <div css={tw`flex items-center justify-between gap-2`}>
                     <CardTitle>玩家列表</CardTitle>
-                    <ActionBtn color={'grey'} isSecondary size={'small'} onClick={refreshList} disabled={disabled || listLoading}>
+                    <ActionBtn
+                        color={'grey'}
+                        isSecondary
+                        size={'small'}
+                        onClick={refreshList}
+                        disabled={disabled || listLoading}
+                        css={tw`h-[22px] px-2 text-[11px] leading-none`}
+                    >
                         {listLoading ? '刷新中…' : '刷新'}
                     </ActionBtn>
                 </div>
@@ -897,7 +905,7 @@ export default () => {
             </SectionHead>
             <Card>
                 <CardTitle>发送广播</CardTitle>
-                <CardDesc>/say — 全服公告（兼容 Fabric/Forge/NeoForge/Paper）</CardDesc>
+                <CardDesc>向全服玩家发送公告消息（Fabric / Forge / NeoForge / Paper 通用）</CardDesc>
                 <CardBody>
                     <TextInput
                         value={broadcast}
@@ -916,7 +924,7 @@ export default () => {
             <Grid cols={2}>
                 <Card>
                     <CardTitle>世界时间</CardTitle>
-                    <CardDesc>/time set</CardDesc>
+                    <CardDesc>设置时间为白天、正午、夜晚或午夜</CardDesc>
                     <CardBody>
                         <ModeBar>
                             {TIME_OPTS.map((o) => (
@@ -929,7 +937,7 @@ export default () => {
                 </Card>
                 <Card>
                     <CardTitle>天气</CardTitle>
-                    <CardDesc>/weather</CardDesc>
+                    <CardDesc>设置天气为晴朗、下雨或雷暴</CardDesc>
                     <CardBody>
                         <ModeBar>
                             {WEATHER_OPTS.map((o) => (
@@ -942,7 +950,7 @@ export default () => {
                 </Card>
                 <Card>
                     <CardTitle>死亡掉落</CardTitle>
-                    <CardDesc>/gamerule keepInventory（查询当前值）</CardDesc>
+                    <CardDesc>开启或关闭死亡后物品掉落</CardDesc>
                     <CardBody>
                         <ModeBar>
                             <ModeBtn active={keepInv === false} onClick={() => setKeepInvCb(false)} disabled={disabled}>
