@@ -189,6 +189,10 @@ const SelectBtn = styled.button<{ open?: boolean; disabled?: boolean }>`
     text-align: center;
     user-select: none;
     font-family: inherit;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
     &:hover {
         border-color: ${(props) => (props.disabled ? '#3d4a63' : '#4a5a7a')};
     }
@@ -460,6 +464,8 @@ export default () => {
     const [whitelist, setWhitelist] = useState<string[]>([]);
     const [banned, setBanned] = useState<string[]>([]);
     const [keepInv, setKeepInv] = useState<boolean | null>(null);
+    const [timeSel, setTimeSel] = useState('');
+    const [weatherSel, setWeatherSel] = useState('');
 
     const [hint, setHint] = useState<{ mode: 'success' | 'error'; text: string } | null>(null);
     const hintTimer = useRef<number | null>(null);
@@ -608,10 +614,14 @@ export default () => {
     );
 
     // ===== 动作 =====
-    const setTime = (v: string) => sendCommand(`time set ${v}`, `时间已设为${TIME_OPTS.find((o) => o.v === v)?.zh}`);
-    const setWeather = (v: string) =>
+    const setTime = (v: string) => {
+        setTimeSel(v);
+        sendCommand(`time set ${v}`, `时间已设为${TIME_OPTS.find((o) => o.v === v)?.zh}`);
+    };
+    const setWeather = (v: string) => {
+        setWeatherSel(v);
         sendCommand(`weather ${v}`, `天气已设为${WEATHER_OPTS.find((o) => o.v === v)?.zh}`);
-
+    };
     const setKeepInvCb = (on: boolean) => {
         sendCommand(`gamerule keepInventory ${on ? 'true' : 'false'}`, on ? '死亡掉落已关闭' : '死亡掉落已开启');
         window.setTimeout(() => sendCommand('gamerule keepInventory'), 1200); // 操作后回查当前值
@@ -936,7 +946,7 @@ export default () => {
                     <CardBody>
                         <ModeBar>
                             {TIME_OPTS.map((o) => (
-                                <ModeBtn key={o.v} onClick={() => setTime(o.v)} disabled={disabled}>
+                                <ModeBtn key={o.v} active={timeSel === o.v} onClick={() => setTime(o.v)} disabled={disabled}>
                                     {o.zh}
                                 </ModeBtn>
                             ))}
@@ -949,7 +959,7 @@ export default () => {
                     <CardBody>
                         <ModeBar>
                             {WEATHER_OPTS.map((o) => (
-                                <ModeBtn key={o.v} onClick={() => setWeather(o.v)} disabled={disabled}>
+                                <ModeBtn key={o.v} active={weatherSel === o.v} onClick={() => setWeather(o.v)} disabled={disabled}>
                                     {o.zh}
                                 </ModeBtn>
                             ))}
