@@ -872,7 +872,8 @@ export default () => {
                             移除
                         </ActionBtn>
                     </CardBody>
-                </Card>            </Grid>
+                </Card>
+            </Grid>
 
             {/* 世界操作（广播长条 + 设置卡） */}
             <SectionHead>
