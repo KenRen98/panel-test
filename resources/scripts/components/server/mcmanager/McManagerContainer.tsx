@@ -577,8 +577,8 @@ export default () => {
             return;
         }
 
-        // keepInventory 当前值： "Gamerule keep_inventory is now set to: false"
-        const gm = line.match(/keep_?inventory is (?:now )?set to:?\s*(true|false)/i);
+        // keepInventory 当前值： "Gamerule keep_inventory is currently set to true" / "Game rule keepInventory is now set to: false"
+        const gm = line.match(/keep_?inventory is (?:now|currently )?set to:?\s*(true|false)/i);
         if (gm) {
             setKeepInv(gm[1] === 'true');
         }
