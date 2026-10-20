@@ -829,6 +829,8 @@ export default () => {
                         </ActionBtn>
                     </CardBody>
                 </Card>
+            </Grid>
+            <Grid cols={2}>
                 <Card>
                     <CardTitle>封禁</CardTitle>
                     <CardDesc>/ban /pardon</CardDesc>
