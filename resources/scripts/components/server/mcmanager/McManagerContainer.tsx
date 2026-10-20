@@ -513,6 +513,7 @@ export default () => {
         if (!isRunning) return;
         sendCommand('whitelist list');
         sendCommand('banlist players');
+        sendCommand('gamerule keep_inventory');
         sendCommand('gamerule keepInventory');
         loadOps();
     }, [isRunning, sendCommand, loadOps]);
@@ -576,8 +577,8 @@ export default () => {
             return;
         }
 
-        // keepInventory 当前值： "Gamerule keepInventory is now set to: false"
-        const gm = line.match(/keepInventory is (?:now )?set to:?\s*(true|false)/i);
+        // keepInventory 当前值： "Gamerule keep_inventory is now set to: false"
+        const gm = line.match(/keep_?inventory is (?:now )?set to:?\s*(true|false)/i);
         if (gm) {
             setKeepInv(gm[1] === 'true');
         }
@@ -623,8 +624,12 @@ export default () => {
         sendCommand(`weather ${v}`, `天气已设为${WEATHER_OPTS.find((o) => o.v === v)?.zh}`);
     };
     const setKeepInvCb = (on: boolean) => {
-        sendCommand(`gamerule keepInventory ${on ? 'true' : 'false'}`, on ? '死亡掉落已关闭' : '死亡掉落已开启');
-        window.setTimeout(() => sendCommand('gamerule keepInventory'), 1200); // 操作后回查当前值
+        sendCommand(`gamerule keep_inventory ${on ? 'true' : 'false'}`, on ? '死亡掉落已关闭' : '死亡掉落已开启');
+        sendCommand(`gamerule keepInventory ${on ? 'true' : 'false'}`); // 兼容旧版规则名
+        window.setTimeout(() => {
+            sendCommand('gamerule keep_inventory');
+            sendCommand('gamerule keepInventory');
+        }, 1200); // 操作后回查当前值
     };
 
     const doOp = (deop: boolean) => {
