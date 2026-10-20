@@ -208,7 +208,10 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
                     <StatBlock icon={faCalendarAlt} title={'到期时间'} color={dueColor} className={'flex-1 min-w-0'}>
                         <>
                             {dueLabel(due.next_due)}
-                            <span className={'ml-1 text-gray-300 text-[70%] select-none'}>/ {dueDateOnly(due.next_due)}</span>
+                            <span className={'ml-1 text-gray-300 text-[70%] select-none'}>
+                                / <span className={'hidden sm:inline'}>{dueDateOnly(due.next_due).slice(0, 4)}-</span>
+                                {dueDateOnly(due.next_due).slice(5)}
+                            </span>
                         </>
                     </StatBlock>
                 </a>
