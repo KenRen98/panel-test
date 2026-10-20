@@ -269,10 +269,49 @@ const TextInput = styled.input`
     }
 `;
 
-// 玩家 chip
-const PlayerChip = styled.span`
+// 玩家 chip（可点选）
+const PlayerChip = styled.span<{ pick?: boolean; sel?: boolean }>`
     ${tw`inline-flex items-center gap-1 rounded-full border border-neutral-600 bg-[#1d243a] px-2.5 text-xs text-neutral-100`};
     line-height: 24px;
+    ${(props) => (props.pick ? 'cursor: pointer;' : '')}
+    ${(props) =>
+        props.sel
+            ? `border-color: ${theme`colors.primary.500`.toString()}; box-shadow: 0 0 0 1px ${theme`colors.primary.500`.toString()};`
+            : ''}
+`;
+
+// ===== 操作区：单列卡片（点选玩家后操作，与 demo 对齐） =====
+const OpList = styled.div`
+    ${tw`flex flex-col gap-2.5 mt-3.5`};
+`;
+const OpCard = styled.div`
+    ${tw`flex items-center gap-3 rounded-xl border border-neutral-600 bg-[#1d243a] px-3.5 py-2.5 min-w-0`};
+`;
+const OpInfo = styled.div`
+    ${tw`flex-none min-w-[120px]`};
+`;
+const OpTitle = styled.div`
+    ${tw`text-[13px] font-medium text-neutral-100 leading-snug`};
+`;
+const OpDesc = styled.div`
+    ${tw`text-[10px] text-neutral-500 mt-0.5`};
+`;
+const OpActions = styled.div`
+    ${tw`flex-1 flex items-center gap-2 flex-wrap justify-end min-w-0`};
+    @media (max-width: 700px) {
+        justify-content: flex-start;
+        & > button, & > .mc-select { flex: 1 1 calc(50% - 4px); }
+        & > span { flex: 1 1 100%; }
+    }
+`;
+const SelectedChip = styled.span<{ active?: boolean }>`
+    ${tw`inline-flex items-center rounded-lg border px-2.5 text-xs whitespace-nowrap overflow-hidden`};
+    max-width: 160px;
+    text-overflow: ellipsis;
+    line-height: 26px;
+    color: ${(props) => (props.active ? '#eaf2ff' : '#aeb8cb')};
+    border-color: ${(props) => (props.active ? theme`colors.primary.500`.toString() : '#3d4a63')};
+    background: rgba(255, 255, 255, 0.04);
 `;
 
 // 确认弹窗（对齐生产 ConfirmMask/ConfirmBox）
@@ -389,12 +428,8 @@ export default () => {
     const [confirm, setConfirm] = useState<ConfirmState | null>(null);
     const [broadcast, setBroadcast] = useState('');
 
-    const [opPlayer, setOpPlayer] = useState('');
-    const [banPlayer, setBanPlayer] = useState('');
-    const [wlPlayer, setWlPlayer] = useState('');
-    const [tpFrom, setTpFrom] = useState('');
+    const [selectedPlayer, setSelectedPlayer] = useState(''); // 当前点选玩家
     const [tpTo, setTpTo] = useState('');
-    const [gmPlayer, setGmPlayer] = useState('');
     const [gmMode, setGmMode] = useState('');
 
     // 服务器侧状态回显：OP（ops.json）/ 白名单（/whitelist list）/ 封禁（/banlist players）/ keepInventory
@@ -533,22 +568,8 @@ export default () => {
     const toggleSel = useCallback((key: string) => setOpenSel((cur) => (cur === key ? null : key)), []);
     const pick = useCallback((key: string, v: string) => {
         setOpenSel(null);
-        switch (key) {
-            case 'op':
-                return setOpPlayer(v);
-            case 'ban':
-                return setBanPlayer(v);
-            case 'wl':
-                return setWlPlayer(v);
-            case 'tpFrom':
-                return setTpFrom(v);
-            case 'tpTo':
-                return setTpTo(v);
-            case 'gmPlayer':
-                return setGmPlayer(v);
-            case 'gmMode':
-                return setGmMode(v);
-        }
+        if (key === 'tpTo') return setTpTo(v);
+        if (key === 'gmMode') return setGmMode(v);
     }, []);
 
     // 玩家状态标签（下拉项用）
@@ -574,46 +595,46 @@ export default () => {
     };
 
     const doOp = (deop: boolean) => {
-        if (!opPlayer) {
-            flashHint('error', '请先选择玩家。');
+        if (!selectedPlayer) {
+            flashHint('error', '请先点选玩家。');
             return;
         }
-        sendCommand(`${deop ? 'deop' : 'op'} ${opPlayer}`, `${deop ? '解除OP' : '授予OP'}：${opPlayer}`);
+        sendCommand(`${deop ? 'deop' : 'op'} ${selectedPlayer}`, `${deop ? '解除OP' : '授予OP'}：${selectedPlayer}`);
         window.setTimeout(loadOps, 1200); // ops.json 由服务端异步落盘，稍后重读
     };
 
     const doBan = (pardon: boolean) => {
-        if (!banPlayer) {
-            flashHint('error', '请先选择玩家。');
+        if (!selectedPlayer) {
+            flashHint('error', '请先点选玩家。');
             return;
         }
-        sendCommand(`${pardon ? 'pardon' : 'ban'} ${banPlayer}`, `${pardon ? '解封' : '封禁'}：${banPlayer}`);
+        sendCommand(`${pardon ? 'pardon' : 'ban'} ${selectedPlayer}`, `${pardon ? '解封' : '封禁'}：${selectedPlayer}`);
         window.setTimeout(() => sendCommand('banlist players'), 1200);
     };
 
     const doWhitelist = (remove: boolean) => {
-        if (!wlPlayer) {
-            flashHint('error', '请先选择玩家。');
+        if (!selectedPlayer) {
+            flashHint('error', '请先点选玩家。');
             return;
         }
-        sendCommand(`whitelist ${remove ? 'remove' : 'add'} ${wlPlayer}`, `${remove ? '移除白名单' : '添加白名单'}：${wlPlayer}`);
+        sendCommand(`whitelist ${remove ? 'remove' : 'add'} ${selectedPlayer}`, `${remove ? '移除白名单' : '添加白名单'}：${selectedPlayer}`);
         window.setTimeout(() => sendCommand('whitelist list'), 1200);
     };
 
     const doTp = () => {
-        if (!tpFrom || !tpTo) {
-            flashHint('error', '请选择两个玩家。');
+        if (!selectedPlayer || !tpTo) {
+            flashHint('error', '请先点选玩家。');
             return;
         }
-        sendCommand(`tp ${tpFrom} ${tpTo}`, `传送 ${tpFrom} → ${tpTo}`);
+        sendCommand(`tp ${selectedPlayer} ${tpTo}`, `传送 ${selectedPlayer} → ${tpTo}`);
     };
 
     const doGamemode = () => {
-        if (!gmPlayer || !gmMode) {
-            flashHint('error', '请选择玩家和模式。');
+        if (!selectedPlayer || !gmMode) {
+            flashHint('error', '请先点选玩家和模式。');
             return;
         }
-        sendCommand(`gamemode ${gmMode} ${gmPlayer}`, `${gmPlayer} 已切换为${GAMEMODES.find((m) => m.v === gmMode)?.zh}`);
+        sendCommand(`gamemode ${gmMode} ${selectedPlayer}`, `${selectedPlayer} 已切换为${GAMEMODES.find((m) => m.v === gmMode)?.zh}`);
     };
 
     const doBroadcast = () => {
@@ -704,7 +725,12 @@ export default () => {
                     </GroupLabel>
                     {online && players.length > 0 ? (
                         players.map((p) => (
-                            <PlayerChip key={p}>
+                            <PlayerChip
+                                key={p}
+                                pick
+                                sel={p === selectedPlayer}
+                                onClick={() => setSelectedPlayer((cur) => (cur === p ? '' : p))}
+                            >
                                 {p}
                                 {ops.includes(p) && <Tag kind='op'>OP</Tag>}
                             </PlayerChip>
@@ -748,43 +774,29 @@ export default () => {
                 )}
             </Card>
 
-            <Grid>
-                <Card>
-                    <CardTitle>管理权限</CardTitle>
-                    <CardDesc>当前 OP：{ops.length > 0 ? ops.join('、') : '—'}</CardDesc>
-                    <CardBody>
-                        <PlayerSelect
-                            options={players}
-                            value={opPlayer}
-                            open={openSel === 'op'}
-                            placeholder={'选择玩家'}
-                            disabled={disabled}
-                            onToggle={() => toggleSel('op')}
-                            onSelect={(v) => pick('op', v)}
-                            renderTag={renderTag}
-                        />
+            <OpList>
+                <OpCard>
+                    <OpInfo>
+                        <OpTitle>管理权限</OpTitle>
+                        <OpDesc>当前 OP：{ops.length > 0 ? ops.join('、') : '—'}</OpDesc>
+                    </OpInfo>
+                    <OpActions>
+                        <SelectedChip active={!!selectedPlayer}>{selectedPlayer || '未选择'}</SelectedChip>
                         <ActionBtn color={'primary'} size={'small'} onClick={() => doOp(false)} disabled={disabled}>
                             授予OP
                         </ActionBtn>
                         <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doOp(true)} disabled={disabled}>
                             解除OP
                         </ActionBtn>
-                    </CardBody>
-                </Card>
-                <Card>
-                    <CardTitle>游戏模式</CardTitle>
-                    <CardDesc>/gamemode</CardDesc>
-                    <CardBody>
-                        <PlayerSelect
-                            options={players}
-                            value={gmPlayer}
-                            open={openSel === 'gmPlayer'}
-                            placeholder={'选择玩家'}
-                            disabled={disabled}
-                            onToggle={() => toggleSel('gmPlayer')}
-                            onSelect={(v) => pick('gmPlayer', v)}
-                            renderTag={renderTag}
-                        />
+                    </OpActions>
+                </OpCard>
+                <OpCard>
+                    <OpInfo>
+                        <OpTitle>游戏模式</OpTitle>
+                        <OpDesc>/gamemode</OpDesc>
+                    </OpInfo>
+                    <OpActions>
+                        <SelectedChip active={!!selectedPlayer}>{selectedPlayer || '未选择'}</SelectedChip>
                         <PlayerSelect
                             options={GAMEMODES.map((m) => m.v)}
                             value={gmMode}
@@ -797,23 +809,15 @@ export default () => {
                         <ActionBtn color={'primary'} size={'small'} onClick={doGamemode} disabled={disabled}>
                             应用
                         </ActionBtn>
-                    </CardBody>
-                </Card>
-
-                <Card>
-                    <CardTitle>传送玩家</CardTitle>
-                    <CardDesc>/tp 玩家A 玩家B</CardDesc>
-                    <CardBody>
-                        <PlayerSelect
-                            options={players}
-                            value={tpFrom}
-                            open={openSel === 'tpFrom'}
-                            placeholder={'玩家A'}
-                            disabled={disabled}
-                            onToggle={() => toggleSel('tpFrom')}
-                            onSelect={(v) => pick('tpFrom', v)}
-                            renderTag={renderTag}
-                        />
+                    </OpActions>
+                </OpCard>
+                <OpCard>
+                    <OpInfo>
+                        <OpTitle>传送玩家</OpTitle>
+                        <OpDesc>/tp 玩家A 玩家B</OpDesc>
+                    </OpInfo>
+                    <OpActions>
+                        <SelectedChip active={!!selectedPlayer}>{selectedPlayer || '未选择'}</SelectedChip>
                         <PlayerSelect
                             options={players}
                             value={tpTo}
@@ -827,55 +831,39 @@ export default () => {
                         <ActionBtn color={'primary'} size={'small'} onClick={doTp} disabled={disabled}>
                             传送
                         </ActionBtn>
-                    </CardBody>
-                </Card>
-            </Grid>
-            <Grid cols={2}>
-                <Card>
-                    <CardTitle>封禁</CardTitle>
-                    <CardDesc>/ban /pardon</CardDesc>
-                    <CardBody>
-                        <PlayerSelect
-                            options={players}
-                            value={banPlayer}
-                            open={openSel === 'ban'}
-                            placeholder={'选择玩家'}
-                            disabled={disabled}
-                            onToggle={() => toggleSel('ban')}
-                            onSelect={(v) => pick('ban', v)}
-                            renderTag={renderTag}
-                        />
+                    </OpActions>
+                </OpCard>
+                <OpCard>
+                    <OpInfo>
+                        <OpTitle>封禁</OpTitle>
+                        <OpDesc>/ban /pardon</OpDesc>
+                    </OpInfo>
+                    <OpActions>
+                        <SelectedChip active={!!selectedPlayer}>{selectedPlayer || '未选择'}</SelectedChip>
                         <ActionBtn color={'primary'} size={'small'} onClick={() => doBan(false)} disabled={disabled}>
                             封禁
                         </ActionBtn>
                         <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doBan(true)} disabled={disabled}>
                             解封
                         </ActionBtn>
-                    </CardBody>
-                </Card>
-                <Card>
-                    <CardTitle>白名单</CardTitle>
-                    <CardDesc>/whitelist add / remove</CardDesc>
-                    <CardBody>
-                        <PlayerSelect
-                            options={players}
-                            value={wlPlayer}
-                            open={openSel === 'wl'}
-                            placeholder={'选择玩家'}
-                            disabled={disabled}
-                            onToggle={() => toggleSel('wl')}
-                            onSelect={(v) => pick('wl', v)}
-                            renderTag={renderTag}
-                        />
+                    </OpActions>
+                </OpCard>
+                <OpCard>
+                    <OpInfo>
+                        <OpTitle>白名单</OpTitle>
+                        <OpDesc>/whitelist add / remove</OpDesc>
+                    </OpInfo>
+                    <OpActions>
+                        <SelectedChip active={!!selectedPlayer}>{selectedPlayer || '未选择'}</SelectedChip>
                         <ActionBtn color={'primary'} size={'small'} onClick={() => doWhitelist(false)} disabled={disabled}>
                             添加
                         </ActionBtn>
                         <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doWhitelist(true)} disabled={disabled}>
                             移除
                         </ActionBtn>
-                    </CardBody>
-                </Card>
-            </Grid>
+                    </OpActions>
+                </OpCard>
+            </OpList>
 
             {/* 世界操作（广播长条 + 设置卡） */}
             <SectionHead>
