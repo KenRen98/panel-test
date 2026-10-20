@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from 'styled-components/macro';
+import styled, { keyframes } from 'styled-components/macro';
 import tw, { theme } from 'twin.macro';
 import ServerContentBlock from '@/components/elements/ServerContentBlock';
 import Button from '@/components/elements/Button';
@@ -123,9 +123,17 @@ const CardBody = styled.div`
     ${tw`mt-auto flex items-center gap-2 flex-wrap`};
 `;
 
+// 玩家列表分区错峰浮现（百叶式逐块滑入）
+const mcFadeSlide = keyframes`
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+`;
+
 // 玩家列表分区（在线 / 黑名单 / 白名单）
-const PlayerGroup = styled.div`
+const PlayerGroup = styled.div<{ delay?: number }>`
     ${tw`flex items-center gap-2 flex-wrap`};
+    animation: ${mcFadeSlide} 0.28s ease-out both;
+    animation-delay: ${(props) => (props.delay || 0) + 'ms'};
 `;
 
 const GroupLabel = styled.span<{ dot: 'on' | 'off' | 'wl' }>`
@@ -686,7 +694,7 @@ export default () => {
             <Card>
                 <CardTitle>玩家列表</CardTitle>
                 <CardDesc>在线 /list · 黑名单 /banlist players · 白名单 /whitelist list（金色 OP 标记）</CardDesc>
-                <PlayerGroup>
+                <PlayerGroup delay={0}>
                     <GroupLabel dot='on'>
                         <i />在线
                     </GroupLabel>
@@ -708,7 +716,7 @@ export default () => {
                         {listLoading ? '刷新中…' : '刷新'}
                     </ActionBtn>
                 </PlayerGroup>
-                <PlayerGroup>
+                <PlayerGroup delay={120}>
                     <GroupLabel dot='off'>
                         <i />黑名单
                     </GroupLabel>
@@ -723,7 +731,7 @@ export default () => {
                         <span css={tw`text-xs text-neutral-500`}>{isRunning ? '无封禁' : '—'}</span>
                     )}
                 </PlayerGroup>
-                <PlayerGroup>
+                <PlayerGroup delay={240}>
                     <GroupLabel dot='wl'>
                         <i />白名单
                     </GroupLabel>
