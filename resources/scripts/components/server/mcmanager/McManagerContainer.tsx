@@ -6,6 +6,7 @@ import Button from '@/components/elements/Button';
 import { ServerContext } from '@/state/server';
 import { SocketEvent } from '@/components/server/events';
 import useWebsocketEvent from '@/plugins/useWebsocketEvent';
+import http from '@/api/http';
 
 // ===== 样式（对齐 worldsettings 生产风格：深蓝主题） =====
 
@@ -21,6 +22,10 @@ const HeaderR = styled.div`
     ${tw`ml-auto flex flex-col items-end gap-1.5 flex-wrap`};
 `;
 
+const HeaderPills = styled.div`
+    ${tw`flex items-center gap-2 flex-wrap justify-end`};
+`;
+
 // 在线人数胶囊
 const StatsPill = styled.div`
     ${tw`inline-flex items-center gap-1.5 rounded-full border border-neutral-600 px-3.5 text-xs text-neutral-400`};
@@ -28,6 +33,30 @@ const StatsPill = styled.div`
     line-height: 26px;
     & > b {
         ${tw`text-neutral-100 font-semibold`};
+    }
+`;
+
+// 服务器状态胶囊（dot + 文字）
+const StatusPill = styled.div<{ mode: 'running' | 'offline' | 'transition' }>`
+    ${tw`inline-flex items-center gap-1.5 rounded-full border border-neutral-600 px-3.5 text-xs text-neutral-400`};
+    background: ${theme`colors.neutral.700`.toString()};
+    line-height: 26px;
+    & > i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: ${(props) =>
+            props.mode === 'running'
+                ? '#34d399'
+                : props.mode === 'offline'
+                ? '#f87171'
+                : 'hsl(40, 90%, 72%)'};
+        ${(props) =>
+            props.mode === 'running'
+                ? 'box-shadow: 0 0 6px rgba(52, 211, 153, 0.7);'
+                : props.mode === 'offline'
+                ? 'box-shadow: 0 0 6px rgba(248, 113, 113, 0.7);'
+                : ''}
     }
 `;
 
@@ -63,16 +92,13 @@ const SectionTitle = styled.h2`
     ${tw`text-[15px] font-semibold text-neutral-100`};
 `;
 
-// 卡片网格：桌面 5 列 / 中屏 3 列 / 手机 1 列
+// 卡片网格：桌面一行 3 个 / 手机一行 1 个（与 demo 对齐）
 const Grid = styled.div`
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 14px;
     @media (max-width: 700px) {
         grid-template-columns: 1fr;
-    }
-    @media (min-width: 1200px) {
-        grid-template-columns: repeat(5, 1fr);
     }
 `;
 
@@ -97,21 +123,38 @@ const CardBody = styled.div`
     ${tw`mt-auto flex items-center gap-2 flex-wrap`};
 `;
 
-// 分段按钮组（对齐 ModeBar/ModeBtn）
+// 状态行（封禁 / 白名单现状）
+const CardState = styled.div`
+    ${tw`flex items-center gap-1.5 flex-wrap min-h-[20px]`};
+`;
+
+const StateLabel = styled.span`
+    ${tw`text-[10px] text-neutral-500 whitespace-nowrap`};
+`;
+
+// 分段按钮组：按钮平分容器宽度，任意宽度不溢出（与 demo 对齐）
 const ModeBar = styled.div`
-    ${tw`flex items-center gap-0.5 rounded-lg border border-neutral-600 p-0.5 h-[34px]`};
+    ${tw`flex items-stretch gap-0.5 rounded-lg border border-neutral-600 p-0.5 h-[34px] w-full max-w-full`};
     background: ${theme`colors.neutral.700`.toString()};
-    width: max-content;
 `;
 
 const ModeBtn = styled.button<{ active?: boolean }>`
-    ${tw`h-full px-3 rounded-md text-[13px] cursor-pointer border-0 transition-colors duration-150`};
+    ${tw`h-full rounded-md text-[13px] cursor-pointer border-0 transition-colors duration-150 px-1.5`};
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-family: inherit;
     color: ${(props) => (props.active ? '#f0f6ff' : '#aeb8cb')};
     background: ${(props) => (props.active ? theme`colors.primary.500`.toString() : 'transparent')};
     font-weight: ${(props) => (props.active ? 600 : 400)};
     &:hover {
         color: ${(props) => (props.active ? '#f0f6ff' : '#e7ecf3')};
+    }
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
     }
 `;
 
@@ -122,7 +165,7 @@ const SelectWrap = styled.div`
     min-width: 96px;
 `;
 
-const SelectBtn = styled.button<{ open?: boolean }>`
+const SelectBtn = styled.button<{ open?: boolean; disabled?: boolean }>`
     ${tw`w-full flex items-center justify-center rounded-lg border text-[13px] text-neutral-100 cursor-pointer px-2 transition-colors duration-150`};
     height: 34px;
     background: #1d243a;
@@ -131,7 +174,11 @@ const SelectBtn = styled.button<{ open?: boolean }>`
     user-select: none;
     font-family: inherit;
     &:hover {
-        border-color: #4a5a7a;
+        border-color: ${(props) => (props.disabled ? '#3d4a63' : '#4a5a7a')};
+    }
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
     }
 `;
 
@@ -149,7 +196,7 @@ const OptMenu = styled.div`
 `;
 
 const OptItem = styled.button<{ active?: boolean }>`
-    ${tw`w-full py-[7px] px-2 text-xs text-neutral-100 text-left cursor-pointer whitespace-nowrap border-0 transition-colors duration-100`};
+    ${tw`w-full py-[7px] px-2 text-xs text-left cursor-pointer whitespace-nowrap border-0 transition-colors duration-100`};
     background: transparent;
     font-family: inherit;
     color: ${(props) => (props.active ? '#5a96f6' : '#e7ecf3')};
@@ -157,6 +204,21 @@ const OptItem = styled.button<{ active?: boolean }>`
     &:hover {
         background: #2b3650;
     }
+`;
+
+// 下拉项 / 玩家 chip 的状态标签
+const Tag = styled.span<{ kind: 'op' | 'ban' | 'wl' }>`
+    font-size: 9px;
+    padding: 0 5px;
+    line-height: 14px;
+    border-radius: 4px;
+    margin-left: 4px;
+    ${(props) =>
+        props.kind === 'op'
+            ? 'color:#fbbf24;border:1px solid rgba(251,191,36,0.5);background:rgba(251,191,36,0.08);'
+            : props.kind === 'ban'
+            ? 'color:hsl(0,80%,72%);border:1px solid rgba(239,68,68,0.5);background:rgba(239,68,68,0.08);'
+            : 'color:#7db4ff;border:1px solid rgba(90,150,246,0.5);background:rgba(90,150,246,0.08);'}
 `;
 
 // 操作按钮（对齐生产 PrimaryBtn/GreyBtn/DangerBtn）
@@ -177,13 +239,17 @@ const DangerBtn = styled(Button)`
 
 // 输入框（广播）
 const TextInput = styled.input`
-    ${tw`flex-1 min-w-0 rounded-lg border border-neutral-600 bg-[#1d243a] text-[13px] text-neutral-100 px-3 h-[34px] outline-none transition-colors duration-150`};
+    ${tw`flex-1 min-w-0 rounded-lg border border-neutral-600 bg-[#1d243a] text-[16px] text-neutral-100 px-3 h-[34px] outline-none transition-colors duration-150`};
     font-family: inherit;
     &:focus {
         border-color: ${theme`colors.primary.500`.toString()};
     }
     &::placeholder {
         color: #5a6b8a;
+    }
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
     }
 `;
 
@@ -210,7 +276,7 @@ const ConfirmBox = styled.div`
 `;
 
 const ConfirmTitle = styled.div`
-    ${tw`text-[15px] font-bold text-neutral-100 mb-2 flex items-center gap-1.5`};
+    ${tw`text-[15px] font-bold mb-2 flex items-center gap-1.5`};
     color: hsl(0, 80%, 72%);
 `;
 
@@ -255,24 +321,28 @@ interface ConfirmState {
     onOk: () => void;
 }
 
-// ===== 通用下拉（玩家/模式） =====
+// ===== 通用下拉（玩家/模式，支持状态标签） =====
 const PlayerSelect = ({
     options,
     value,
     open,
     placeholder,
+    disabled,
     onToggle,
     onSelect,
+    renderTag,
 }: {
     options: string[];
     value: string;
     open: boolean;
     placeholder: string;
+    disabled?: boolean;
     onToggle: () => void;
     onSelect: (v: string) => void;
+    renderTag?: (v: string) => React.ReactNode;
 }) => (
     <SelectWrap className='mc-select'>
-        <SelectBtn open={open} onClick={onToggle}>
+        <SelectBtn open={open} disabled={disabled} onClick={onToggle}>
             <span>{value || placeholder}</span>
         </SelectBtn>
         {open && (
@@ -283,6 +353,7 @@ const PlayerSelect = ({
                     options.map((p) => (
                         <OptItem key={p} active={p === value} onClick={() => onSelect(p)}>
                             {p}
+                            {renderTag ? renderTag(p) : null}
                         </OptItem>
                     ))
                 )}
@@ -297,6 +368,9 @@ export default () => {
     const connected = ServerContext.useStoreState((state) => state.socket.connected);
     const serverStatus = ServerContext.useStoreState((state) => state.status.value);
 
+    const isRunning = serverStatus === 'running';
+    const disabled = !isRunning;
+
     const [online, setOnline] = useState<OnlineState | null>(null);
     const [listLoading, setListLoading] = useState(false);
     const [openSel, setOpenSel] = useState<string | null>(null);
@@ -310,6 +384,12 @@ export default () => {
     const [tpTo, setTpTo] = useState('');
     const [gmPlayer, setGmPlayer] = useState('');
     const [gmMode, setGmMode] = useState('');
+
+    // 服务器侧状态回显：OP（ops.json）/ 白名单（/whitelist list）/ 封禁（/banlist players）/ keepInventory
+    const [ops, setOps] = useState<string[]>([]);
+    const [whitelist, setWhitelist] = useState<string[]>([]);
+    const [banned, setBanned] = useState<string[]>([]);
+    const [keepInv, setKeepInv] = useState<boolean | null>(null);
 
     const [hint, setHint] = useState<{ mode: 'success' | 'error'; text: string } | null>(null);
     const hintTimer = useRef<number | null>(null);
@@ -328,29 +408,70 @@ export default () => {
                 flashHint('error', '控制台未连接，请稍后重试。');
                 return;
             }
+            if (!isRunning) return; // 服务器未运行时禁止执行
             instance.send('send command', cmd);
             if (okText) flashHint('success', `已发送：${okText}`);
         },
-        [instance, connected, flashHint]
+        [instance, connected, flashHint, isRunning]
     );
 
-    // ===== 在线玩家：发 list 并解析输出 =====
+    // ===== 读取 ops.json（原版无查询 OP 指令，文件是唯一权威来源） =====
+    const loadOps = useCallback(async () => {
+        if (!uuid) return;
+        try {
+            const { data } = await http.get(`/api/client/servers/${uuid}/files/contents`, {
+                params: { file: 'ops.json' },
+                transformResponse: (res) => res,
+                responseType: 'text',
+                headers: { 'X-Doubao-Skip-Progress': '1' },
+            });
+            const parsed = JSON.parse(data || '[]');
+            setOps(Array.isArray(parsed) ? parsed.map((x) => x.name).filter(Boolean) : []);
+        } catch {
+            setOps([]);
+        }
+    }, [uuid]);
+
+    // ===== 查询三类状态（无副作用命令） =====
+    const refreshStatuses = useCallback(() => {
+        if (!isRunning) return;
+        sendCommand('whitelist list');
+        sendCommand('banlist players');
+        sendCommand('gamerule keepInventory');
+        loadOps();
+    }, [isRunning, sendCommand, loadOps]);
+
+    // ===== 在线玩家：发 list 并解析输出（服务器未运行时不发请求） =====
     const refreshList = useCallback(() => {
-        if (!uuid || !connected) return;
+        if (!uuid || !connected || !isRunning) return;
         setListLoading(true);
         sendCommand('list');
-        // 8 秒内未收到解析结果则取消 loading
         window.setTimeout(() => setListLoading(false), 8000);
-    }, [uuid, connected, sendCommand]);
+    }, [uuid, connected, sendCommand, isRunning]);
 
+    // 服务器启动 → 自动拉列表 + 状态；停止 → 清空状态
+    useEffect(() => {
+        if (isRunning) {
+            refreshList();
+            refreshStatuses();
+        } else {
+            setOnline(null);
+            setOps([]);
+            setWhitelist([]);
+            setBanned([]);
+            setKeepInv(null);
+            setOpenSel(null);
+        }
+    }, [isRunning, refreshList, refreshStatuses]);
+
+    // ===== 解析控制台输出（list / whitelist / banlist / gamerule） =====
     useWebsocketEvent(SocketEvent.CONSOLE_OUTPUT, (data) => {
         const line = String(data).replace(/(?:\r\n|\r|\n)$/im, '').trim();
         if (!line) return;
 
-        // 兼容多版本输出：
+        // 在线玩家（兼容多版本）：
         //   "There are 3 of a max of 20 players online: A, B, C"  (1.18+)
         //   "There are 3 players online: A, B, C"                 (旧版)
-        //   "3 players online: A, B, C"
         //   无玩家时无冒号： "There are 0 of a max of 20 players online"
         const m =
             line.match(/(\d+)\s+of\s+a\s+max\s+of\s+(\d+)\s+players?\s+online:\s*(.*)$/i) ||
@@ -362,6 +483,27 @@ export default () => {
             const list = m[3] ? m[3].split(',').map((s) => s.trim()).filter(Boolean) : [];
             setOnline({ count, max, players: list });
             setListLoading(false);
+            return;
+        }
+
+        // 白名单： "There are 4 whitelisted players: Steve, Alex" / "There are no whitelisted players"
+        const wm = line.match(/There are (no|\d+) whitelisted players?:?\s*(.*)$/i);
+        if (wm) {
+            setWhitelist(wm[1] === 'no' ? [] : wm[2] ? wm[2].split(',').map((s) => s.trim()).filter(Boolean) : []);
+            return;
+        }
+
+        // 封禁： "There are 1 banned players: Herobrine" / "There are no banned players"
+        const bm = line.match(/There are (no|\d+) banned players?:?\s*(.*)$/i);
+        if (bm) {
+            setBanned(bm[1] === 'no' ? [] : bm[2] ? bm[2].split(',').map((s) => s.trim()).filter(Boolean) : []);
+            return;
+        }
+
+        // keepInventory 当前值： "Gamerule keepInventory is now set to: false"
+        const gm = line.match(/keepInventory is (?:now )?set to:?\s*(true|false)/i);
+        if (gm) {
+            setKeepInv(gm[1] === 'true');
         }
     });
 
@@ -397,13 +539,27 @@ export default () => {
         }
     }, []);
 
+    // 玩家状态标签（下拉项用）
+    const renderTag = useCallback(
+        (p: string) => (
+            <>
+                {ops.includes(p) && <Tag kind='op'>OP</Tag>}
+                {banned.includes(p) && <Tag kind='ban'>已封禁</Tag>}
+                {whitelist.includes(p) && <Tag kind='wl'>白名单</Tag>}
+            </>
+        ),
+        [ops, banned, whitelist]
+    );
+
     // ===== 动作 =====
     const setTime = (v: string) => sendCommand(`time set ${v}`, `时间已设为${TIME_OPTS.find((o) => o.v === v)?.zh}`);
     const setWeather = (v: string) =>
         sendCommand(`weather ${v}`, `天气已设为${WEATHER_OPTS.find((o) => o.v === v)?.zh}`);
 
-    const setKeepInventory = (on: boolean) =>
+    const setKeepInvCb = (on: boolean) => {
         sendCommand(`gamerule keepInventory ${on ? 'true' : 'false'}`, on ? '死亡掉落已关闭' : '死亡掉落已开启');
+        window.setTimeout(() => sendCommand('gamerule keepInventory'), 1200); // 操作后回查当前值
+    };
 
     const doOp = (deop: boolean) => {
         if (!opPlayer) {
@@ -411,6 +567,7 @@ export default () => {
             return;
         }
         sendCommand(`${deop ? 'deop' : 'op'} ${opPlayer}`, `${deop ? '解除OP' : '授予OP'}：${opPlayer}`);
+        window.setTimeout(loadOps, 1200); // ops.json 由服务端异步落盘，稍后重读
     };
 
     const doBan = (pardon: boolean) => {
@@ -419,6 +576,7 @@ export default () => {
             return;
         }
         sendCommand(`${pardon ? 'pardon' : 'ban'} ${banPlayer}`, `${pardon ? '解封' : '封禁'}：${banPlayer}`);
+        window.setTimeout(() => sendCommand('banlist players'), 1200);
     };
 
     const doWhitelist = (remove: boolean) => {
@@ -427,6 +585,7 @@ export default () => {
             return;
         }
         sendCommand(`whitelist ${remove ? 'remove' : 'add'} ${wlPlayer}`, `${remove ? '移除白名单' : '添加白名单'}：${wlPlayer}`);
+        window.setTimeout(() => sendCommand('whitelist list'), 1200);
     };
 
     const doTp = () => {
@@ -473,6 +632,14 @@ export default () => {
         });
     };
 
+    // 常驻状态提示（无 flash 反馈时显示）
+    const displayedHint = hint || (isRunning
+        ? { mode: 'success' as const, text: '服务器运行中，全部功能可用' }
+        : { mode: 'info' as const, text: '服务器未启动：仅重置世界可用' });
+
+    const statusMode = isRunning ? 'running' : serverStatus === 'offline' ? 'offline' : 'transition';
+    const statusText = isRunning ? '服务器已启动' : serverStatus === 'offline' ? '服务器未启动' : '状态变更中';
+
     return (
         <ServerContentBlock title={'MC 管理'} showFlashKey={'mcmanager'}>
             <div css={tw`flex items-start mb-4`}>
@@ -497,33 +664,67 @@ export default () => {
                     <h1 css={tw`text-[30px] font-bold leading-tight`}>MC 管理</h1>
                 </HeaderL>
                 <HeaderR>
-                    <StatsPill>
-                        在线 <b>{online ? `${online.count}/${online.max}` : '--'}</b>
-                    </StatsPill>
-                    {hint && (
-                        <RestartHint mode={hint.mode}>
-                            <span>{hint.text}</span>
-                        </RestartHint>
-                    )}
+                    <HeaderPills>
+                        <StatsPill>
+                            在线 <b>{online ? `${online.count}/${online.max}` : '--'}</b>
+                        </StatsPill>
+                        <StatusPill mode={statusMode}>
+                            <i />
+                            <span>{statusText}</span>
+                        </StatusPill>
+                    </HeaderPills>
+                    <RestartHint mode={displayedHint.mode}>
+                        <span>{displayedHint.text}</span>
+                    </RestartHint>
                 </HeaderR>
             </div>
 
-            {/* 在线玩家 */}
+            {/* 在线玩家（最顶；服务器未运行时禁用刷新且不发 /list） */}
             <Card>
                 <CardTitle>在线玩家</CardTitle>
-                <CardDesc>来自 /list 命令，点击刷新获取最新</CardDesc>
+                <CardDesc>来自 /list 命令，点击刷新获取最新（金色 OP 标记）</CardDesc>
                 <CardBody>
                     <PlayerChips>
-                        {players.length > 0 ? (
-                            players.map((p) => <PlayerChip key={p}>{p}</PlayerChip>)
+                        {online && players.length > 0 ? (
+                            players.map((p) => (
+                                <PlayerChip key={p}>
+                                    {p}
+                                    {ops.includes(p) && <Tag kind='op'>OP</Tag>}
+                                </PlayerChip>
+                            ))
                         ) : listLoading ? (
                             <span css={tw`text-xs text-neutral-500`}>获取中…</span>
                         ) : (
-                            <span css={tw`text-xs text-neutral-500`}>暂无玩家在线</span>
+                            <span css={tw`text-xs text-neutral-500`}>
+                                {isRunning ? '暂无玩家在线' : '服务器未启动，暂无在线玩家'}
+                            </span>
                         )}
                     </PlayerChips>
-                    <ActionBtn color={'grey'} isSecondary size={'small'} onClick={refreshList} disabled={listLoading}>
+                    <ActionBtn color={'grey'} isSecondary size={'small'} onClick={refreshList} disabled={disabled || listLoading}>
                         {listLoading ? '刷新中…' : '刷新'}
+                    </ActionBtn>
+                </CardBody>
+            </Card>
+
+            {/* 广播（紧随在线玩家） */}
+            <SectionHead>
+                <SectionTitle>广播通知</SectionTitle>
+            </SectionHead>
+            <Card>
+                <CardTitle>发送广播</CardTitle>
+                <CardDesc>/say — 全服公告，所有玩家可见（兼容 Fabric/Forge/NeoForge/Paper）</CardDesc>
+                <CardBody>
+                    <TextInput
+                        value={broadcast}
+                        placeholder={'输入广播内容…'}
+                        disabled={disabled}
+                        onChange={(e) => setBroadcast(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') doBroadcast();
+                        }}
+                    />
+                    <ActionBtn color={'primary'} size={'small'} onClick={doBroadcast} disabled={disabled}>
+                        发送广播
                     </ActionBtn>
                 </CardBody>
             </Card>
@@ -539,7 +740,7 @@ export default () => {
                     <CardBody>
                         <ModeBar>
                             {TIME_OPTS.map((o) => (
-                                <ModeBtn key={o.v} onClick={() => setTime(o.v)}>
+                                <ModeBtn key={o.v} onClick={() => setTime(o.v)} disabled={disabled}>
                                     {o.zh}
                                 </ModeBtn>
                             ))}
@@ -552,7 +753,7 @@ export default () => {
                     <CardBody>
                         <ModeBar>
                             {WEATHER_OPTS.map((o) => (
-                                <ModeBtn key={o.v} onClick={() => setWeather(o.v)}>
+                                <ModeBtn key={o.v} onClick={() => setWeather(o.v)} disabled={disabled}>
                                     {o.zh}
                                 </ModeBtn>
                             ))}
@@ -561,11 +762,15 @@ export default () => {
                 </Card>
                 <Card>
                     <CardTitle>死亡掉落</CardTitle>
-                    <CardDesc>/gamerule keepInventory</CardDesc>
+                    <CardDesc>/gamerule keepInventory（查询当前值）</CardDesc>
                     <CardBody>
                         <ModeBar>
-                            <ModeBtn onClick={() => setKeepInventory(false)}>掉落</ModeBtn>
-                            <ModeBtn onClick={() => setKeepInventory(true)}>不掉落</ModeBtn>
+                            <ModeBtn active={keepInv === false} onClick={() => setKeepInvCb(false)} disabled={disabled}>
+                                掉落
+                            </ModeBtn>
+                            <ModeBtn active={keepInv === true} onClick={() => setKeepInvCb(true)} disabled={disabled}>
+                                不掉落
+                            </ModeBtn>
                         </ModeBar>
                     </CardBody>
                 </Card>
@@ -587,60 +792,92 @@ export default () => {
             <Grid>
                 <Card>
                     <CardTitle>管理权限</CardTitle>
-                    <CardDesc>原版仅支持 OP / 解除 OP</CardDesc>
+                    <CardDesc>当前 OP：{ops.length > 0 ? ops.join('、') : '—'}</CardDesc>
                     <CardBody>
                         <PlayerSelect
                             options={players}
                             value={opPlayer}
                             open={openSel === 'op'}
                             placeholder={'选择玩家'}
+                            disabled={disabled}
                             onToggle={() => toggleSel('op')}
                             onSelect={(v) => pick('op', v)}
+                            renderTag={renderTag}
                         />
-                        <ActionBtn color={'primary'} size={'small'} onClick={() => doOp(false)}>
+                        <ActionBtn color={'primary'} size={'small'} onClick={() => doOp(false)} disabled={disabled}>
                             授予OP
                         </ActionBtn>
-                        <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doOp(true)}>
+                        <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doOp(true)} disabled={disabled}>
                             解除OP
                         </ActionBtn>
                     </CardBody>
                 </Card>
                 <Card>
                     <CardTitle>封禁</CardTitle>
-                    <CardDesc>/ban /pardon</CardDesc>
+                    <CardDesc>/ban /pardon（黑名单：/banlist players）</CardDesc>
+                    <CardState>
+                        <StateLabel>已封禁</StateLabel>
+                        {banned.length > 0 ? (
+                            banned.map((p) => (
+                                <PlayerChip key={p}>
+                                    {p}
+                                    <Tag kind='ban'>黑名单</Tag>
+                                </PlayerChip>
+                            ))
+                        ) : (
+                            <span css={tw`text-xs text-neutral-500`}>—</span>
+                        )}
+                    </CardState>
                     <CardBody>
                         <PlayerSelect
                             options={players}
                             value={banPlayer}
                             open={openSel === 'ban'}
                             placeholder={'选择玩家'}
+                            disabled={disabled}
                             onToggle={() => toggleSel('ban')}
                             onSelect={(v) => pick('ban', v)}
+                            renderTag={renderTag}
                         />
-                        <ActionBtn color={'primary'} size={'small'} onClick={() => doBan(false)}>
+                        <ActionBtn color={'primary'} size={'small'} onClick={() => doBan(false)} disabled={disabled}>
                             封禁
                         </ActionBtn>
-                        <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doBan(true)}>
+                        <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doBan(true)} disabled={disabled}>
                             解封
                         </ActionBtn>
                     </CardBody>
                 </Card>
                 <Card>
                     <CardTitle>白名单</CardTitle>
-                    <CardDesc>/whitelist add / remove</CardDesc>
+                    <CardDesc>/whitelist add / remove（现状：/whitelist list）</CardDesc>
+                    <CardState>
+                        <StateLabel>白名单</StateLabel>
+                        {whitelist.length > 0 ? (
+                            whitelist.map((p) => (
+                                <PlayerChip key={p}>
+                                    {p}
+                                    <Tag kind='wl'>白名单</Tag>
+                                </PlayerChip>
+                            ))
+                        ) : (
+                            <span css={tw`text-xs text-neutral-500`}>—</span>
+                        )}
+                    </CardState>
                     <CardBody>
                         <PlayerSelect
                             options={players}
                             value={wlPlayer}
                             open={openSel === 'wl'}
                             placeholder={'选择玩家'}
+                            disabled={disabled}
                             onToggle={() => toggleSel('wl')}
                             onSelect={(v) => pick('wl', v)}
+                            renderTag={renderTag}
                         />
-                        <ActionBtn color={'primary'} size={'small'} onClick={() => doWhitelist(false)}>
+                        <ActionBtn color={'primary'} size={'small'} onClick={() => doWhitelist(false)} disabled={disabled}>
                             添加
                         </ActionBtn>
-                        <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doWhitelist(true)}>
+                        <ActionBtn color={'grey'} isSecondary size={'small'} onClick={() => doWhitelist(true)} disabled={disabled}>
                             移除
                         </ActionBtn>
                     </CardBody>
@@ -654,18 +891,22 @@ export default () => {
                             value={tpFrom}
                             open={openSel === 'tpFrom'}
                             placeholder={'玩家A'}
+                            disabled={disabled}
                             onToggle={() => toggleSel('tpFrom')}
                             onSelect={(v) => pick('tpFrom', v)}
+                            renderTag={renderTag}
                         />
                         <PlayerSelect
                             options={players}
                             value={tpTo}
                             open={openSel === 'tpTo'}
                             placeholder={'玩家B'}
+                            disabled={disabled}
                             onToggle={() => toggleSel('tpTo')}
                             onSelect={(v) => pick('tpTo', v)}
+                            renderTag={renderTag}
                         />
-                        <ActionBtn color={'primary'} size={'small'} onClick={doTp}>
+                        <ActionBtn color={'primary'} size={'small'} onClick={doTp} disabled={disabled}>
                             传送
                         </ActionBtn>
                     </CardBody>
@@ -679,45 +920,26 @@ export default () => {
                             value={gmPlayer}
                             open={openSel === 'gmPlayer'}
                             placeholder={'选择玩家'}
+                            disabled={disabled}
                             onToggle={() => toggleSel('gmPlayer')}
                             onSelect={(v) => pick('gmPlayer', v)}
+                            renderTag={renderTag}
                         />
                         <PlayerSelect
                             options={GAMEMODES.map((m) => m.v)}
                             value={gmMode}
                             open={openSel === 'gmMode'}
                             placeholder={'模式'}
+                            disabled={disabled}
                             onToggle={() => toggleSel('gmMode')}
                             onSelect={(v) => pick('gmMode', v)}
                         />
-                        <ActionBtn color={'primary'} size={'small'} onClick={doGamemode}>
+                        <ActionBtn color={'primary'} size={'small'} onClick={doGamemode} disabled={disabled}>
                             应用
                         </ActionBtn>
                     </CardBody>
                 </Card>
             </Grid>
-
-            {/* 广播 */}
-            <SectionHead>
-                <SectionTitle>广播通知</SectionTitle>
-            </SectionHead>
-            <Card>
-                <CardTitle>发送广播</CardTitle>
-                <CardDesc>/say — 全服公告，所有玩家可见（兼容 Fabric/Forge/NeoForge/Paper）</CardDesc>
-                <CardBody>
-                    <TextInput
-                        value={broadcast}
-                        placeholder={'输入广播内容…'}
-                        onChange={(e) => setBroadcast(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') doBroadcast();
-                        }}
-                    />
-                    <ActionBtn color={'primary'} size={'small'} onClick={doBroadcast}>
-                        发送广播
-                    </ActionBtn>
-                </CardBody>
-            </Card>
 
             {/* 确认弹窗（重置世界） */}
             {confirm && (
