@@ -135,14 +135,10 @@ const FloatingItem = ({ delay, children }: { delay: number; children: React.Reac
     );
 };
 
-// 动态判断项的浮现错峰（ms）：一键安装 0 → 模组安装 120 → 模组管理 240 → 世界设置 360 → MC 管理 480
-const DYNAMIC_DELAYS: Record<string, number> = {
-    '/modpack': 0,
-    '/steammod': 120,
-    '/dstmodmanager': 240,
-    '/worldsettings': 360,
-    '/mcmanager': 480,
-};
+// 动态浮现项：错峰延迟按"实际可见顺序"计算（每项 120ms 递增），
+// 不同游戏服的可见项不同（饥荒无 MC 管理、MC 服无世界设置等），
+// 不能按路径硬编码固定延迟，否则 MC 服的第 3 项会等到 480ms 才浮现。
+const DYNAMIC_PATHS = new Set(['/modpack', '/steammod', '/dstmodmanager', '/worldsettings', '/mcmanager']);
 
 export default ({ collapsed = false }: { collapsed?: boolean }) => {
     const match = useRouteMatch<{ id: string }>();
@@ -186,6 +182,9 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
             return;
         }
 
+        // 动态项顺序计数器（按实际可见顺序分配错峰延迟）
+        let dynOrder = 0;
+
         if (rendered.length > 0) {
             rendered.push(<Separator key={`sep-${group}`} collapsed={collapsed} />);
         }
@@ -216,7 +215,8 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
                         </Item>
                     );
 
-                    const delay = DYNAMIC_DELAYS[route.path];
+                    const isDynamic = DYNAMIC_PATHS.has(route.path);
+                    const delay = isDynamic ? dynOrder++ * 120 : undefined;
                     return delay !== undefined ? (
                         <FloatingItem key={route.path} delay={delay}>
                             {link}
