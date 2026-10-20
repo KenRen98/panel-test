@@ -117,7 +117,10 @@ const CardTitle = styled.div`
 `;
 
 const CardDesc = styled.div`
-    ${tw`text-[10px] text-neutral-500 leading-none mt-[-6px] whitespace-nowrap overflow-hidden text-ellipsis`};
+    ${tw`text-[10px] text-neutral-500 leading-none mt-[-6px]`};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 `;
 
 const CardBody = styled.div`
@@ -321,7 +324,10 @@ const OpTitle = styled.div`
     ${tw`text-[13px] font-medium text-neutral-100 leading-snug`};
 `;
 const OpDesc = styled.div`
-    ${tw`text-[10px] text-neutral-500 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis`};
+    ${tw`text-[10px] text-neutral-500 mt-0.5`};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 `;
 const OpInfoRow = styled.div`
     ${tw`flex items-center justify-between gap-2 min-w-0`};
