@@ -940,9 +940,9 @@ export default () => {
                         </ModeBar>
                     </CardBody>
                 </Card>
-                <Card style={{ alignItems: 'flex-end' }}>
-                    <CardTitle style={{ textAlign: 'right' }}>重新生成世界</CardTitle>
-                    <CardDesc style={{ textAlign: 'right' }}>删除存档，重启后生成全新世界</CardDesc>
+                <Card>
+                    <CardTitle>重新生成世界</CardTitle>
+                    <CardDesc>删除存档，重启后生成全新世界</CardDesc>
                     <CardBody style={{ justifyContent: 'flex-end' }}>
                         <DangerBtn size={'small'} onClick={confirmReset}>
                             重置世界
