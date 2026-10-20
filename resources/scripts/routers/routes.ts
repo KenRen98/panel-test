@@ -5,6 +5,7 @@ import {
     faCogs,
     faDownload,
     faFolderOpen,
+    faGamepad,
     faGlobe,
     faHistory,
     faNetworkWired,
@@ -48,6 +49,8 @@ const DstModManagerContainer = lazy(() => import('@/components/server/dstmodmana
 const InstallLogContainer = lazy(() => import('@/components/server/installlog/InstallLogContainer'));
 // 世界设置：读写 worldgenoverride.lua，独立分包避免打进主 chunk
 const WorldSettingsContainer = lazy(() => import('@/components/server/worldsettings/WorldSettingsContainer'));
+// MC 管理：原版指令操作（时间/天气/OP/封禁/白名单/传送/游戏模式/广播），独立分包
+const McManagerContainer = lazy(() => import('@/components/server/mcmanager/McManagerContainer'));
 
 interface RouteDefinition {
     path: string;
@@ -169,6 +172,14 @@ export default {
             component: WorldSettingsContainer,
             group: 1,
             icon: faGlobe,
+        },
+        {
+            path: '/mcmanager',
+            permission: 'startup.*',
+            name: 'MC 管理',
+            component: McManagerContainer,
+            group: 1,
+            icon: faGamepad,
         },
         // ===== 组2 =====
         {

@@ -135,12 +135,13 @@ const FloatingItem = ({ delay, children }: { delay: number; children: React.Reac
     );
 };
 
-// 动态判断项的浮现错峰（ms）：一键安装 0 → 模组安装 120 → 模组管理 240 → 世界设置 360
+// 动态判断项的浮现错峰（ms）：一键安装 0 → 模组安装 120 → 模组管理 240 → 世界设置 360 → MC 管理 480
 const DYNAMIC_DELAYS: Record<string, number> = {
     '/modpack': 0,
     '/steammod': 120,
     '/dstmodmanager': 240,
     '/worldsettings': 360,
+    '/mcmanager': 480,
 };
 
 export default ({ collapsed = false }: { collapsed?: boolean }) => {
