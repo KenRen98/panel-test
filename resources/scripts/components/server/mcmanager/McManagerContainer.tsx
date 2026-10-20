@@ -117,7 +117,7 @@ const CardTitle = styled.div`
 `;
 
 const CardDesc = styled.div`
-    ${tw`text-[10px] text-neutral-500 leading-none`};
+    ${tw`text-[10px] text-neutral-500 leading-none mt-[-6px]`};
 `;
 
 const CardBody = styled.div`
@@ -466,8 +466,6 @@ export default () => {
     const [keepInv, setKeepInv] = useState<boolean | null>(null);
     const [timeSel, setTimeSel] = useState('');
     const [weatherSel, setWeatherSel] = useState('');
-    // MC 主版本（>=26 用 snake_case 规则名；null=未知，默认 keep_inventory）
-    const [mcMajor, setMcMajor] = useState<number | null>(null);
 
     const [hint, setHint] = useState<{ mode: 'success' | 'error'; text: string } | null>(null);
     const hintTimer = useRef<number | null>(null);
@@ -493,12 +491,6 @@ export default () => {
         [instance, connected, flashHint, isRunning]
     );
 
-    // gamerule 规则名：MC 26.x 起为 snake_case（keep_inventory），旧版为 keepInventory
-    const keepRuleName = useCallback(
-        () => (mcMajor !== null && mcMajor < 26 ? 'keepInventory' : 'keep_inventory'),
-        [mcMajor]
-    );
-
     // ===== 读取 ops.json（原版无查询 OP 指令，文件是唯一权威来源） =====
     const loadOps = useCallback(async () => {
         if (!uuid) return;
@@ -519,12 +511,12 @@ export default () => {
     // ===== 查询三类状态（无副作用命令） =====
     const refreshStatuses = useCallback(() => {
         if (!isRunning) return;
-        sendCommand('version'); // 用于判定 MC 版本对应的规则名
         sendCommand('whitelist list');
         sendCommand('banlist players');
-        sendCommand(`gamerule ${keepRuleName()}`);
+        sendCommand('gamerule keep_inventory');
+        sendCommand('gamerule keepInventory');
         loadOps();
-    }, [isRunning, sendCommand, loadOps, keepRuleName]);
+    }, [isRunning, sendCommand, loadOps]);
 
     // ===== 在线玩家：发 list 并解析输出（服务器未运行时不发请求） =====
     const refreshList = useCallback(() => {
@@ -585,18 +577,6 @@ export default () => {
             return;
         }
 
-        // 版本判定："This server is running Paper version 26.3-..." → major=26
-        const vm = line.match(/running .* version (\d+)(?:\.\d+)?/i);
-        if (vm) {
-            const major = Number(vm[1]);
-            if (major !== mcMajor) {
-                setMcMajor(major);
-                // 版本已明确，按正确规则名补一次回查（修正未知期默认值）
-                sendCommand(`gamerule ${major >= 26 ? 'keep_inventory' : 'keepInventory'}`);
-            }
-            return;
-        }
-
         // keepInventory 当前值： "Gamerule keep_inventory is now set to: false"
         const gm = line.match(/keep_?inventory is (?:now )?set to:?\s*(true|false)/i);
         if (gm) {
@@ -644,8 +624,12 @@ export default () => {
         sendCommand(`weather ${v}`, `天气已设为${WEATHER_OPTS.find((o) => o.v === v)?.zh}`);
     };
     const setKeepInvCb = (on: boolean) => {
-        sendCommand(`gamerule ${keepRuleName()} ${on ? 'true' : 'false'}`, on ? '死亡掉落已关闭' : '死亡掉落已开启');
-        window.setTimeout(() => sendCommand(`gamerule ${keepRuleName()}`), 1200); // 操作后回查当前值
+        sendCommand(`gamerule keep_inventory ${on ? 'true' : 'false'}`, on ? '死亡掉落已关闭' : '死亡掉落已开启');
+        sendCommand(`gamerule keepInventory ${on ? 'true' : 'false'}`); // 兼容旧版规则名
+        window.setTimeout(() => {
+            sendCommand('gamerule keep_inventory');
+            sendCommand('gamerule keepInventory');
+        }, 1200); // 操作后回查当前值
     };
 
     const doOp = (deop: boolean) => {
