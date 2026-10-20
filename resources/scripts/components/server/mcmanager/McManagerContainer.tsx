@@ -652,7 +652,7 @@ export default () => {
     const statusText = isRunning ? '服务器已启动' : serverStatus === 'offline' ? '服务器未启动' : '状态变更中';
 
     return (
-        <ServerContentBlock title={'MC 管理'} showFlashKey={'mcmanager'}>
+        <ServerContentBlock title={'快捷指令'} showFlashKey={'mcmanager'}>
             <div css={tw`flex items-start mb-4`}>
                 <HeaderL>
                     <IconBlock>
@@ -672,7 +672,7 @@ export default () => {
                             <rect x='14' y='14' width='7' height='7' rx='1' />
                         </svg>
                     </IconBlock>
-                    <h1 css={tw`text-[30px] font-bold leading-tight`}>MC 管理</h1>
+                    <h1 css={tw`text-[30px] font-bold leading-tight`}>快捷指令</h1>
                 </HeaderL>
                 <HeaderR>
                     <HeaderPills>
