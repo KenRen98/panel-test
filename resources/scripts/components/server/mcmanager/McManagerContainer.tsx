@@ -563,15 +563,15 @@ export default () => {
             return;
         }
 
-        // 白名单： "There are 4 whitelisted players: Steve, Alex" / "There are no whitelisted players"
-        const wm = line.match(/There are (no|\d+) whitelisted players?:?\s*(.*)$/i);
+        // 白名单： "There are 4 whitelisted players: Steve, Alex" / "There are 3 whitelisted player(s): wxt233, tiwen, winson123" / "There are no whitelisted players"
+        const wm = line.match(/There are (no|\d+) whitelisted players?(?:\(s\))?:?\s*(.*)$/i);
         if (wm) {
             setWhitelist(wm[1] === 'no' ? [] : wm[2] ? wm[2].split(',').map((s) => s.trim()).filter(Boolean) : []);
             return;
         }
 
-        // 封禁： "There are 1 banned players: Herobrine" / "There are no banned players"
-        const bm = line.match(/There are (no|\d+) banned players?:?\s*(.*)$/i);
+        // 封禁： "There are 1 banned players: Herobrine" / "There are 1 banned player(s): Herobrine" / "There are no banned players"
+        const bm = line.match(/There are (no|\d+) banned players?(?:\(s\))?:?\s*(.*)$/i);
         if (bm) {
             setBanned(bm[1] === 'no' ? [] : bm[2] ? bm[2].split(',').map((s) => s.trim()).filter(Boolean) : []);
             return;
