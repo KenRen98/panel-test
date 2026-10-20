@@ -283,9 +283,30 @@ const PlayerChip = styled.span<{ pick?: boolean; sel?: boolean }>`
 // ===== 操作区：单列卡片（点选玩家后操作，与 demo 对齐） =====
 const OpList = styled.div`
     ${tw`flex flex-col gap-2.5 mt-3.5`};
+    @media (min-width: 701px) {
+        flex-direction: row;
+        gap: 0;
+        border: 1px solid #3d4a63;
+        border-radius: 12px;
+        background: ${theme`colors.neutral.700`.toString()};
+        overflow: hidden;
+    }
 `;
 const OpCard = styled.div`
     ${tw`flex items-center gap-3 rounded-xl border border-neutral-600 bg-[#1d243a] px-3.5 py-2.5 min-w-0`};
+    @media (min-width: 701px) {
+        flex: 1 1 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        padding: 10px 12px;
+        & + & {
+            border-left: 1px solid #3d4a63;
+        }
+    }
 `;
 const OpInfo = styled.div`
     ${tw`flex-none min-w-[120px]`};
@@ -298,6 +319,9 @@ const OpDesc = styled.div`
 `;
 const OpActions = styled.div`
     ${tw`flex-1 flex items-center gap-2 flex-wrap justify-end min-w-0`};
+    @media (min-width: 701px) {
+        justify-content: flex-start;
+    }
     @media (max-width: 700px) {
         justify-content: flex-start;
         & > button, & > .mc-select { flex: 1 1 calc(50% - 4px); }
@@ -717,8 +741,13 @@ export default () => {
                 <SectionTitle>玩家管理</SectionTitle>
             </SectionHead>
             <Card>
-                <CardTitle>玩家列表</CardTitle>
-                <CardDesc>在线 /list · 黑名单 /banlist players · 白名单 /whitelist list（金色 OP 标记）</CardDesc>
+                <div css={tw`flex items-center justify-between gap-2`}>
+                    <CardTitle>玩家列表</CardTitle>
+                    <ActionBtn color={'grey'} isSecondary size={'small'} onClick={refreshList} disabled={disabled || listLoading}>
+                        {listLoading ? '刷新中…' : '刷新'}
+                    </ActionBtn>
+                </div>
+                <CardDesc>点击选择玩家执行下方操作</CardDesc>
                 <PlayerGroup delay={0}>
                     <GroupLabel dot='on'>
                         <i />在线
@@ -742,9 +771,6 @@ export default () => {
                             {isRunning ? '暂无玩家在线' : '服务器未启动，暂无在线玩家'}
                         </span>
                     )}
-                    <ActionBtn color={'grey'} isSecondary size={'small'} onClick={refreshList} disabled={disabled || listLoading}>
-                        {listLoading ? '刷新中…' : '刷新'}
-                    </ActionBtn>
                 </PlayerGroup>
                 {banned.length > 0 && (
                     <PlayerGroup delay={120}>
@@ -778,7 +804,7 @@ export default () => {
                 <OpCard>
                     <OpInfo>
                         <OpTitle>管理权限</OpTitle>
-                        <OpDesc>当前 OP：{ops.length > 0 ? ops.join('、') : '—'}</OpDesc>
+                        <OpDesc>OP 权限，俗称作弊</OpDesc>
                     </OpInfo>
                     <OpActions>
                         <SelectedChip active={!!selectedPlayer}>{selectedPlayer || '未选择'}</SelectedChip>
@@ -793,7 +819,7 @@ export default () => {
                 <OpCard>
                     <OpInfo>
                         <OpTitle>游戏模式</OpTitle>
-                        <OpDesc>/gamemode</OpDesc>
+                        <OpDesc>切换创造、生存、冒险、观察者模式</OpDesc>
                     </OpInfo>
                     <OpActions>
                         <SelectedChip active={!!selectedPlayer}>{selectedPlayer || '未选择'}</SelectedChip>
@@ -814,7 +840,7 @@ export default () => {
                 <OpCard>
                     <OpInfo>
                         <OpTitle>传送玩家</OpTitle>
-                        <OpDesc>/tp 玩家A 玩家B</OpDesc>
+                        <OpDesc>传送选中玩家到指定玩家身边</OpDesc>
                     </OpInfo>
                     <OpActions>
                         <SelectedChip active={!!selectedPlayer}>{selectedPlayer || '未选择'}</SelectedChip>
@@ -836,7 +862,7 @@ export default () => {
                 <OpCard>
                     <OpInfo>
                         <OpTitle>封禁</OpTitle>
-                        <OpDesc>/ban /pardon</OpDesc>
+                        <OpDesc>禁止 / 恢复玩家进入服务器</OpDesc>
                     </OpInfo>
                     <OpActions>
                         <SelectedChip active={!!selectedPlayer}>{selectedPlayer || '未选择'}</SelectedChip>
@@ -851,7 +877,7 @@ export default () => {
                 <OpCard>
                     <OpInfo>
                         <OpTitle>白名单</OpTitle>
-                        <OpDesc>/whitelist add / remove</OpDesc>
+                        <OpDesc>仅允许名单内玩家进入</OpDesc>
                     </OpInfo>
                     <OpActions>
                         <SelectedChip active={!!selectedPlayer}>{selectedPlayer || '未选择'}</SelectedChip>
