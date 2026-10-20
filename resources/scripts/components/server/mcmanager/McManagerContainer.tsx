@@ -341,15 +341,6 @@ const OpActions = styled.div`
         & > .mc-select { flex: 1 1 calc(50% - 4px); width: auto; }
     }
 `;
-const SelectedChip = styled.span<{ active?: boolean }>`
-    ${tw`inline-flex items-center rounded-lg border px-2.5 text-xs whitespace-nowrap overflow-hidden`};
-    text-overflow: ellipsis;
-    line-height: 26px;
-    color: ${(props) => (props.active ? '#eaf2ff' : '#aeb8cb')};
-    border-color: ${(props) => (props.active ? theme`colors.primary.500`.toString() : '#3d4a63')};
-    background: rgba(255, 255, 255, 0.04);
-`;
-
 // 确认弹窗（对齐生产 ConfirmMask/ConfirmBox）
 const ConfirmMask = styled.div`
     ${tw`fixed inset-0 z-[60] flex items-center justify-center p-5`};
@@ -848,7 +839,6 @@ export default () => {
                             <OpTitle>管理权限</OpTitle>
                             <OpDesc>OP 权限，俗称作弊</OpDesc>
                         </OpInfo>
-                        {selectedPlayer ? <SelectedChip active>{selectedPlayer}</SelectedChip> : null}
                     </OpInfoRow>
                     <OpActions>
                         <ActionBtn color={'primary'} size={'small'} onClick={() => doOp(false)} disabled={disabled || !selectedPlayer}>
@@ -865,7 +855,6 @@ export default () => {
                             <OpTitle>游戏模式</OpTitle>
                             <OpDesc>切换创造、生存、冒险、观察者模式</OpDesc>
                         </OpInfo>
-                        {selectedPlayer ? <SelectedChip active>{selectedPlayer}</SelectedChip> : null}
                     </OpInfoRow>
                     <OpActions>
                         <PlayerSelect
@@ -888,7 +877,6 @@ export default () => {
                             <OpTitle>传送玩家</OpTitle>
                             <OpDesc>传送选中玩家到指定玩家身边</OpDesc>
                         </OpInfo>
-                        {selectedPlayer ? <SelectedChip active>{selectedPlayer}</SelectedChip> : null}
                     </OpInfoRow>
                     <OpActions>
                         <PlayerSelect
@@ -912,7 +900,6 @@ export default () => {
                             <OpTitle>封禁</OpTitle>
                             <OpDesc>禁止 / 恢复玩家进入服务器</OpDesc>
                         </OpInfo>
-                        {selectedPlayer ? <SelectedChip active>{selectedPlayer}</SelectedChip> : null}
                     </OpInfoRow>
                     <OpActions>
                         <ActionBtn color={'primary'} size={'small'} onClick={() => doBan(false)} disabled={disabled || !selectedPlayer}>
@@ -929,7 +916,6 @@ export default () => {
                             <OpTitle>白名单</OpTitle>
                             <OpDesc>仅允许名单内玩家进入</OpDesc>
                         </OpInfo>
-                        {selectedPlayer ? <SelectedChip active>{selectedPlayer}</SelectedChip> : null}
                     </OpInfoRow>
                     <OpActions>
                         <ActionBtn color={'primary'} size={'small'} onClick={() => doWhitelist(false)} disabled={disabled || !selectedPlayer}>
