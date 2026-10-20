@@ -112,14 +112,6 @@ export default {
             icon: faTerminal,
         },
         {
-            path: '/mcmanager',
-            permission: 'startup.*',
-            name: '快捷指令',
-            component: McManagerContainer,
-            group: 1,
-            icon: faGamepad,
-        },
-        {
             path: '/startup',
             permission: 'startup.*',
             name: '游戏参数',
@@ -156,6 +148,14 @@ export default {
             component: ModpackContainer,
             group: 1,
             icon: faDownload,
+        },
+        {
+            path: '/mcmanager',
+            permission: 'startup.*',
+            name: '快捷指令',
+            component: McManagerContainer,
+            group: 1,
+            icon: faGamepad,
         },
         {
             path: '/steammod',
