@@ -135,10 +135,11 @@ const FloatingItem = ({ delay, children }: { delay: number; children: React.Reac
     );
 };
 
-// 动态浮现项：错峰延迟按"实际可见顺序"计算（每项 200ms 递增），
+// 动态浮现项：错峰延迟按"实际可见顺序"计算（初始 300ms + 每项 200ms 递增），
 // 不同游戏服的可见项不同（饥荒无 MC 管理、MC 服无世界设置等），
 // 不能按路径硬编码固定延迟，否则 MC 服的第 3 项会等很久才浮现。
-// 计数放全局（跨组连续），保证所有动态项按可见顺序依次错峰出现。
+// 初始 300ms 让页面先渲染稳定再开始浮现；计数放全局（跨组连续），
+// 保证所有动态项按可见顺序依次错峰出现。
 const DYNAMIC_PATHS = new Set(['/modpack', '/steammod', '/dstmodmanager', '/worldsettings', '/mcmanager']);
 
 export default ({ collapsed = false }: { collapsed?: boolean }) => {
@@ -216,7 +217,8 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
                     );
 
                     const isDynamic = DYNAMIC_PATHS.has(route.path);
-                    const delay = isDynamic ? dynOrder++ * 200 : undefined;
+                    // 初始 300ms 等待页面渲染稳定，之后按可见顺序每项 200ms 错峰浮现
+                    const delay = isDynamic ? 300 + dynOrder++ * 200 : undefined;
                     return delay !== undefined ? (
                         <FloatingItem key={route.path} delay={delay}>
                             {link}
