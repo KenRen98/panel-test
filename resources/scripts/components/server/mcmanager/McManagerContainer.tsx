@@ -155,7 +155,8 @@ const ModeBar = styled.div`
 `;
 
 const ModeBtn = styled.button<{ active?: boolean }>`
-    ${tw`h-full rounded-md text-[13px] cursor-pointer border-0 transition-colors duration-150 px-1.5`};
+    ${tw`h-full rounded-md text-[13px] cursor-pointer border-0 px-1.5`};
+    transition: color 0.8s, background 0.8s;
     flex: 1 1 0;
     min-width: 0;
     overflow: hidden;
@@ -165,6 +166,7 @@ const ModeBtn = styled.button<{ active?: boolean }>`
     color: ${(props) => (props.active ? '#f0f6ff' : '#aeb8cb')};
     background: ${(props) => (props.active ? theme`colors.primary.500`.toString() : 'transparent')};
     font-weight: ${(props) => (props.active ? 600 : 400)};
+    ${(props) => (props.active ? 'transition: color 0.15s, background 0.15s;' : '')}
     &:hover {
         color: ${(props) => (props.active ? '#f0f6ff' : '#e7ecf3')};
     }
@@ -221,6 +223,7 @@ const OptItem = styled.button<{ active?: boolean }>`
     font-family: inherit;
     color: ${(props) => (props.active ? '#5a96f6' : '#e7ecf3')};
     font-weight: ${(props) => (props.active ? 600 : 400)};
+    ${(props) => (props.active ? 'transition: color 0.15s, background 0.15s;' : '')}
     &:hover {
         background: #2b3650;
     }
@@ -615,12 +618,23 @@ export default () => {
     );
 
     // ===== 动作 =====
+    // 世界时间/天气点击高亮 10s 后自动淡出（无查询指令回显真实值，高亮仅为操作反馈）
+    const selTimer = useRef<number | null>(null);
+    const scheduleSelReset = () => {
+        if (selTimer.current) window.clearTimeout(selTimer.current);
+        selTimer.current = window.setTimeout(() => {
+            setTimeSel('');
+            setWeatherSel('');
+        }, 10000);
+    };
     const setTime = (v: string) => {
         setTimeSel(v);
+        scheduleSelReset();
         sendCommand(`time set ${v}`, `时间已设为${TIME_OPTS.find((o) => o.v === v)?.zh}`);
     };
     const setWeather = (v: string) => {
         setWeatherSel(v);
+        scheduleSelReset();
         sendCommand(`weather ${v}`, `天气已设为${WEATHER_OPTS.find((o) => o.v === v)?.zh}`);
     };
     const setKeepInvCb = (on: boolean) => {
