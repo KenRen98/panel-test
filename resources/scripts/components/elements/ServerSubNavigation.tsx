@@ -10,6 +10,7 @@ import { useStoreState } from '@/state/hooks';
 import { hasCapability, getEggCapabilities } from '@/api/server/eggCapabilities';
 import { hasSteamModCapability, hasDstModManagerCapability } from '@/api/server/steamMods';
 import { hasWorldSettingsCapability } from '@/api/server/worldSettings';
+import { hasMcManagerCapability } from '@/api/server/mcManager';
 
 const Nav = styled.nav`
     ${tw`flex flex-col px-2 py-3 gap-0.5`};
@@ -151,6 +152,7 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
     const hasSteamMod = hasSteamModCapability(variables);
     const hasDstModManager = hasDstModManagerCapability(variables);
     const hasWorldSettings = hasWorldSettingsCapability(variables);
+    const hasMcManager = hasMcManagerCapability(variables);
 
     // 游戏教程：始终显示。egg 通过 EGG_CAPABILITIES 声明 manual-<suffix> 时跳对应后缀，
     // 未声明时跳默认地址 https://manual.mr-leaves.com/3-servergames/
@@ -172,7 +174,8 @@ export default ({ collapsed = false }: { collapsed?: boolean }) => {
             !(route.path === '/modpack' && !hasModpack) &&
             !(route.path === '/steammod' && !hasSteamMod) &&
             !(route.path === '/dstmodmanager' && !hasDstModManager) &&
-            !(route.path === '/worldsettings' && !hasWorldSettings)
+            !(route.path === '/worldsettings' && !hasWorldSettings) &&
+            !(route.path === '/mcmanager' && !hasMcManager)
     );
 
     const groups: number[] = [1, 2, 3];

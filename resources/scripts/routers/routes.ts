@@ -176,7 +176,7 @@ export default {
         {
             path: '/mcmanager',
             permission: 'startup.*',
-            name: 'MC 管理',
+            name: '快捷指令',
             component: McManagerContainer,
             group: 1,
             icon: faGamepad,
