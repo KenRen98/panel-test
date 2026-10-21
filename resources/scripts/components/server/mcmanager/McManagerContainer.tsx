@@ -485,7 +485,7 @@ export default () => {
                 return;
             }
             if (!isRunning) return; // 服务器未运行时禁止执行
-            instance.send('send command', cmd);
+            instance.send('send command', cmd.replace(/\u001b\[[0-9;]*m/g, '')); // 防御：命令参数内不残留 ANSI
             if (okText) flashHint('success', `已发送：${okText}`);
         },
         [instance, connected, flashHint, isRunning]
@@ -543,7 +543,10 @@ export default () => {
 
     // ===== 解析控制台输出（list / whitelist / banlist / gamerule） =====
     useWebsocketEvent(SocketEvent.CONSOLE_OUTPUT, (data) => {
-        const line = String(data).replace(/(?:\r\n|\r|\n)$/im, '').trim();
+        const line = String(data)
+            .replace(/(?:\r\n|\r|\n)$/im, '')
+            .trim()
+            .replace(/\u001b\[[0-9;]*m/g, ''); // 剥离 MC 颜色码 ANSI 序列，避免混入玩家名
         if (!line) return;
 
         // 在线玩家（兼容多版本）：
